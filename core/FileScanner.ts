@@ -26,9 +26,10 @@ export class FileScanner {
       if (!pattern.includes("*") && !pattern.includes("?")) {
         return filePath.includes(pattern);
       }
-      // 对于 glob 模式，使用文件名进行匹配
-      const fileName = path.basename(filePath);
-      return minimatch(fileName, pattern);
+      // 对于 glob 模式，使用相对于根目录的路径进行匹配
+      const rootDir = path.join(process.cwd(), this.config.rootDir);
+      const relativePath = path.relative(rootDir, filePath);
+      return minimatch(relativePath, pattern);
     });
   }
 
