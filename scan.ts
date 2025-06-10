@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /**
  * 国际化
  * 1. 文件名与languages 中的语言对应,查看指定outputDir 文件夹下是否有对应的json文件,如果没有则创建
@@ -9,20 +11,25 @@
  * 7. 完成所有文件的替换后，将内存中的内容写入到指定outputDir 的文件夹下的的指定languages文件夹下生成对应的json文件，key为文案内容，value为翻译
  * 8. 使用googleapis 读取远程翻译内容,key 相同的进行替换,key 不相同的进行添加
  * 9. 最后将本地的翻译内容推送到远程翻译文件中
- * 
+ *
  * 说明
  * 1. i18n.config.js 包含所有配置
  * 2. 谷歌表格的读写参考i18n-manager.mjs
-*/
+ */
 
-import config from '../i18n.config.js';
-import { I18nScanner } from './core/I18nScanner';
+import type { I18nConfig } from "./types";
+import { I18nScanner } from "./core/I18nScanner";
+import * as path from "path";
+
+// 从当前工作目录加载配置文件
+const configPath = path.join(process.cwd(), "i18n.config.js");
+const config: I18nConfig = require(configPath);
 
 const scanner = new I18nScanner(config);
 
 if (require.main === module) {
-  scanner.scan().catch(error => {
-    console.error('扫描失败:', error);
+  scanner.scan().catch((error) => {
+    console.error("扫描失败:", error);
     process.exit(1);
   });
 }

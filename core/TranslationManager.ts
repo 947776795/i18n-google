@@ -1,8 +1,8 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import { promisify } from 'util';
-import type { I18nConfig } from '../types';
-import type { TransformResult } from './AstTransformer';
+import * as fs from "fs";
+import * as path from "path";
+import { promisify } from "util";
+import type { I18nConfig } from "../types";
+import type { TransformResult } from "./AstTransformer";
 
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
@@ -51,10 +51,17 @@ export class TranslationManager {
   }
 
   /**
-   * 更新翻译
+   * 更新翻译 - 合并远程翻译到本地翻译
    */
-  public updateTranslations(translations: TranslationData): void {
-    this.translations = translations;
+  public updateTranslations(remoteTranslations: TranslationData): void {
+    // 合并远程翻译到本地翻译，而不是覆盖
+    Object.entries(remoteTranslations).forEach(([lang, translations]) => {
+      if (!this.translations[lang]) {
+        this.translations[lang] = {};
+      }
+      // 远程翻译优先，但保留本地新增的翻译
+      Object.assign(this.translations[lang], translations);
+    });
   }
 
   /**
@@ -65,7 +72,7 @@ export class TranslationManager {
       Object.entries(this.translations).map(([lang, translations]) => {
         const filePath = path.join(this.config.outputDir, `${lang}.json`);
         return writeFile(filePath, JSON.stringify(translations, null, 2));
-      }),
+      })
     );
   }
 
@@ -87,12 +94,12 @@ export class TranslationManager {
       this.config.languages.map(async (lang) => {
         const filePath = path.join(this.config.outputDir, `${lang}.json`);
         try {
-          const content = await readFile(filePath, 'utf-8');
+          const content = await readFile(filePath, "utf-8");
           this.translations[lang] = JSON.parse(content);
         } catch (error) {
           this.translations[lang] = {};
         }
-      }),
+      })
     );
   }
-} 
+}

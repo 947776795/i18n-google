@@ -1,6 +1,6 @@
-import { google } from 'googleapis';
-import type { I18nConfig } from '../types';
-import type { TranslationData } from './TranslationManager';
+import { google } from "googleapis";
+import type { I18nConfig } from "../types";
+import type { TranslationData } from "./TranslationManager";
 
 export class GoogleSheetsSync {
   private googleSheets: any;
@@ -15,11 +15,11 @@ export class GoogleSheetsSync {
   private async initGoogleSheets() {
     const auth = new google.auth.GoogleAuth({
       keyFile: this.config.keyFile,
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
     });
 
     const authClient = await auth.getClient();
-    this.googleSheets = google.sheets({ version: 'v4', auth: authClient });
+    this.googleSheets = google.sheets({ version: "v4", auth: authClient });
   }
 
   /**
@@ -32,9 +32,15 @@ export class GoogleSheetsSync {
     });
 
     const rows = response.data.values || [];
-    const headers = rows[0];
+    const headers = rows[0] || [];
     const langIndices = new Map<string, number>();
     const translations: TranslationData = {};
+
+    // 检查是否有数据
+    if (rows.length === 0 || headers.length === 0) {
+      console.log("Google Sheets 中没有数据，返回空翻译");
+      return translations;
+    }
 
     headers.forEach((header: string, index: number) => {
       if (this.config.languages.includes(header)) {
@@ -64,19 +70,19 @@ export class GoogleSheetsSync {
    * 将翻译同步到 Google Sheets
    */
   public async syncToSheet(translations: TranslationData): Promise<void> {
-    const headers = ['key', ...this.config.languages];
+    const headers = ["key", ...this.config.languages];
     const values = [headers];
 
     // 构建数据行
     const keys = new Set<string>();
-    Object.values(translations).forEach(langTranslations => {
-      Object.keys(langTranslations).forEach(key => keys.add(key));
+    Object.values(translations).forEach((langTranslations) => {
+      Object.keys(langTranslations).forEach((key) => keys.add(key));
     });
 
-    keys.forEach(key => {
+    keys.forEach((key) => {
       const row = [key];
-      this.config.languages.forEach(lang => {
-        row.push(translations[lang]?.[key] || '');
+      this.config.languages.forEach((lang) => {
+        row.push(translations[lang]?.[key] || "");
       });
       values.push(row);
     });
@@ -84,9 +90,11 @@ export class GoogleSheetsSync {
     // 更新 Google Sheets
     await this.googleSheets.spreadsheets.values.update({
       spreadsheetId: this.config.spreadsheetId,
-      range: `${this.config.sheetName}!A1:${String.fromCharCode(65 + headers.length)}${values.length}`,
-      valueInputOption: 'RAW',
+      range: `${this.config.sheetName}!A1:${String.fromCharCode(
+        65 + headers.length
+      )}${values.length}`,
+      valueInputOption: "RAW",
       resource: { values },
     });
   }
-} 
+}

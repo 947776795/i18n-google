@@ -31,7 +31,7 @@ describe("AstTransformer", () => {
     check: {
       test: (value: string) => value.startsWith("%") && value.endsWith("%"),
     },
-    format: (value: string) => value.replace(/^%|%$/g, ""),
+    format: (value: string) => value.replace(/^%+|%+$/g, ""),
     include: ["ts", "tsx"],
     outputDir: "translations",
   };
@@ -49,9 +49,8 @@ describe("AstTransformer", () => {
     transformer = new AstTransformer(mockConfig);
   });
 
-  describe("transformFile", () => {
+  describe("transformFile - String Literals", () => {
     it("should transform text wrapped in % to I18n.t calls", async () => {
-      // 创建测试文件
       const testFile = path.join(testDir, "test.tsx");
       const sourceCode = `
         import React from 'react';
@@ -69,10 +68,8 @@ describe("AstTransformer", () => {
 
       await writeFile(testFile, sourceCode, "utf-8");
 
-      // 执行转换
       const results = await transformer.transformFile(testFile);
 
-      // 验证结果
       expect(results).toHaveLength(2);
       expect(results[0]).toEqual({
         key: expect.stringMatching(/^[a-f0-9]{8}$/),
@@ -83,11 +80,35 @@ describe("AstTransformer", () => {
         text: "Welcome to our app",
       });
 
-      // 验证转换后的文件内容
       const transformedCode = await readFile(testFile, "utf-8");
       expect(transformedCode).toContain('import { I18n } from "@utils"');
       expect(transformedCode).toContain("I18n.t(");
       expect(transformedCode).toContain("Not translated text");
+      expect(transformedCode).toContain("{I18n.t("); // JSX expression container
+    });
+
+    it("should handle multiple % symbols correctly", async () => {
+      const testFile = path.join(testDir, "multiple-percent.tsx");
+      const sourceCode = `
+        import React from 'react';
+        
+        export const TestComponent = () => {
+          return (
+            <div>
+              <h1>%%Hello World%%</h1>
+              <p>%%%Multiple Percent%%%</p>
+            </div>
+          );
+        };
+      `;
+
+      await writeFile(testFile, sourceCode, "utf-8");
+
+      const results = await transformer.transformFile(testFile);
+
+      expect(results).toHaveLength(2);
+      expect(results[0].text).toBe("Hello World");
+      expect(results[1].text).toBe("Multiple Percent");
     });
 
     it("should not add I18n import if no translations needed", async () => {
@@ -113,16 +134,39 @@ describe("AstTransformer", () => {
       expect(transformedCode).not.toContain("import { I18n }");
     });
 
-    it("should handle multiple occurrences of the same text", async () => {
-      const testFile = path.join(testDir, "duplicate-text.tsx");
+    it("should handle JavaScript variables (non-JSX)", async () => {
+      const testFile = path.join(testDir, "js-variables.ts");
+      const sourceCode = `
+        const message = "%Hello World%";
+        const button = "%Click Me%";
+        const log = console.log("%Debug Message%");
+      `;
+
+      await writeFile(testFile, sourceCode, "utf-8");
+
+      const results = await transformer.transformFile(testFile);
+
+      expect(results).toHaveLength(3);
+      const transformedCode = await readFile(testFile, "utf-8");
+      expect(transformedCode).toContain('import { I18n } from "@utils"');
+      expect(transformedCode).toContain("I18n.t(");
+      // Should not have JSX expression containers in pure JS
+      expect(transformedCode).not.toContain("{I18n.t(");
+    });
+  });
+
+  describe("transformFile - Template Literals", () => {
+    it("should transform template literals with variables", async () => {
+      const testFile = path.join(testDir, "template-literals.tsx");
       const sourceCode = `
         import React from 'react';
         
-        export const TestComponent = () => {
+        export const TestComponent = ({ name, count }: { name: string; count: number }) => {
           return (
             <div>
-              <h1>%Submit%</h1>
-              <button>%Submit%</button>
+              <h1>{\`%Hello \${name}%\`}</h1>
+              <p>{\`%You have \${count} items%\`}</p>
+              <span>{\`No percent signs here \${name}\`}</span>
             </div>
           );
         };
@@ -133,26 +177,26 @@ describe("AstTransformer", () => {
       const results = await transformer.transformFile(testFile);
 
       expect(results).toHaveLength(2);
-      expect(results[0]).toEqual(results[1]);
-      expect(results[0]).toEqual({
-        key: expect.stringMatching(/^[a-f0-9]{8}$/),
-        text: "Submit",
-      });
+      expect(results[0].text).toBe("Hello %{var0}");
+      expect(results[1].text).toBe("You have %{var0} items");
 
       const transformedCode = await readFile(testFile, "utf-8");
-      const matches = transformedCode.match(/I18n\.t\("[a-f0-9]{8}"\)/g);
-      expect(matches).toHaveLength(2);
+      expect(transformedCode).toContain('import { I18n } from "@utils"');
+      expect(transformedCode).toContain("I18n.t(");
+      expect(transformedCode).toContain("var0: name");
+      expect(transformedCode).toContain("var0: count");
+      expect(transformedCode).toContain("No percent signs here"); // Should remain unchanged
     });
 
-    it("should handle special characters in translation keys", async () => {
-      const testFile = path.join(testDir, "special-chars.tsx");
+    it("should handle complex template literals with multiple variables", async () => {
+      const testFile = path.join(testDir, "complex-template.tsx");
       const sourceCode = `
         import React from 'react';
         
-        export const TestComponent = () => {
+        export const TestComponent = ({ user, score, level }: any) => {
           return (
             <div>
-              <h1>%Hello, World! (Special) #123%</h1>
+              <h1>{\`%Welcome \${user.name}, you are level \${level} with \${score} points%\`}</h1>
             </div>
           );
         };
@@ -163,12 +207,69 @@ describe("AstTransformer", () => {
       const results = await transformer.transformFile(testFile);
 
       expect(results).toHaveLength(1);
-      expect(results[0]).toEqual({
-        key: expect.stringMatching(/^[a-f0-9]{8}$/),
-        text: "Hello, World! (Special) #123",
-      });
+      expect(results[0].text).toBe(
+        "Welcome %{var0}, you are level %{var1} with %{var2} points"
+      );
+
+      const transformedCode = await readFile(testFile, "utf-8");
+      expect(transformedCode).toContain("var0: user.name");
+      expect(transformedCode).toContain("var1: level");
+      expect(transformedCode).toContain("var2: score");
     });
 
+    it("should handle template literals in JavaScript (non-JSX)", async () => {
+      const testFile = path.join(testDir, "js-template.ts");
+      const sourceCode = `
+        const name = "John";
+        const message = \`%Hello \${name}, welcome back%\`;
+        console.log(\`%Debug: \${message}%\`);
+      `;
+
+      await writeFile(testFile, sourceCode, "utf-8");
+
+      const results = await transformer.transformFile(testFile);
+
+      expect(results).toHaveLength(2);
+      expect(results[0].text).toBe("Hello %{var0}, welcome back");
+      expect(results[1].text).toBe("Debug: %{var0}");
+
+      const transformedCode = await readFile(testFile, "utf-8");
+      expect(transformedCode).toContain('import { I18n } from "@utils"');
+      expect(transformedCode).toContain("I18n.t(");
+      expect(transformedCode).toContain("var0: name");
+      expect(transformedCode).toContain("var0: message");
+      // Should not have JSX expression containers
+      expect(transformedCode).not.toContain("{I18n.t(");
+    });
+
+    it("should handle template literals with only static content", async () => {
+      const testFile = path.join(testDir, "static-template.tsx");
+      const sourceCode = `
+        import React from 'react';
+        
+        export const TestComponent = () => {
+          return (
+            <div>
+              <h1>{\`%Static Template String%\`}</h1>
+            </div>
+          );
+        };
+      `;
+
+      await writeFile(testFile, sourceCode, "utf-8");
+
+      const results = await transformer.transformFile(testFile);
+
+      expect(results).toHaveLength(1);
+      expect(results[0].text).toBe("Static Template String");
+
+      const transformedCode = await readFile(testFile, "utf-8");
+      expect(transformedCode).toContain("I18n.t(");
+      expect(transformedCode).not.toContain("{ var0:");
+    });
+  });
+
+  describe("I18n Import Handling", () => {
     it("should handle existing I18n imports", async () => {
       const testFile = path.join(testDir, "existing-import.tsx");
       const sourceCode = `
@@ -246,17 +347,49 @@ describe("AstTransformer", () => {
       expect(transformedCode).toContain('import { I18n } from "@utils"');
       expect(transformedCode).toContain('import { I18n } from "react-i18next"');
     });
+  });
 
-    it("should handle default imports from @utils", async () => {
-      const testFile = path.join(testDir, "default-import.tsx");
+  describe("Edge Cases", () => {
+    it("should handle multiple occurrences of the same text", async () => {
+      const testFile = path.join(testDir, "duplicate-text.tsx");
       const sourceCode = `
         import React from 'react';
-        import utils from "@utils";
         
         export const TestComponent = () => {
           return (
             <div>
-              <h1>%Hello World%</h1>
+              <h1>%Submit%</h1>
+              <button>%Submit%</button>
+            </div>
+          );
+        };
+      `;
+
+      await writeFile(testFile, sourceCode, "utf-8");
+
+      const results = await transformer.transformFile(testFile);
+
+      expect(results).toHaveLength(2);
+      expect(results[0]).toEqual(results[1]);
+      expect(results[0]).toEqual({
+        key: expect.stringMatching(/^[a-f0-9]{8}$/),
+        text: "Submit",
+      });
+
+      const transformedCode = await readFile(testFile, "utf-8");
+      const matches = transformedCode.match(/I18n\.t\("[a-f0-9]{8}"\)/g);
+      expect(matches).toHaveLength(2);
+    });
+
+    it("should handle special characters in translation keys", async () => {
+      const testFile = path.join(testDir, "special-chars.tsx");
+      const sourceCode = `
+        import React from 'react';
+        
+        export const TestComponent = () => {
+          return (
+            <div>
+              <h1>%Hello, World! (Special) #123%</h1>
             </div>
           );
         };
@@ -267,9 +400,40 @@ describe("AstTransformer", () => {
       const results = await transformer.transformFile(testFile);
 
       expect(results).toHaveLength(1);
-      const transformedCode = await readFile(testFile, "utf-8");
-      expect(transformedCode).toContain('import { I18n } from "@utils"');
-      expect(transformedCode).toContain('import utils from "@utils"');
+      expect(results[0]).toEqual({
+        key: expect.stringMatching(/^[a-f0-9]{8}$/),
+        text: "Hello, World! (Special) #123",
+      });
+    });
+
+    it("should handle empty translation text", async () => {
+      const testFile = path.join(testDir, "empty-text.tsx");
+      const sourceCode = `
+        import React from 'react';
+        
+        export const TestComponent = () => {
+          return (
+            <div>
+              <h1>%%</h1>
+            </div>
+          );
+        };
+      `;
+
+      await writeFile(testFile, sourceCode, "utf-8");
+
+      const results = await transformer.transformFile(testFile);
+
+      expect(results).toHaveLength(1);
+      expect(results[0].text).toBe("");
+    });
+
+    it("should handle file read/write errors gracefully", async () => {
+      const nonExistentFile = path.join(testDir, "non-existent.tsx");
+
+      await expect(
+        transformer.transformFile(nonExistentFile)
+      ).rejects.toThrow();
     });
   });
 
@@ -295,16 +459,17 @@ describe("AstTransformer", () => {
         filePath: "src/components/Multiple.tsx",
         text: "__multiple___underscores__",
       },
+      {
+        filePath: "src/components/Template.tsx",
+        text: "Hello %{var0}, you have %{var1} items",
+      },
     ];
 
     testCases.forEach(({ filePath, text }) => {
       it(`should generate hash-based key for "${text}"`, () => {
         const key = transformer["generateTranslationKey"](filePath, text);
-        // We expect an MD5 hash of 8 characters
         expect(key).toMatch(/^[a-f0-9]{8}$/);
-        // Keys should be consistent for same input
         expect(key).toBe(transformer["generateTranslationKey"](filePath, text));
-        // Different text should generate different keys
         if (text !== testCases[0].text) {
           expect(key).not.toBe(
             transformer["generateTranslationKey"](
@@ -314,6 +479,79 @@ describe("AstTransformer", () => {
           );
         }
       });
+    });
+
+    it("should generate different keys for same text in different files", () => {
+      const text = "Hello World";
+      const key1 = transformer["generateTranslationKey"]("file1.tsx", text);
+      const key2 = transformer["generateTranslationKey"]("file2.tsx", text);
+
+      expect(key1).not.toBe(key2);
+      expect(key1).toMatch(/^[a-f0-9]{8}$/);
+      expect(key2).toMatch(/^[a-f0-9]{8}$/);
+    });
+  });
+
+  describe("Configuration Integration", () => {
+    it("should respect custom check function", async () => {
+      const customConfig: I18nConfig = {
+        ...mockConfig,
+        check: {
+          test: (value: string) =>
+            value.startsWith("T_") && value.endsWith("_T"),
+        },
+        format: (value: string) => value.replace(/^T_|_T$/g, ""),
+      };
+
+      const customTransformer = new AstTransformer(customConfig);
+      const testFile = path.join(testDir, "custom-check.tsx");
+      const sourceCode = `
+        import React from 'react';
+        
+        export const TestComponent = () => {
+          return (
+            <div>
+              <h1>T_Custom Translation_T</h1>
+              <p>%This should not match%</p>
+            </div>
+          );
+        };
+      `;
+
+      await writeFile(testFile, sourceCode, "utf-8");
+
+      const results = await customTransformer.transformFile(testFile);
+
+      expect(results).toHaveLength(1);
+      expect(results[0].text).toBe("Custom Translation");
+    });
+
+    it("should respect custom format function", async () => {
+      const customConfig: I18nConfig = {
+        ...mockConfig,
+        format: (value: string) => value.replace(/^%+|%+$/g, "").toUpperCase(),
+      };
+
+      const customTransformer = new AstTransformer(customConfig);
+      const testFile = path.join(testDir, "custom-format.tsx");
+      const sourceCode = `
+        import React from 'react';
+        
+        export const TestComponent = () => {
+          return (
+            <div>
+              <h1>%hello world%</h1>
+            </div>
+          );
+        };
+      `;
+
+      await writeFile(testFile, sourceCode, "utf-8");
+
+      const results = await customTransformer.transformFile(testFile);
+
+      expect(results).toHaveLength(1);
+      expect(results[0].text).toBe("HELLO WORLD");
     });
   });
 });

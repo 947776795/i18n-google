@@ -2,3 +2,5 @@ node_modules
 coverage
 package-lock.json
 i18n.config.js
+serviceAccountKeyFile.json
+dist/*
