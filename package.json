@@ -1,0 +1,25 @@
+{
+  "name": "i18n-google",
+  "version": "1.0.0",
+  "description": "I18n scanning system with Google Sheets integration",
+  "main": "index.js",
+  "scripts": {
+    "scan": "ts-node scan.ts",
+    "test": "jest"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "googleapis": "^129.0.0",
+    "jscodeshift": "^0.15.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/jscodeshift": "^0.11.11",
+    "@types/node": "^20.11.24",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
