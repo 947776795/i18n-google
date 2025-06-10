@@ -14,7 +14,7 @@
 ## 工作原理
 
 1. **文件扫描**: 根据配置递归扫描指定目录下的文件
-2. **内容识别**: 使用自定义规则识别需要国际化的文案（如 `%文案内容%`）
+2. **内容识别**: 使用自定义规则识别需要国际化的文案（如 `~文案内容~`）
 3. **代码转换**: 使用 jscodeshift 将识别的文案替换为 `I18n.t(key)` 调用
 4. **导入注入**: 自动添加 I18n 相关的导入语句
 5. **翻译生成**: 为每种语言生成对应的 JSON 翻译文件
@@ -170,7 +170,7 @@ flowchart TD
     end
 
     subgraph "示例转换"
-        T["原始代码:<br/>'%欢迎使用%'"] --> U["生成 key:<br/>'welcome_message'"]
+        T["原始代码:<br/>'~欢迎使用~'"] --> U["生成 key:<br/>'welcome_message'"]
         U --> V["转换后:<br/>I18n.t('welcome_message')"]
         V --> W["翻译项:<br/>{key: 'welcome_message',<br/>value: '欢迎使用'}"]
     end
@@ -218,12 +218,20 @@ module.exports = {
 
   // 检查是否是未翻译的文案
   check: {
-    test: (value) => value.startsWith("%") && value.endsWith("%"),
+    test: (value) => {
+      const trimmedValue = value.trim();
+      // 处理开头与结尾都是~的字符串，长度大于1
+      return (
+        trimmedValue.startsWith("~") &&
+        trimmedValue.endsWith("~") &&
+        trimmedValue.length > 1
+      );
+    },
   },
 
-  // 格式化文案内容
+  // 格式化 value 去掉前后%
   format(value) {
-    return value.replace(/^%+|%+$/g, "");
+    return value.replace(/^~+|~+$/g, "").trim();
   },
 
   // 指定要包含的文件类型
@@ -268,11 +276,53 @@ await scanner.scan();
 
 ## 示例
 
+### 占位符使用说明
+
+本工具支持自定义占位符来标识需要国际化的文案。占位符的配置在 `i18n.config.js` 文件中：
+
+```javascript
+// 检查是否是未翻译的文案
+check: {
+  test: (value) => {
+    // 处理开头与结尾都是~的字符串，长度大于1
+    if (value.startsWith("~") && value.endsWith("~") && value.length > 1) {
+      return true;
+    }
+  },
+},
+
+// 格式化 value 去掉前后~
+format(value) {
+  return value.replace(/^~+|~+$/g, "");
+},
+```
+
+#### 使用示例
+
+在代码中使用 `~` 符号包围需要翻译的文案：
+
+```tsx
+function Welcome({ count }) {
+  return (
+    <div>
+      <h1>{`~欢迎使用我们的产品~`}</h1>
+      <p>{`~Count is ${count}~`}</p>
+    </div>
+  );
+}
+```
+
+**注意**：
+
+- 占位符必须在字符串的开头和结尾
+- 对于存在变量的处理必须使用 {`~Count is ${count}~`}
+- 占位符内容长度必须大于 1（不能是空的 `~~`）
+
 ### 转换前的代码
 
 ```tsx
 function Welcome() {
-  return <div>{"%欢迎使用我们的产品%"}</div>;
+  return <div>{`~欢迎使用我们的产品~`}</div>;
 }
 ```
 

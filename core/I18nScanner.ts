@@ -31,7 +31,7 @@ export class I18nScanner {
       // 2. 扫描文件
       console.log("2. 扫描文件...");
       const files = await this.fileScanner.scanFiles();
-      console.log(`发现 ${files.length} 个文件:`, files);
+      console.log(`发现 ${files.length} 个文件:`);
 
       // 3. 处理每个文件
       console.log("3. 处理每个文件...");

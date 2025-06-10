@@ -1,0 +1,27 @@
+# 开发相关文件
+*.ts
+!*.d.ts
+tsconfig.json
+jest.config.js
+
+# 测试和覆盖率
+coverage/
+**/*.test.js
+**/*.spec.js
+
+# 构建工具
+node_modules/
+
+# 示例和开发文件
+demo/
+i18n.config.js
+serviceAccountKeyFile.json
+
+# Git 和编辑器
+.git/
+.vscode/
+.idea/
+
+# 其他
+*.log
+.DS_Store 
