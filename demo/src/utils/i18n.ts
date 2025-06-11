@@ -1,128 +1,103 @@
-// import { EN, ZHCN, ZHTC } from '@constants/index'
-
-export const ZHTC = "zh-TC";
-export const EN = "en";
-export const ZHCN = "zh-CN";
-export const KO = "ko";
-export const ES = "es";
-export const TR = "tr";
-export const DE = "de";
-export const VI = "vi";
+import {
+  LOCALES,
+  type Locale,
+  type TranslationKey,
+  type TranslationDictionary,
+  type MessageOptions,
+  type LanguageOption,
+  type TranslationStore,
+  type I18nUtilType,
+} from "./i18n.types";
 
 import { en, zh, zhTC, ko, es, tr, de, vi } from "../translate";
 
-export type Locale =
-  | typeof EN
-  | typeof ZHCN
-  | typeof ZHTC
-  | typeof KO
-  | typeof ES
-  | typeof TR
-  | typeof DE
-  | typeof VI;
-export type TranslationKey = string;
-export type TranslationDictionary = Record<TranslationKey, string>;
+// 导出常量以保持向后兼容
+export const { ZHTC, EN, ZHCN, KO, ES, TR, DE, VI } = LOCALES;
 
-export const locales: Locale[] = [EN, ZHCN, ZHTC, KO, ES, TR, DE, VI];
+// 重新导出类型
+export type { Locale, TranslationKey, TranslationDictionary, MessageOptions };
 
-export const languageOptions = [
+export const locales: readonly Locale[] = Object.values(LOCALES);
+
+export const languageOptions: readonly LanguageOption[] = [
   // 繁体中文（台湾/香港）
-  { label: "中文（繁體）", value: ZHTC, key: "zh-TC" },
+  { label: "中文（繁體）", value: ZHTC },
   // 英语（国际）
-  { label: "English", value: EN, key: "en" },
+  { label: "English", value: EN },
   // 简体中文（中国大陆）
-  { label: "中文（简体）", value: ZHCN, key: "zh" },
+  { label: "中文（简体）", value: ZHCN },
   // 韩语
-  { label: "한국어", value: KO, key: "ko" },
+  { label: "한국어", value: KO },
   // 西班牙语
-  { label: "Español", value: ES, key: "es" },
+  { label: "Español", value: ES },
   // 土耳其语
-  { label: "Türkçe", value: TR, key: "tr" },
+  { label: "Türkçe", value: TR },
   // 德语
-  { label: "Deutsch", value: DE, key: "de" },
+  { label: "Deutsch", value: DE },
   // 越南语
-  { label: "Tiếng Việt", value: VI, key: "vi" },
-];
+  { label: "Tiếng Việt", value: VI },
+] as const;
 
-interface TranslationStore {
-  en: TranslationDictionary;
-  zh: TranslationDictionary;
-  "zh-TC": TranslationDictionary;
-  ko: TranslationDictionary;
-  es: TranslationDictionary;
-  tr: TranslationDictionary;
-  de: TranslationDictionary;
-  vi: TranslationDictionary;
-}
-
+// 直接使用 Locale 值作为键的翻译存储
 const I18nTranslations: TranslationStore = {
-  en,
-  zh,
-  "zh-TC": zhTC,
-  ko,
-  es,
-  tr,
-  de,
-  vi,
+  [EN]: en,
+  [ZHCN]: zh,
+  [ZHTC]: zhTC,
+  [KO]: ko,
+  [ES]: es,
+  [TR]: tr,
+  [DE]: de,
+  [VI]: vi,
 };
 
-interface MessageOptions {
-  [key: string]: string | number;
-}
+// 缓存正则表达式以提高性能
+const INTERPOLATION_REGEX = /(%\{([^}]+)\})/g;
 
 const handleMsg = (msg: string, options?: MessageOptions): string => {
-  if (!msg) {
+  if (!msg || !options) {
     return msg;
   }
-  if (!options) {
-    return msg;
-  }
-  const reg = /(%\{([^}]+)\})/g;
-  const groups = Array.from(msg.matchAll(reg));
-  if (!groups.length) {
-    return msg;
-  }
-  let newMessage = msg;
-  groups.forEach((match) => {
-    const [group, , key] = match;
-    if (key && typeof key === "string") {
-      newMessage = newMessage.replace(group, String(options[key.trim()] || ""));
-    }
-  });
-  return newMessage;
-};
 
-interface I18nUtilType {
-  t: (msg: TranslationKey, options?: MessageOptions) => string;
-  locale: Locale;
-  updateLocale: (newLocale: Locale) => void;
-}
+  // 重置正则表达式的 lastIndex
+  INTERPOLATION_REGEX.lastIndex = 0;
+
+  return msg.replace(INTERPOLATION_REGEX, (match, _, key) => {
+    if (key && typeof key === "string") {
+      const value = options[key.trim()];
+      return value !== undefined ? String(value) : match;
+    }
+    return match;
+  });
+};
 
 const I18nUtil: I18nUtilType = {
   t: function (msg: TranslationKey, options?: MessageOptions): string {
-    switch (I18nUtil.locale) {
-      case ZHCN:
-        return handleMsg(I18nTranslations.zh?.[msg] ?? msg, options);
-      case ZHTC:
-        return handleMsg(I18nTranslations["zh-TC"]?.[msg] ?? msg, options);
-      case KO:
-        return handleMsg(I18nTranslations.ko?.[msg] ?? msg, options);
-      case ES:
-        return handleMsg(I18nTranslations.es?.[msg] ?? msg, options);
-      case TR:
-        return handleMsg(I18nTranslations.tr?.[msg] ?? msg, options);
-      case DE:
-        return handleMsg(I18nTranslations.de?.[msg] ?? msg, options);
-      case VI:
-        return handleMsg(I18nTranslations.vi?.[msg] ?? msg, options);
-      case EN:
-      default:
-        return handleMsg(I18nTranslations.en?.[msg] ?? msg, options);
+    try {
+      const translation = I18nTranslations[I18nUtil.locale]?.[msg];
+
+      // 如果当前语言没有翻译，回退到英文
+      const finalMessage = translation ?? I18nTranslations[EN]?.[msg] ?? msg;
+
+      return handleMsg(finalMessage, options);
+    } catch (error) {
+      console.warn(`Translation error for key "${msg}":`, error);
+      return msg;
     }
   },
+
   locale: EN,
+
   updateLocale: (newLocale: Locale): void => {
-    I18nUtil.locale = newLocale;
+    if (I18nUtil.isValidLocale(newLocale)) {
+      I18nUtil.locale = newLocale;
+    } else {
+      console.warn(`Invalid locale: ${newLocale}. Falling back to ${EN}`);
+      I18nUtil.locale = EN;
+    }
+  },
+
+  isValidLocale: (locale: string): locale is Locale => {
+    return locales.includes(locale as Locale);
   },
 };
 
