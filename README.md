@@ -1,202 +1,19 @@
-# I18n Google
+# i18n-google
 
-一个自动化的国际化(i18n)扫描系统，集成 Google Sheets 翻译管理功能。
+国际化代码转换工具，自动将代码中的文本转换为国际化函数调用。
 
 ## 功能特性
 
-- 🔍 **自动扫描**: 递归扫描项目文件，自动识别需要国际化的文案
-- 🔄 **代码转换**: 使用 jscodeshift 自动替换文案为 i18n 调用
-- 📊 **Google Sheets 集成**: 与 Google Sheets 双向同步翻译内容
-- 🌐 **多语言支持**: 支持多种语言的翻译文件生成
-- ⚙️ **灵活配置**: 可自定义扫描规则、文件类型和输出目录
-- 🚀 **TypeScript 支持**: 完全使用 TypeScript 编写，提供类型安全
+- 🚀 **自动代码转换**：自动将代码中的文本替换为 `I18n.t()` 调用
+- 📝 **多种文本支持**：支持字符串字面量、模板字符串和 JSX 文本节点
+- 🎯 **智能上下文处理**：智能处理 JSX 和普通 JavaScript 上下文
+- 🔧 **灵活标记配置**：支持自定义开始和结尾标记符号
+- 📊 **Google Sheets 集成**：与 Google Sheets 双向同步翻译内容
+- 🔍 **自动生成唯一键**：基于文件路径和文本内容生成 MD5 哈希键
+- 🌐 **多语言支持**：支持多种语言的翻译文件生成
+- ⚙️ **TypeScript 支持**：完全使用 TypeScript 编写，提供类型安全
 
-## 工作原理
-
-1. **文件扫描**: 根据配置递归扫描指定目录下的文件
-2. **内容识别**: 使用自定义规则识别需要国际化的文案（如 `~文案内容~`）
-3. **代码转换**: 使用 jscodeshift 将识别的文案替换为 `I18n.t(key)` 调用
-4. **导入注入**: 自动添加 I18n 相关的导入语句
-5. **翻译生成**: 为每种语言生成对应的 JSON 翻译文件
-6. **远程同步**: 与 Google Sheets 双向同步翻译内容
-
-### 执行流程图
-
-```mermaid
-flowchart TD
-    A["开始执行 i18n-google"] --> B["加载 i18n.config.js 配置文件"]
-    B --> C["创建 I18nScanner 实例"]
-    C --> D["初始化各个组件模块"]
-
-    D --> E["1. 初始化翻译管理器<br/>(TranslationManager)"]
-    E --> F["创建输出目录<br/>检查语言配置"]
-
-    F --> G["2. 扫描文件<br/>(FileScanner)"]
-    G --> H["递归扫描 rootDir 目录"]
-    H --> I["应用 ignore 规则过滤"]
-    I --> J["按 include 文件类型筛选"]
-    J --> K["返回待处理文件列表"]
-
-    K --> L["3. 处理每个文件<br/>(AstTransformer)"]
-    L --> M["解析文件为 AST"]
-    M --> N["查找匹配 check.test 的文案"]
-    N --> O{"发现需要翻译的文案?"}
-
-    O -->|是| P["使用 format 函数处理文案"]
-    P --> Q["生成唯一的翻译 key"]
-    Q --> R["替换文案为 I18n.t(key)"]
-    R --> S["检查并添加 I18n 导入"]
-    S --> T["保存修改后的文件"]
-    T --> U["收集翻译项到内存"]
-
-    O -->|否| V["跳过当前文件"]
-    V --> W["处理下一个文件"]
-    U --> W
-
-    W --> X{"所有文件处理完成?"}
-    X -->|否| L
-    X -->|是| Y["4. 从 Google Sheets 同步翻译<br/>(GoogleSheetsSync)"]
-
-    Y --> Z["使用服务账号认证"]
-    Z --> AA["连接到指定的 spreadsheetId"]
-    AA --> BB["读取 sheetName 中的翻译数据"]
-    BB --> CC["解析远程翻译内容"]
-    CC --> DD["更新本地翻译数据"]
-
-    DD --> EE["5. 保存翻译文件<br/>(TranslationManager)"]
-    EE --> FF["为每种语言创建 JSON 文件"]
-    FF --> GG["写入到 outputDir 目录"]
-
-    GG --> HH["6. 同步到 Google Sheets<br/>(GoogleSheetsSync)"]
-    HH --> II["准备本地翻译数据"]
-    II --> JJ["批量更新 Google Sheets"]
-    JJ --> KK["处理新增和修改的翻译"]
-
-    KK --> LL["扫描流程完成"]
-
-    style A fill:#e1f5fe
-    style LL fill:#c8e6c9
-    style O fill:#fff3e0
-    style X fill:#fff3e0
-```
-
-### 模块架构图
-
-```mermaid
-flowchart LR
-    subgraph "I18nScanner 主控制器"
-        Scanner["I18nScanner<br/>主扫描器"]
-    end
-
-    subgraph "文件处理模块"
-        FileScanner["FileScanner<br/>文件扫描器"]
-        AstTransformer["AstTransformer<br/>AST 转换器"]
-    end
-
-    subgraph "翻译管理模块"
-        TranslationManager["TranslationManager<br/>翻译管理器"]
-        GoogleSheetsSync["GoogleSheetsSync<br/>Google Sheets 同步"]
-    end
-
-    subgraph "配置和类型"
-        Config["i18n.config.js<br/>配置文件"]
-        Types["types.ts<br/>类型定义"]
-    end
-
-    subgraph "外部服务"
-        GoogleSheets["Google Sheets<br/>远程翻译表格"]
-        LocalFiles["本地源代码文件<br/>(js/jsx/ts/tsx)"]
-        TranslationFiles["翻译文件<br/>(JSON)"]
-    end
-
-    Config --> Scanner
-    Types --> Scanner
-
-    Scanner --> FileScanner
-    Scanner --> AstTransformer
-    Scanner --> TranslationManager
-    Scanner --> GoogleSheetsSync
-
-    FileScanner --> LocalFiles
-    LocalFiles --> AstTransformer
-    AstTransformer --> LocalFiles
-    AstTransformer --> TranslationManager
-
-    TranslationManager --> TranslationFiles
-    GoogleSheetsSync --> GoogleSheets
-    GoogleSheets --> TranslationManager
-    TranslationManager --> GoogleSheetsSync
-
-    style Scanner fill:#2196f3,color:#fff
-    style Config fill:#ff9800,color:#fff
-    style GoogleSheets fill:#4caf50,color:#fff
-    style LocalFiles fill:#9c27b0,color:#fff
-    style TranslationFiles fill:#f44336,color:#fff
-```
-
-### 代码转换详细流程
-
-```mermaid
-flowchart TD
-    subgraph "AstTransformer 代码转换详细流程"
-        A["读取源代码文件"] --> B["使用 jscodeshift 解析为 AST"]
-        B --> C["遍历 AST 节点"]
-        C --> D{"是否为字符串字面量?"}
-
-        D -->|是| E["应用 check.test 检查"]
-        E --> F{"匹配翻译规则?"}
-
-        F -->|是| G["使用 format 函数清理文案"]
-        G --> H["生成翻译 key<br/>(MD5 或其他算法)"]
-        H --> I["替换为 I18n.t(key) 调用"]
-        I --> J["检查文件顶部导入"]
-        J --> K{"已存在 I18n 导入?"}
-
-        K -->|否| L["添加 import { I18n } from '@utils'"]
-        K -->|是| M["跳过导入添加"]
-        L --> M
-
-        M --> N["继续遍历下一个节点"]
-
-        F -->|否| O["保持原样，继续下一个节点"]
-        D -->|否| O
-        O --> N
-
-        N --> P{"所有节点遍历完成?"}
-        P -->|否| C
-        P -->|是| Q["生成修改后的代码"]
-        Q --> R["写回文件"]
-        R --> S["返回收集的翻译项"]
-    end
-
-    subgraph "示例转换"
-        T["原始代码:<br/>'~欢迎使用~'"] --> U["生成 key:<br/>'welcome_message'"]
-        U --> V["转换后:<br/>I18n.t('welcome_message')"]
-        V --> W["翻译项:<br/>{key: 'welcome_message',<br/>value: '欢迎使用'}"]
-    end
-
-    style A fill:#e3f2fd
-    style S fill:#c8e6c9
-    style F fill:#fff3e0
-    style K fill:#fff3e0
-    style P fill:#fff3e0
-```
-
-## 安装
-
-### 全局安装
-
-```bash
-npm install -g i18n-google
-```
-
-### 项目安装
-
-```bash
-npm install i18n-google
-```
-
-## 配置
+## 配置说明
 
 在项目根目录创建 `i18n.config.js` 配置文件：
 
@@ -216,23 +33,9 @@ module.exports = {
   sheetName: "translations",
   keyFile: "./serviceAccountKeyFile.json",
 
-  // 检查是否是未翻译的文案
-  check: {
-    test: (value) => {
-      const trimmedValue = value.trim();
-      // 处理开头与结尾都是~的字符串，长度大于1
-      return (
-        trimmedValue.startsWith("~") &&
-        trimmedValue.endsWith("~") &&
-        trimmedValue.length > 1
-      );
-    },
-  },
-
-  // 格式化 value 去掉前后%
-  format(value) {
-    return value.replace(/^~+|~+$/g, "").trim();
-  },
+  // 标记符号配置
+  startMarker: "~", // 开始标记
+  endMarker: "~", // 结尾标记
 
   // 指定要包含的文件类型
   include: ["js", "jsx", "ts", "tsx"],
@@ -241,6 +44,197 @@ module.exports = {
   outputDir: "./src/translate",
 };
 ```
+
+### 配置选项说明
+
+| 选项            | 类型     | 说明                        |
+| --------------- | -------- | --------------------------- |
+| `rootDir`       | string   | 要扫描的根目录              |
+| `languages`     | string[] | 支持的语言列表              |
+| `ignore`        | string[] | 要忽略的文件/目录匹配模式   |
+| `include`       | string[] | 要包含的文件扩展名          |
+| `outputDir`     | string   | 翻译文件输出目录            |
+| `spreadsheetId` | string   | Google Sheets ID            |
+| `sheetName`     | string   | Sheet 名称                  |
+| `keyFile`       | string   | Google 服务账号密钥文件路径 |
+| `startMarker`   | string   | 开始标记符号                |
+| `endMarker`     | string   | 结尾标记符号                |
+
+## 处理模式
+
+本工具支持两种文本处理模式：
+
+### 1. 标记符号模式
+
+适用于字符串字面量和模板字符串，需要用标记符号包围文本：
+
+#### 标记符号示例
+
+**使用波浪线标记（默认）**
+
+```javascript
+// 配置
+startMarker: "~";
+endMarker: "~";
+
+// 代码中的用法
+const message = "~Hello World~";
+const template = `~Hello ${user.name}!~`;
+```
+
+**使用自定义标记**
+
+```javascript
+// 配置
+startMarker: "T_";
+endMarker: "_T";
+
+// 代码中的用法
+const message = "T_Hello World_T";
+const template = `T_Hello ${user.name}!_T`;
+```
+
+**使用双括号标记**
+
+```javascript
+// 配置
+startMarker: "[[";
+endMarker: "]]";
+
+// 代码中的用法
+const message = "[[Hello World]]";
+const template = `[[Hello ${user.name}!]]`;
+```
+
+### 2. JSX 纯文本模式
+
+自动处理 JSX 元素中的纯文本节点，无需标记符号：
+
+```jsx
+// 自动处理的 JSX 文本
+<div>
+  Hello World {/* 会被自动转换 */}
+  <p>Welcome to our app</p> {/* 会被自动转换 */}
+  <span>{"~Marked text~"}</span> {/* 标记模式处理 */}
+</div>
+```
+
+## 转换示例
+
+### 转换前
+
+```javascript
+const message = "~Hello World~";
+const template = `~Hello ${user.name}!~`;
+const greeting = "Normal text"; // 不会被转换（没有标记符号）
+
+function Component() {
+  return (
+    <div>
+      Pure JSX Text {/* 会被转换（JSX纯文本） */}
+      <p title="~Attribute~">Welcome</p> {/* title属性和文本都会被转换 */}
+    </div>
+  );
+}
+```
+
+### 转换后
+
+```javascript
+import { I18n } from "@utils";
+
+const message = I18n.t("a1b2c3d4");
+const template = I18n.t("e5f6g7h8", { var0: user.name });
+const greeting = "Normal text";
+
+function Component() {
+  return (
+    <div>
+      {I18n.t("f9g0h1i2")}
+      <p title={I18n.t("j3k4l5m6")}>{I18n.t("n7o8p9q0")}</p>
+    </div>
+  );
+}
+```
+
+## 核心处理逻辑
+
+1. **字符串检测**：
+
+   - 标记模式：检测以 `startMarker` 开头和 `endMarker` 结尾的字符串
+   - JSX 模式：自动检测 JSX 元素中的纯文本节点
+
+2. **格式化处理**：自动去除开始和结尾的标记符号
+
+3. **翻译键生成**：基于文件路径和文本内容生成 MD5 哈希键
+
+4. **智能替换**：
+   - 在 JSX 中包装为 `{I18n.t(key)}`
+   - 在普通 JS 中直接替换为 `I18n.t(key)`
+   - 模板字符串转换为带参数的调用
+
+## 模板字符串处理
+
+对于包含变量的模板字符串：
+
+```javascript
+// 原始代码
+`~Hello ${name}, you have ${count} items~`;
+
+// 转换为
+I18n.t("hash123", { var0: name, var1: count });
+
+// 翻译文本存储为
+("Hello %{var0}, you have %{var1} items");
+```
+
+## 工作原理
+
+### 处理流程图
+
+```mermaid
+flowchart LR
+    A["🚀 开始扫描"] --> B["⚙️ 加载配置"]
+    B --> C["📁 扫描文件"]
+    C --> D["🔍 解析 AST"]
+
+    D --> E["📝 识别文本节点"]
+
+    subgraph "处理模式"
+        E --> F1["🏷️ 标记字符串<br/>~text~"]
+        E --> F2["📄 JSX纯文本<br/>&lt;div&gt;text&lt;/div&gt;"]
+        E --> F3["🔗 模板字符串<br/>`~Hello ${name}~`"]
+    end
+
+    F1 --> G["🔑 生成键值"]
+    F2 --> G
+    F3 --> G
+
+    G --> H["🔄 替换调用<br/>I18n.t()"]
+    H --> I["📦 添加导入"]
+    I --> J["💾 保存文件"]
+
+    J --> K["📋 生成翻译"]
+    K --> L["☁️ 同步远程"]
+    L --> M["✅ 完成"]
+
+    style A fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style M fill:#c8e6c9,stroke:#388e3c,stroke-width:2px
+    style F1 fill:#fff9c4,stroke:#f57c00,stroke-width:2px
+    style F2 fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style F3 fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    style G fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    style H fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+```
+
+### 详细步骤
+
+1. **文件扫描**: 根据配置递归扫描指定目录下的文件
+2. **内容识别**: 使用标记符号或 JSX 文本节点检测需要国际化的文案
+3. **代码转换**: 使用 jscodeshift 将识别的文案替换为 `I18n.t(key)` 调用
+4. **导入注入**: 自动添加 I18n 相关的导入语句
+5. **翻译生成**: 为每种语言生成对应的 JSON 翻译文件
+6. **远程同步**: 与 Google Sheets 双向同步翻译内容
 
 ### Google Sheets 配置
 
@@ -274,75 +268,15 @@ const scanner = new I18nScanner(config);
 await scanner.scan();
 ```
 
-## 示例
-
-### 占位符使用说明
-
-本工具支持自定义占位符来标识需要国际化的文案。占位符的配置在 `i18n.config.js` 文件中：
-
-```javascript
-// 检查是否是未翻译的文案
-check: {
-  test: (value) => {
-    // 处理开头与结尾都是~的字符串，长度大于1
-    if (value.startsWith("~") && value.endsWith("~") && value.length > 1) {
-      return true;
-    }
-  },
-},
-
-// 格式化 value 去掉前后~
-format(value) {
-  return value.replace(/^~+|~+$/g, "");
-},
-```
-
-#### 使用示例
-
-在代码中使用 `~` 符号包围需要翻译的文案：
-
-```tsx
-function Welcome({ count }) {
-  return (
-    <div>
-      <h1>{`~欢迎使用我们的产品~`}</h1>
-      <p>{`~Count is ${count}~`}</p>
-    </div>
-  );
-}
-```
-
-**注意**：
-
-- 占位符必须在字符串的开头和结尾
-- 对于存在变量的处理必须使用 {`~Count is ${count}~`}
-- 占位符内容长度必须大于 1（不能是空的 `~~`）
-
-### 转换前的代码
-
-```tsx
-function Welcome() {
-  return <div>{`~欢迎使用我们的产品~`}</div>;
-}
-```
-
-### 转换后的代码
-
-```tsx
-import { I18n } from "@utils";
-
-function Welcome() {
-  return <div>{I18n.t("welcome_message")}</div>;
-}
-```
-
-### 生成的翻译文件
+## 生成的翻译文件
 
 `src/translate/zh-CN.json`:
 
 ```json
 {
-  "welcome_message": "欢迎使用我们的产品"
+  "a1b2c3d4": "Hello World",
+  "e5f6g7h8": "Hello %{var0}!",
+  "f9g0h1i2": "Pure JSX Text"
 }
 ```
 
@@ -350,24 +284,25 @@ function Welcome() {
 
 ```json
 {
-  "welcome_message": "Welcome to our product"
+  "a1b2c3d4": "Hello World",
+  "e5f6g7h8": "Hello %{var0}!",
+  "f9g0h1i2": "Pure JSX Text"
 }
 ```
 
-## 配置选项说明
+## 安装
 
-| 选项            | 类型     | 说明                        |
-| --------------- | -------- | --------------------------- |
-| `rootDir`       | string   | 要扫描的根目录              |
-| `languages`     | string[] | 支持的语言列表              |
-| `ignore`        | string[] | 要忽略的文件/目录匹配模式   |
-| `include`       | string[] | 要包含的文件扩展名          |
-| `outputDir`     | string   | 翻译文件输出目录            |
-| `spreadsheetId` | string   | Google Sheets ID            |
-| `sheetName`     | string   | Sheet 名称                  |
-| `keyFile`       | string   | Google 服务账号密钥文件路径 |
-| `check.test`    | function | 检测文案的函数              |
-| `format`        | function | 格式化文案的函数            |
+### 全局安装
+
+```bash
+npm install -g i18n-google
+```
+
+### 项目安装
+
+```bash
+npm install i18n-google
+```
 
 ## 开发
 
@@ -411,6 +346,14 @@ i18n-google/
 ├── types.ts               # 类型定义
 └── package.json
 ```
+
+## 优势
+
+- **灵活性**：支持任意自定义标记符号
+- **智能化**：自动处理 JSX 纯文本节点
+- **向后兼容**：现有项目可以选择适合的标记符号
+- **可读性**：标记符号在代码中清晰可见
+- **自动化**：一键完成整个国际化流程
 
 ## 许可证
 

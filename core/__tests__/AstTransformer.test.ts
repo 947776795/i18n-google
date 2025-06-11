@@ -28,10 +28,8 @@ describe("AstTransformer", () => {
     spreadsheetId: "test-sheet-id",
     sheetName: "Translations",
     keyFile: "test-key.json",
-    check: {
-      test: (value: string) => value.startsWith("%") && value.endsWith("%"),
-    },
-    format: (value: string) => value.replace(/^%+|%+$/g, ""),
+    startMarker: "%",
+    endMarker: "%",
     include: ["ts", "tsx"],
     outputDir: "translations",
   };
@@ -493,18 +491,15 @@ describe("AstTransformer", () => {
   });
 
   describe("Configuration Integration", () => {
-    it("should respect custom check function", async () => {
+    it("should respect custom markers", async () => {
       const customConfig: I18nConfig = {
         ...mockConfig,
-        check: {
-          test: (value: string) =>
-            value.startsWith("T_") && value.endsWith("_T"),
-        },
-        format: (value: string) => value.replace(/^T_|_T$/g, ""),
+        startMarker: "T_",
+        endMarker: "_T",
       };
 
       const customTransformer = new AstTransformer(customConfig);
-      const testFile = path.join(testDir, "custom-check.tsx");
+      const testFile = path.join(testDir, "custom-markers.tsx");
       const sourceCode = `
         import React from 'react';
         
@@ -526,21 +521,23 @@ describe("AstTransformer", () => {
       expect(results[0].text).toBe("Custom Translation");
     });
 
-    it("should respect custom format function", async () => {
+    it("should handle different start and end markers", async () => {
       const customConfig: I18nConfig = {
         ...mockConfig,
-        format: (value: string) => value.replace(/^%+|%+$/g, "").toUpperCase(),
+        startMarker: "[[",
+        endMarker: "]]",
       };
 
       const customTransformer = new AstTransformer(customConfig);
-      const testFile = path.join(testDir, "custom-format.tsx");
+      const testFile = path.join(testDir, "different-markers.tsx");
       const sourceCode = `
         import React from 'react';
         
         export const TestComponent = () => {
           return (
             <div>
-              <h1>%hello world%</h1>
+              <h1>[[hello world]]</h1>
+              <p>%This should not match%</p>
             </div>
           );
         };
@@ -551,7 +548,173 @@ describe("AstTransformer", () => {
       const results = await customTransformer.transformFile(testFile);
 
       expect(results).toHaveLength(1);
-      expect(results[0].text).toBe("HELLO WORLD");
+      expect(results[0].text).toBe("hello world");
+    });
+  });
+
+  describe("transformFile - JSX Text Nodes", () => {
+    it("should transform JSX text nodes that are pure text", async () => {
+      const testFile = path.join(testDir, "jsx-text.tsx");
+      const sourceCode = `
+        import React from 'react';
+        
+        export const TestComponent = () => {
+          return (
+            <div>
+              Hello World
+              <p>Welcome to our app</p>
+              <span>Normal text</span>
+              <h1>Title</h1>
+            </div>
+          );
+        };
+      `;
+
+      await writeFile(testFile, sourceCode, "utf-8");
+
+      const results = await transformer.transformFile(testFile);
+
+      expect(results).toHaveLength(4);
+      expect(results[0]).toEqual({
+        key: expect.stringMatching(/^[a-f0-9]{8}$/),
+        text: "Hello World",
+      });
+      expect(results[1]).toEqual({
+        key: expect.stringMatching(/^[a-f0-9]{8}$/),
+        text: "Welcome to our app",
+      });
+      expect(results[2]).toEqual({
+        key: expect.stringMatching(/^[a-f0-9]{8}$/),
+        text: "Normal text",
+      });
+      expect(results[3]).toEqual({
+        key: expect.stringMatching(/^[a-f0-9]{8}$/),
+        text: "Title",
+      });
+
+      const transformedCode = await readFile(testFile, "utf-8");
+      expect(transformedCode).toContain('import { I18n } from "@utils"');
+      expect(transformedCode).toContain("{I18n.t(");
+      expect(transformedCode).not.toContain("Hello World");
+      expect(transformedCode).not.toContain("Welcome to our app");
+    });
+
+    it("should handle both marked strings and pure JSX text", async () => {
+      const testFile = path.join(testDir, "jsx-mixed-types.tsx");
+      const sourceCode = `
+        import React from 'react';
+        
+        export const TestComponent = () => {
+          const markedString = "%Marked String%";
+          return (
+            <div>
+              Pure JSX Text
+              <p title="%Marked Attribute%">Another Pure Text</p>
+              <span>{"%Marked in Expression%"}</span>
+              <h1>{\`%Marked Template \${name}%\`}</h1>
+            </div>
+          );
+        };
+      `;
+
+      await writeFile(testFile, sourceCode, "utf-8");
+
+      const results = await transformer.transformFile(testFile);
+
+      expect(results).toHaveLength(6);
+
+      // 验证包含了所有类型的翻译
+      const texts = results.map((r) => r.text).sort();
+      expect(texts).toEqual([
+        "Another Pure Text",
+        "Marked Attribute",
+        "Marked String",
+        "Marked Template %{var0}",
+        "Marked in Expression",
+        "Pure JSX Text",
+      ]);
+    });
+
+    it("should handle JSX text with whitespace correctly", async () => {
+      const testFile = path.join(testDir, "jsx-whitespace.tsx");
+      const sourceCode = `
+        import React from 'react';
+        
+        export const TestComponent = () => {
+          return (
+            <div>
+              
+              Hello World
+              
+              <p>  Welcome  </p>
+            </div>
+          );
+        };
+      `;
+
+      await writeFile(testFile, sourceCode, "utf-8");
+
+      const results = await transformer.transformFile(testFile);
+
+      expect(results).toHaveLength(2);
+      expect(results[0].text).toBe("Hello World");
+      expect(results[1].text).toBe("Welcome");
+    });
+
+    it("should skip empty or whitespace-only JSX text", async () => {
+      const testFile = path.join(testDir, "jsx-empty.tsx");
+      const sourceCode = `
+        import React from 'react';
+        
+        export const TestComponent = () => {
+          return (
+            <div>
+              
+              <p>Valid text</p>
+              
+            </div>
+          );
+        };
+      `;
+
+      await writeFile(testFile, sourceCode, "utf-8");
+
+      const results = await transformer.transformFile(testFile);
+
+      expect(results).toHaveLength(1);
+      expect(results[0].text).toBe("Valid text");
+    });
+
+    it("should handle mixed JSX text and string literals", async () => {
+      const testFile = path.join(testDir, "jsx-mixed.tsx");
+      const sourceCode = `
+        import React from 'react';
+        
+        export const TestComponent = () => {
+          const message = "%JavaScript string%";
+          return (
+            <div>
+              JSX text node
+              <p title="%Attribute value%">Another JSX text</p>
+            </div>
+          );
+        };
+      `;
+
+      await writeFile(testFile, sourceCode, "utf-8");
+
+      const results = await transformer.transformFile(testFile);
+
+      expect(results).toHaveLength(4);
+
+      // 验证包含了所有类型的翻译
+      const texts = results.map((r) => r.text).sort();
+      expect(texts).toEqual([
+        "Another JSX text",
+        "Attribute value",
+        "JSX text node",
+        "JavaScript string",
+      ]);
     });
   });
 });

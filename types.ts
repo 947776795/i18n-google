@@ -5,10 +5,8 @@ export interface I18nConfig {
   spreadsheetId: string;
   sheetName: string;
   keyFile: string;
-  check: {
-    test: (value: string) => boolean;
-  };
-  format: (value: string) => string;
+  startMarker: string; // 开始标记符号
+  endMarker: string; // 结尾标记符号
   include: string[];
   outputDir: string;
-} 
+}

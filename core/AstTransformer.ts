@@ -22,6 +22,35 @@ export class AstTransformer {
   constructor(private config: I18nConfig) {}
 
   /**
+   * 内部检查方法：判断字符串是否需要翻译
+   */
+  private isTranslatableString(value: string): boolean {
+    const { startMarker, endMarker } = this.config;
+    return (
+      value.startsWith(startMarker) &&
+      value.endsWith(endMarker) &&
+      value.length >= startMarker.length + endMarker.length
+    );
+  }
+
+  /**
+   * 内部格式化方法：去掉开始和结尾的标记符号
+   */
+  private formatString(value: string): string {
+    const { startMarker, endMarker } = this.config;
+    const startRegex = new RegExp(`^${this.escapeRegex(startMarker)}+`);
+    const endRegex = new RegExp(`${this.escapeRegex(endMarker)}+$`);
+    return value.replace(startRegex, "").replace(endRegex, "");
+  }
+
+  /**
+   * 转义正则表达式特殊字符
+   */
+  private escapeRegex(str: string): string {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  /**
    * 处理单个文件的转换
    */
   public async transformFile(filePath: string): Promise<TransformResult[]> {
@@ -31,11 +60,11 @@ export class AstTransformer {
       const root = j(source);
       const results: TransformResult[] = [];
 
-      // 查找需要翻译的字符串字面量
+      // 查找需要翻译的字符串字面量（带标记符号）
       root.find(j.Literal).forEach((path: any) => {
         const value = path.node.value;
-        if (typeof value === "string" && this.config.check.test(value)) {
-          const text = this.config.format(value);
+        if (typeof value === "string" && this.isTranslatableString(value)) {
+          const text = this.formatString(value);
           const key = this.generateTranslationKey(filePath, text);
           results.push({ key, text });
 
@@ -50,12 +79,21 @@ export class AstTransformer {
         }
       });
 
-      // 查找需要翻译的模板字符串
+      // 查找需要翻译的模板字符串（带标记符号）
       root.find("TemplateLiteral").forEach((path: any) => {
         const templateResult = this.handleTemplateLiteral(path, filePath, j);
         if (templateResult) {
           results.push(templateResult.translationResult);
           this.replaceWithI18nCall(path, templateResult.callExpr, j);
+        }
+      });
+
+      // 查找需要翻译的JSX文本节点（纯文本）
+      root.find("JSXText").forEach((path: any) => {
+        const textResult = this.handleJSXText(path, filePath, j);
+        if (textResult) {
+          results.push(textResult.translationResult);
+          this.replaceJSXTextWithI18nCall(path, textResult.callExpr, j);
         }
       });
 
@@ -109,7 +147,53 @@ export class AstTransformer {
   }
 
   /**
-   * 处理模板字符串
+   * 处理JSX文本节点（纯文本，不需要标记符号）
+   */
+  private handleJSXText(
+    path: any,
+    filePath: string,
+    j: API
+  ): TemplateProcessResult | null {
+    const node = path.node;
+    const textValue = node.value;
+
+    // 去除前后空白字符，但保留内部空格
+    const trimmedText = textValue.trim();
+
+    // 如果是空字符串或只有空白字符，跳过
+    if (!trimmedText) {
+      return null;
+    }
+
+    // JSX文本节点直接处理，不需要检查标记符号
+    const key = this.generateTranslationKey(filePath, trimmedText);
+
+    // 创建 I18n.t 调用
+    const callExpr = j.callExpression(
+      j.memberExpression(j.identifier("I18n"), j.identifier("t")),
+      [j.literal(key)]
+    );
+
+    return {
+      translationResult: { key, text: trimmedText },
+      callExpr,
+    };
+  }
+
+  /**
+   * 替换JSX文本节点为I18n调用
+   */
+  private replaceJSXTextWithI18nCall(path: any, callExpr: any, j: API): void {
+    // JSX文本节点需要包装为表达式容器
+    const jsxExpr = {
+      type: "JSXExpressionContainer",
+      expression: callExpr,
+    };
+    path.replace(jsxExpr);
+  }
+
+  /**
+   * 处理模板字符串（带标记符号）
    */
   private handleTemplateLiteral(
     path: any,
@@ -122,12 +206,12 @@ export class AstTransformer {
     const fullTemplateText = this.buildTemplateText(node);
 
     // 检查是否需要翻译
-    if (!this.config.check.test(fullTemplateText)) {
+    if (!this.isTranslatableString(fullTemplateText)) {
       return null;
     }
 
-    // 使用配置的 format 方法处理文本
-    const formattedText = this.config.format(fullTemplateText);
+    // 使用内部 format 方法处理文本
+    const formattedText = this.formatString(fullTemplateText);
 
     // 构建带占位符的翻译文本
     const translationText = this.buildTranslationText(node, formattedText);
@@ -173,7 +257,7 @@ export class AstTransformer {
       const quasiText = quasis[i].value.cooked || quasis[i].value.raw;
 
       // 对每个静态部分应用 format 方法
-      const formattedQuasi = this.config.format(quasiText);
+      const formattedQuasi = this.formatString(quasiText);
       translationText += formattedQuasi;
 
       if (i < expressions.length) {

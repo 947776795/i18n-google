@@ -28,10 +28,8 @@ describe("FileScanner", () => {
     spreadsheetId: "test-sheet-id",
     sheetName: "Translations",
     keyFile: "test-key.json",
-    check: {
-      test: (value: string) => value.startsWith("%") && value.endsWith("%"),
-    },
-    format: (value: string) => value.replace(/^%|%$/g, ""),
+    startMarker: "%",
+    endMarker: "%",
     include: ["ts", "tsx", "js", "jsx"],
     outputDir: "translations",
   };
