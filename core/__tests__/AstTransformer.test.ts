@@ -10,6 +10,7 @@ import {
   beforeEach,
 } from "@jest/globals";
 import { AstTransformer } from "../AstTransformer";
+import { StringUtils } from "../utils/StringUtils";
 import type { I18nConfig } from "../../types";
 
 const writeFile = promisify(fs.writeFile);
@@ -465,12 +466,12 @@ describe("AstTransformer", () => {
 
     testCases.forEach(({ filePath, text }) => {
       it(`should generate hash-based key for "${text}"`, () => {
-        const key = transformer["generateTranslationKey"](filePath, text);
+        const key = StringUtils.generateTranslationKey(filePath, text);
         expect(key).toMatch(/^[a-f0-9]{8}$/);
-        expect(key).toBe(transformer["generateTranslationKey"](filePath, text));
+        expect(key).toBe(StringUtils.generateTranslationKey(filePath, text));
         if (text !== testCases[0].text) {
           expect(key).not.toBe(
-            transformer["generateTranslationKey"](
+            StringUtils.generateTranslationKey(
               testCases[0].filePath,
               testCases[0].text
             )
@@ -481,8 +482,8 @@ describe("AstTransformer", () => {
 
     it("should generate different keys for same text in different files", () => {
       const text = "Hello World";
-      const key1 = transformer["generateTranslationKey"]("file1.tsx", text);
-      const key2 = transformer["generateTranslationKey"]("file2.tsx", text);
+      const key1 = StringUtils.generateTranslationKey("file1.tsx", text);
+      const key2 = StringUtils.generateTranslationKey("file2.tsx", text);
 
       expect(key1).not.toBe(key2);
       expect(key1).toMatch(/^[a-f0-9]{8}$/);

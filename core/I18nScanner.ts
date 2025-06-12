@@ -1,18 +1,18 @@
 import type { I18nConfig } from "../types";
 import { FileScanner } from "./FileScanner";
-import { AstTransformer } from "./AstTransformer";
+import { FileTransformer } from "./FileTransformer";
 import { TranslationManager } from "./TranslationManager";
 import { GoogleSheetsSync } from "./GoogleSheetsSync";
 
 export class I18nScanner {
   private fileScanner: FileScanner;
-  private astTransformer: AstTransformer;
+  private fileTransformer: FileTransformer;
   private translationManager: TranslationManager;
   private googleSheetsSync: GoogleSheetsSync;
 
   constructor(private config: I18nConfig) {
     this.fileScanner = new FileScanner(config);
-    this.astTransformer = new AstTransformer(config);
+    this.fileTransformer = new FileTransformer(config);
     this.translationManager = new TranslationManager(config);
     this.googleSheetsSync = new GoogleSheetsSync(config);
   }
@@ -37,7 +37,7 @@ export class I18nScanner {
       console.log("3. 处理每个文件...");
       let totalResults = 0;
       for (const file of files) {
-        const results = await this.astTransformer.transformFile(file);
+        const results = await this.fileTransformer.transformFile(file);
         results.forEach((result) => {
           this.translationManager.addTranslation(result);
           totalResults++;

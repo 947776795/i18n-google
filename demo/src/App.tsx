@@ -21,11 +21,11 @@ function App() {
               var0: count
             })}{" "}
           </button>
-          <p>~</p>
-          <p>2~</p>
-          <p> ~2~ </p>
-          <p>~2</p>
-          <p>{a}~</p>
+          <p>{I18n.t("4ff08bee")}</p>
+          <p>{I18n.t("82f62e4f")}</p>
+          <p>{I18n.t("7e84c7ab")}</p>
+          <p>{I18n.t("26962607")}</p>
+          <p>{a}{I18n.t("4ff08bee")}</p>
           <p>{a}{I18n.t("86221979")}</p>
         </div>
 
@@ -33,10 +33,8 @@ function App() {
         <ProductList />
 
         <div className="description">
-          <p>this 10% ddd 20%</p>
-          <p>
-            %The text wrapped with % symbols will be extracted for translation%
-          </p>
+          <p>{I18n.t("e1363e9c")}</p>
+          <p>{I18n.t("280a8ebc")}</p>
         </div>
       </div>
       <Footer />

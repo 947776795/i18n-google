@@ -39,6 +39,7 @@
   "author": "jwgkkk",
   "license": "MIT",
   "dependencies": {
+    "ast-types": "^0.16.1",
     "googleapis": "^129.0.0",
     "jscodeshift": "^17.3.0",
     "minimatch": "^10.0.1"
