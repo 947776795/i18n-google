@@ -4,9 +4,9 @@ import { TranslationManager } from "./TranslationManager";
 import { GoogleSheetsSync } from "./GoogleSheetsSync";
 import { RecordManager } from "./RecordManager";
 import { UnusedKeyAnalyzer } from "./UnusedKeyAnalyzer";
-import { I18nError, I18nErrorType, ErrorHandler } from "./errors/I18nError";
-import { DeletionProgressIndicator } from "./ui/ProgressIndicator";
-import { UserInteraction } from "./ui/UserInteraction";
+import { I18nError, I18nErrorType, ErrorHandler } from "../errors/I18nError";
+import { DeletionProgressIndicator } from "../ui/ProgressIndicator";
+import { UserInteraction } from "../ui/UserInteraction";
 import * as fs from "fs";
 
 // 删除结果接口

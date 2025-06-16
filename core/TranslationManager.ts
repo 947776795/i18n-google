@@ -3,7 +3,7 @@ import * as path from "path";
 import { promisify } from "util";
 import type { I18nConfig } from "../types";
 import type { TransformResult } from "./AstTransformer";
-import { I18nError, I18nErrorType, ErrorHandler } from "./errors/I18nError";
+import { I18nError, I18nErrorType, ErrorHandler } from "../errors/I18nError";
 
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);

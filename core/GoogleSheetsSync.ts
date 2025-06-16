@@ -1,7 +1,7 @@
 import { google } from "googleapis";
 import type { I18nConfig } from "../types";
 import type { TranslationData } from "./TranslationManager";
-import { I18nError, I18nErrorType, ErrorHandler } from "./errors/I18nError";
+import { I18nError, I18nErrorType, ErrorHandler } from "../errors/I18nError";
 
 export class GoogleSheetsSync {
   private googleSheets: any;

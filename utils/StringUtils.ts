@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import type { I18nConfig } from "../../types";
+import type { I18nConfig } from "../types";
 
 /**
  * 字符串处理工具类

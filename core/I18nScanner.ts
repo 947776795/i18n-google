@@ -7,9 +7,9 @@ import { RecordManager } from "./RecordManager";
 import { UnusedKeyAnalyzer } from "./UnusedKeyAnalyzer";
 import { KeyDeletionService } from "./KeyDeletionService";
 import { ExistingReference, TransformResult } from "./AstTransformer";
-import { ErrorHandler } from "./errors/I18nError";
-import { ScanProgressIndicator } from "./ui/ProgressIndicator";
-import { UserInteraction } from "./ui/UserInteraction";
+import { ErrorHandler } from "../errors/I18nError";
+import { ScanProgressIndicator } from "../ui/ProgressIndicator";
+import { UserInteraction } from "../ui/UserInteraction";
 
 export class I18nScanner {
   private fileScanner: FileScanner;

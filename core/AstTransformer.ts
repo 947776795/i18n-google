@@ -2,8 +2,8 @@ import * as jscodeshift from "jscodeshift";
 import type { ASTPath } from "jscodeshift";
 import { namedTypes as n } from "ast-types";
 import type { I18nConfig } from "../types";
-import { StringUtils } from "./utils/StringUtils";
-import { AstUtils } from "./utils/AstUtils";
+import { StringUtils } from "../utils/StringUtils";
+import { AstUtils } from "../utils/AstUtils";
 
 export interface TransformResult {
   key: string;
