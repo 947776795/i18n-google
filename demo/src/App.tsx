@@ -16,17 +16,22 @@ function App() {
       <div className="app-container">
         <h1>{I18n.t("4ac6728e")}</h1>
         <div className="card">
-          <button onClick={() => setCount((count) => count + 1)}>
-            {I18n.t("0c1b17fb", {
-              var0: count
+          <button>{I18n.t("f6eca793")}{I18n.t("0c1b17fb", {
+              var0: count,
             })}{" "}
           </button>
           <p>{I18n.t("4ff08bee")}</p>
           <p>{I18n.t("82f62e4f")}</p>
           <p>{I18n.t("7e84c7ab")}</p>
           <p>{I18n.t("26962607")}</p>
-          <p>{a}{I18n.t("4ff08bee")}</p>
-          <p>{a}{I18n.t("86221979")}</p>
+          <p>
+            {a}
+            {I18n.t("4ff08bee")}
+          </p>
+          <p>
+            {a}
+            {I18n.t("86221979")}
+          </p>
         </div>
 
         <UserCard />

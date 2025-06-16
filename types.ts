@@ -9,4 +9,5 @@ export interface I18nConfig {
   endMarker: string; // 结尾标记符号
   include: string[];
   outputDir: string;
+  forceKeepKeys?: string[]; // 强制保留的Key列表
 }

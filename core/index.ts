@@ -14,6 +14,22 @@ export { TranslationManager } from "./TranslationManager";
 // Google Sheets 集成
 export { GoogleSheetsSync } from "./GoogleSheetsSync";
 
+// 记录管理
+export { RecordManager } from "./RecordManager";
+export type {
+  CompleteRecordFile,
+  CompleteTranslationRecord,
+  RecordMetadata,
+} from "./RecordManager";
+
+// 无用Key分析
+export { UnusedKeyAnalyzer } from "./UnusedKeyAnalyzer";
+export type { DeletePreview, KeyStatistics } from "./UnusedKeyAnalyzer";
+
+// Key删除服务
+export { KeyDeletionService } from "./KeyDeletionService";
+export type { DeletionResult } from "./KeyDeletionService";
+
 // 工具类
 export { StringUtils } from "./utils/StringUtils";
 export { AstUtils } from "./utils/AstUtils";

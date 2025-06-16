@@ -10,6 +10,20 @@ export interface TransformResult {
   text: string;
 }
 
+export interface ExistingReference {
+  key: string; // I18n Key
+  filePath: string; // 文件路径
+  lineNumber: number; // 行号
+  columnNumber: number; // 列号
+  callExpression: string; // 完整的调用表达式 "I18n.t('8a709a33')"
+}
+
+export interface FileAnalysisResult {
+  existingReferences: ExistingReference[]; // 现有的引用
+  newTranslations: TransformResult[]; // 新生成的翻译
+  transformedCode: string; // 转换后的代码
+}
+
 interface TemplateProcessResult {
   translationResult: TransformResult;
   callExpr: n.CallExpression;
@@ -57,6 +71,183 @@ export class AstTransformer {
     const transformedCode = root.toSource();
 
     return { results, transformedCode };
+  }
+
+  /**
+   * 收集源码中现有的 I18n.t() 调用
+   * @param source - 源码字符串
+   * @param filePath - 文件路径
+   * @returns 现有的 I18n 引用列表
+   */
+  public collectExistingI18nCalls(
+    source: string,
+    filePath: string
+  ): ExistingReference[] {
+    console.log(
+      `🔍 [DEBUG] AstTransformer.collectExistingI18nCalls: ${filePath}`
+    );
+
+    const j = jscodeshift.withParser("tsx");
+    const root = j(source);
+    const references: ExistingReference[] = [];
+
+    console.log(`📊 [DEBUG] 开始查找 I18n.t() 调用...`);
+
+    // 查找所有 I18n.t() 调用
+    root.find(j.CallExpression).forEach((path: ASTPath<n.CallExpression>) => {
+      const callExpr = path.node;
+
+      console.log(`🔍 [DEBUG] 检查调用表达式: ${path.node.type}`);
+
+      // 检查是否是 I18n.t() 调用
+      if (this.isI18nTCall(callExpr)) {
+        console.log(`✅ [DEBUG] 找到 I18n.t() 调用`);
+
+        const keyArg = callExpr.arguments[0];
+        console.log(`🔑 [DEBUG] 第一个参数类型: ${keyArg?.type}`);
+
+        // 处理字符串字面量参数
+        if (n.Literal.check(keyArg) && typeof keyArg.value === "string") {
+          const key = keyArg.value;
+          const loc = callExpr.loc;
+
+          console.log(`📝 [DEBUG] 字符串字面量 key: "${key}"`);
+          console.log(
+            `📍 [DEBUG] 位置信息: ${
+              loc ? `${loc.start.line}:${loc.start.column}` : "null"
+            }`
+          );
+
+          if (loc && loc.start) {
+            const ref = {
+              key,
+              filePath,
+              lineNumber: loc.start.line,
+              columnNumber: loc.start.column,
+              callExpression: `I18n.t("${key}")`,
+            };
+            references.push(ref);
+            console.log(
+              `✅ [DEBUG] 添加字符串字面量引用: ${JSON.stringify(ref)}`
+            );
+          } else {
+            console.log(`⚠️  [DEBUG] 字符串字面量缺少位置信息`);
+          }
+        }
+        // 处理模板字面量参数（如果是纯字符串）
+        else if (n.TemplateLiteral.check(keyArg)) {
+          console.log(
+            `📝 [DEBUG] 模板字面量，表达式数量: ${keyArg.expressions.length}, quasis数量: ${keyArg.quasis.length}`
+          );
+
+          // 只处理没有表达式的纯字符串模板
+          if (keyArg.expressions.length === 0 && keyArg.quasis.length === 1) {
+            const key =
+              keyArg.quasis[0].value.cooked || keyArg.quasis[0].value.raw;
+            const loc = callExpr.loc;
+
+            console.log(`📝 [DEBUG] 纯字符串模板 key: "${key}"`);
+            console.log(
+              `📍 [DEBUG] 位置信息: ${
+                loc ? `${loc.start.line}:${loc.start.column}` : "null"
+              }`
+            );
+
+            if (loc && loc.start) {
+              const ref = {
+                key,
+                filePath,
+                lineNumber: loc.start.line,
+                columnNumber: loc.start.column,
+                callExpression: `I18n.t(\`${key}\`)`,
+              };
+              references.push(ref);
+              console.log(
+                `✅ [DEBUG] 添加模板字面量引用: ${JSON.stringify(ref)}`
+              );
+            } else {
+              console.log(`⚠️  [DEBUG] 模板字面量缺少位置信息`);
+            }
+          } else {
+            console.log(`⚠️  [DEBUG] 跳过复杂模板字面量（有表达式）`);
+          }
+        } else {
+          console.log(
+            `⚠️  [DEBUG] 跳过非字符串参数: ${keyArg?.type || "undefined"}`
+          );
+        }
+      } else {
+        // 只在找到其他调用表达式时记录（避免太多日志）
+        const callee = callExpr.callee;
+        if (n.MemberExpression.check(callee)) {
+          const objectName = n.Identifier.check(callee.object)
+            ? callee.object.name
+            : "unknown";
+          const propertyName = n.Identifier.check(callee.property)
+            ? callee.property.name
+            : "unknown";
+          if (objectName === "I18n" || propertyName === "t") {
+            console.log(
+              `🔍 [DEBUG] 跳过非 I18n.t() 调用: ${objectName}.${propertyName}`
+            );
+          }
+        }
+      }
+    });
+
+    console.log(
+      `📊 [DEBUG] 完成扫描，共找到 ${references.length} 个 I18n.t() 引用`
+    );
+    return references;
+  }
+
+  /**
+   * 扩展的转换方法，同时返回现有引用和新翻译
+   * @param source - 源码字符串
+   * @param filePath - 文件路径
+   * @returns 完整的文件分析结果
+   */
+  public analyzeAndTransformSource(
+    source: string,
+    filePath: string
+  ): FileAnalysisResult {
+    // 1. 收集现有引用
+    const existingReferences = this.collectExistingI18nCalls(source, filePath);
+
+    // 2. 进行转换
+    const { results: newTranslations, transformedCode } = this.transformSource(
+      source,
+      filePath
+    );
+
+    return {
+      existingReferences,
+      newTranslations,
+      transformedCode,
+    };
+  }
+
+  /**
+   * 检查调用表达式是否是 I18n.t() 调用
+   */
+  private isI18nTCall(callExpr: n.CallExpression): boolean {
+    const callee = callExpr.callee;
+
+    // 检查是否是成员表达式 (I18n.t)
+    if (n.MemberExpression.check(callee)) {
+      const object = callee.object;
+      const property = callee.property;
+
+      // 检查对象是否是 I18n
+      if (n.Identifier.check(object) && object.name === "I18n") {
+        // 检查属性是否是 t
+        if (n.Identifier.check(property) && property.name === "t") {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   /**

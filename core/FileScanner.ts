@@ -20,7 +20,7 @@ export class FileScanner {
   /**
    * 检查路径是否应该被忽略
    */
-  private shouldIgnore(filePath: string): boolean {
+  protected shouldIgnore(filePath: string): boolean {
     return this.config.ignore.some((pattern) => {
       // 对于简单的目录名匹配
       if (!pattern.includes("*") && !pattern.includes("?")) {
@@ -36,7 +36,7 @@ export class FileScanner {
   /**
    * 递归扫描目录
    */
-  private async scanDirectory(dir: string): Promise<string[]> {
+  protected async scanDirectory(dir: string): Promise<string[]> {
     const entries = await readdir(dir);
     const files: string[] = [];
 

@@ -1,0 +1,143 @@
+{
+  "metadata": {
+    "scanTime": "2025-06-16T11:01:08.282Z",
+    "totalKeys": 22,
+    "usedKeys": 22,
+    "unusedKeys": 0,
+    "newKeysAdded": 2
+  },
+  "records": {
+    "26962607": {
+      "files": [
+        "/Users/jinwangui/Desktop/demo/i18n-google/demo/src/App.tsx"
+      ],
+      "lastScanTime": "2025-06-16T11:01:08.280Z"
+    },
+    "86221979": {
+      "files": [
+        "/Users/jinwangui/Desktop/demo/i18n-google/demo/src/App.tsx"
+      ],
+      "lastScanTime": "2025-06-16T11:01:08.280Z"
+    },
+    "b2957400": {
+      "files": [
+        "/Users/jinwangui/Desktop/demo/i18n-google/demo/src/u/TestComponent.tsx"
+      ],
+      "lastScanTime": "2025-06-16T11:01:08.280Z"
+    },
+    "31392d23": {
+      "files": [
+        "/Users/jinwangui/Desktop/demo/i18n-google/demo/src/u/TestComponent.tsx"
+      ],
+      "lastScanTime": "2025-06-16T11:01:08.280Z"
+    },
+    "4ac6728e": {
+      "files": [
+        "/Users/jinwangui/Desktop/demo/i18n-google/demo/src/App.tsx"
+      ],
+      "lastScanTime": "2025-06-16T11:01:08.280Z"
+    },
+    "f6eca793": {
+      "files": [
+        "/Users/jinwangui/Desktop/demo/i18n-google/demo/src/App.tsx"
+      ],
+      "lastScanTime": "2025-06-16T11:01:08.280Z"
+    },
+    "0c1b17fb": {
+      "files": [
+        "/Users/jinwangui/Desktop/demo/i18n-google/demo/src/App.tsx"
+      ],
+      "lastScanTime": "2025-06-16T11:01:08.280Z"
+    },
+    "4ff08bee": {
+      "files": [
+        "/Users/jinwangui/Desktop/demo/i18n-google/demo/src/App.tsx"
+      ],
+      "lastScanTime": "2025-06-16T11:01:08.280Z"
+    },
+    "82f62e4f": {
+      "files": [
+        "/Users/jinwangui/Desktop/demo/i18n-google/demo/src/App.tsx"
+      ],
+      "lastScanTime": "2025-06-16T11:01:08.280Z"
+    },
+    "7e84c7ab": {
+      "files": [
+        "/Users/jinwangui/Desktop/demo/i18n-google/demo/src/App.tsx"
+      ],
+      "lastScanTime": "2025-06-16T11:01:08.280Z"
+    },
+    "e1363e9c": {
+      "files": [
+        "/Users/jinwangui/Desktop/demo/i18n-google/demo/src/App.tsx"
+      ],
+      "lastScanTime": "2025-06-16T11:01:08.280Z"
+    },
+    "280a8ebc": {
+      "files": [
+        "/Users/jinwangui/Desktop/demo/i18n-google/demo/src/App.tsx"
+      ],
+      "lastScanTime": "2025-06-16T11:01:08.280Z"
+    },
+    "36c77256": {
+      "files": [
+        "/Users/jinwangui/Desktop/demo/i18n-google/demo/src/components/Header.tsx"
+      ],
+      "lastScanTime": "2025-06-16T11:01:08.280Z"
+    },
+    "e1c383f7": {
+      "files": [
+        "/Users/jinwangui/Desktop/demo/i18n-google/demo/src/components/Header.tsx"
+      ],
+      "lastScanTime": "2025-06-16T11:01:08.280Z"
+    },
+    "82f9dc5a": {
+      "files": [
+        "/Users/jinwangui/Desktop/demo/i18n-google/demo/src/components/Header.tsx"
+      ],
+      "lastScanTime": "2025-06-16T11:01:08.280Z"
+    },
+    "c687e060": {
+      "files": [
+        "/Users/jinwangui/Desktop/demo/i18n-google/demo/src/components/Header.tsx"
+      ],
+      "lastScanTime": "2025-06-16T11:01:08.280Z"
+    },
+    "a55108d8": {
+      "files": [
+        "/Users/jinwangui/Desktop/demo/i18n-google/demo/src/components/Header2.tsx"
+      ],
+      "lastScanTime": "2025-06-16T11:01:08.280Z"
+    },
+    "d1dadea1": {
+      "files": [
+        "/Users/jinwangui/Desktop/demo/i18n-google/demo/src/components/Header2.tsx"
+      ],
+      "lastScanTime": "2025-06-16T11:01:08.280Z"
+    },
+    "8a709a33": {
+      "files": [
+        "/Users/jinwangui/Desktop/demo/i18n-google/demo/src/const/const.ts"
+      ],
+      "lastScanTime": "2025-06-16T11:01:08.280Z"
+    },
+    "3aa5c52e": {
+      "files": [
+        "/Users/jinwangui/Desktop/demo/i18n-google/demo/src/const/const.ts"
+      ],
+      "lastScanTime": "2025-06-16T11:01:08.280Z"
+    },
+    "ca26c1a9": {
+      "files": [
+        "/Users/jinwangui/Desktop/demo/i18n-google/demo/src/page/home.tsx"
+      ],
+      "lastScanTime": "2025-06-16T11:01:08.280Z"
+    },
+    "a3e9451e": {
+      "files": [
+        "/Users/jinwangui/Desktop/demo/i18n-google/demo/src/u/home.tsx"
+      ],
+      "lastScanTime": "2025-06-16T11:01:08.280Z"
+    }
+  }
+}
