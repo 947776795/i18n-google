@@ -2,8 +2,9 @@ import * as jscodeshift from "jscodeshift";
 import type { ASTPath } from "jscodeshift";
 import { namedTypes as n } from "ast-types";
 import type { I18nConfig } from "../types";
-import { StringUtils } from "../utils/StringUtils";
+import { StringUtils, Logger } from "../utils/StringUtils";
 import { AstUtils } from "../utils/AstUtils";
+import * as fs from "fs";
 
 export interface TransformResult {
   key: string;
@@ -83,7 +84,7 @@ export class AstTransformer {
     source: string,
     filePath: string
   ): ExistingReference[] {
-    console.log(
+    Logger.debug(
       `🔍 [DEBUG] AstTransformer.collectExistingI18nCalls: ${filePath}`
     );
 
@@ -91,28 +92,28 @@ export class AstTransformer {
     const root = j(source);
     const references: ExistingReference[] = [];
 
-    console.log(`📊 [DEBUG] 开始查找 I18n.t() 调用...`);
+    Logger.debug(`📊 [DEBUG] 开始查找 I18n.t() 调用...`);
 
     // 查找所有 I18n.t() 调用
     root.find(j.CallExpression).forEach((path: ASTPath<n.CallExpression>) => {
       const callExpr = path.node;
 
-      console.log(`🔍 [DEBUG] 检查调用表达式: ${path.node.type}`);
+      Logger.debug(`🔍 [DEBUG] 检查调用表达式: ${path.node.type}`);
 
       // 检查是否是 I18n.t() 调用
       if (this.isI18nTCall(callExpr)) {
-        console.log(`✅ [DEBUG] 找到 I18n.t() 调用`);
+        Logger.debug(`✅ [DEBUG] 找到 I18n.t() 调用`);
 
         const keyArg = callExpr.arguments[0];
-        console.log(`🔑 [DEBUG] 第一个参数类型: ${keyArg?.type}`);
+        Logger.debug(`🔑 [DEBUG] 第一个参数类型: ${keyArg?.type}`);
 
         // 处理字符串字面量参数
         if (n.Literal.check(keyArg) && typeof keyArg.value === "string") {
           const key = keyArg.value;
           const loc = callExpr.loc;
 
-          console.log(`📝 [DEBUG] 字符串字面量 key: "${key}"`);
-          console.log(
+          Logger.debug(`📝 [DEBUG] 字符串字面量 key: "${key}"`);
+          Logger.debug(
             `📍 [DEBUG] 位置信息: ${
               loc ? `${loc.start.line}:${loc.start.column}` : "null"
             }`
@@ -127,16 +128,16 @@ export class AstTransformer {
               callExpression: `I18n.t("${key}")`,
             };
             references.push(ref);
-            console.log(
+            Logger.debug(
               `✅ [DEBUG] 添加字符串字面量引用: ${JSON.stringify(ref)}`
             );
           } else {
-            console.log(`⚠️  [DEBUG] 字符串字面量缺少位置信息`);
+            Logger.debug(`⚠️  [DEBUG] 字符串字面量缺少位置信息`);
           }
         }
         // 处理模板字面量参数（如果是纯字符串）
         else if (n.TemplateLiteral.check(keyArg)) {
-          console.log(
+          Logger.debug(
             `📝 [DEBUG] 模板字面量，表达式数量: ${keyArg.expressions.length}, quasis数量: ${keyArg.quasis.length}`
           );
 
@@ -146,8 +147,8 @@ export class AstTransformer {
               keyArg.quasis[0].value.cooked || keyArg.quasis[0].value.raw;
             const loc = callExpr.loc;
 
-            console.log(`📝 [DEBUG] 纯字符串模板 key: "${key}"`);
-            console.log(
+            Logger.debug(`📝 [DEBUG] 纯字符串模板 key: "${key}"`);
+            Logger.debug(
               `📍 [DEBUG] 位置信息: ${
                 loc ? `${loc.start.line}:${loc.start.column}` : "null"
               }`
@@ -162,17 +163,17 @@ export class AstTransformer {
                 callExpression: `I18n.t(\`${key}\`)`,
               };
               references.push(ref);
-              console.log(
+              Logger.debug(
                 `✅ [DEBUG] 添加模板字面量引用: ${JSON.stringify(ref)}`
               );
             } else {
-              console.log(`⚠️  [DEBUG] 模板字面量缺少位置信息`);
+              Logger.debug(`⚠️  [DEBUG] 模板字面量缺少位置信息`);
             }
           } else {
-            console.log(`⚠️  [DEBUG] 跳过复杂模板字面量（有表达式）`);
+            Logger.debug(`⚠️  [DEBUG] 跳过复杂模板字面量（有表达式）`);
           }
         } else {
-          console.log(
+          Logger.debug(
             `⚠️  [DEBUG] 跳过非字符串参数: ${keyArg?.type || "undefined"}`
           );
         }
@@ -187,7 +188,7 @@ export class AstTransformer {
             ? callee.property.name
             : "unknown";
           if (objectName === "I18n" || propertyName === "t") {
-            console.log(
+            Logger.debug(
               `🔍 [DEBUG] 跳过非 I18n.t() 调用: ${objectName}.${propertyName}`
             );
           }
@@ -195,7 +196,7 @@ export class AstTransformer {
       }
     });
 
-    console.log(
+    Logger.debug(
       `📊 [DEBUG] 完成扫描，共找到 ${references.length} 个 I18n.t() 引用`
     );
     return references;
@@ -304,7 +305,37 @@ export class AstTransformer {
     filePath: string,
     results: TransformResult[]
   ): void {
+    // 首先处理包含混合内容的JSX元素
+    const processedElements = new Set<n.JSXElement>();
+
+    root.find(j.JSXElement).forEach((path: ASTPath<n.JSXElement>) => {
+      const mixedResult = this.handleJSXMixedContent(path, filePath, j);
+      if (mixedResult) {
+        results.push(mixedResult.translationResult);
+        // 替换整个元素的children为单个I18n调用
+        const jsxExpr = AstUtils.createJSXExpressionContainer(
+          mixedResult.callExpr
+        );
+        path.node.children = [jsxExpr];
+        processedElements.add(path.node);
+      }
+    });
+
+    // 然后处理纯文本节点（跳过已经处理过的元素中的文本）
     root.find(j.JSXText).forEach((path: ASTPath<n.JSXText>) => {
+      // 检查是否在已处理的元素中
+      let parentElement = path.parent;
+      while (parentElement && !n.JSXElement.check(parentElement.node)) {
+        parentElement = parentElement.parent;
+      }
+
+      if (
+        parentElement &&
+        processedElements.has(parentElement.node as n.JSXElement)
+      ) {
+        return; // 跳过已处理的元素中的文本
+      }
+
       const textResult = this.handleJSXText(path, filePath, j);
       if (textResult) {
         results.push(textResult.translationResult);
@@ -360,6 +391,11 @@ export class AstTransformer {
       return null;
     }
 
+    // 检查是否包含英文字符，如果不包含则跳过
+    if (!StringUtils.containsEnglishCharacters(trimmedText)) {
+      return null;
+    }
+
     // JSX文本节点直接处理，不需要检查标记符号
     const key = StringUtils.generateTranslationKey(filePath, trimmedText);
 
@@ -368,6 +404,85 @@ export class AstTransformer {
 
     return {
       translationResult: { key, text: trimmedText },
+      callExpr,
+    };
+  }
+
+  /**
+   * 处理包含混合内容的JSX元素（文本 + 表达式）
+   * 示例：<div>Hello {name}, welcome!</div>
+   */
+  private handleJSXMixedContent(
+    path: ASTPath<n.JSXElement>,
+    filePath: string,
+    j: JSCodeshiftAPI
+  ): TemplateProcessResult | null {
+    const element = path.node;
+    const children = element.children || [];
+
+    // 检查是否包含混合内容（至少有一个文本节点和一个表达式）
+    const hasText = children.some(
+      (child) => n.JSXText.check(child) && child.value.trim()
+    );
+    const hasExpression = children.some((child) =>
+      n.JSXExpressionContainer.check(child)
+    );
+
+    if (!hasText || !hasExpression) {
+      return null;
+    }
+
+    // 构建翻译文本和表达式列表
+    let translationText = "";
+    const expressions: n.Expression[] = [];
+    let hasEnglishContent = false;
+
+    for (const child of children) {
+      if (n.JSXText.check(child)) {
+        const textValue = child.value;
+        // 检查文本是否包含英文字符
+        if (StringUtils.containsEnglishCharacters(textValue)) {
+          hasEnglishContent = true;
+        }
+        translationText += textValue;
+      } else if (
+        n.JSXExpressionContainer.check(child) &&
+        child.expression &&
+        !n.JSXEmptyExpression.check(child.expression)
+      ) {
+        // 添加占位符
+        translationText += `%{var${expressions.length}}`;
+        expressions.push(child.expression as n.Expression);
+      }
+    }
+
+    // 如果没有英文内容，跳过
+    if (!hasEnglishContent) {
+      return null;
+    }
+
+    // 清理翻译文本（去除多余空白）
+    translationText = translationText.replace(/\s+/g, " ").trim();
+
+    if (!translationText) {
+      return null;
+    }
+
+    const key = StringUtils.generateTranslationKey(filePath, translationText);
+
+    // 构建 I18n.t 调用
+    let optionsObj: n.ObjectExpression | undefined;
+    if (expressions.length > 0) {
+      const properties = expressions.map((expr, index) =>
+        AstUtils.createProperty(`var${index}`, expr)
+      );
+      optionsObj = AstUtils.createObjectExpression(properties);
+    }
+
+    const callExpr = AstUtils.createI18nCall(key, optionsObj);
+
+    return {
+      translationResult: { key, text: translationText },
       callExpr,
     };
   }
@@ -516,26 +631,19 @@ export class AstTransformer {
    * 这个方法保留用于向后兼容
    */
   public async transformFile(filePath: string): Promise<TransformResult[]> {
-    const fs = await import("fs");
-    const { promisify } = await import("util");
-
-    const readFile = promisify(fs.readFile);
-    const writeFile = promisify(fs.writeFile);
-
     try {
-      const source = await readFile(filePath, "utf-8");
-      const { results, transformedCode } = this.transformSource(
-        source,
-        filePath
-      );
+      const source = await fs.promises.readFile(filePath, "utf-8");
+      const { results } = this.transformSource(source, filePath);
 
       if (results.length > 0) {
-        await writeFile(filePath, transformedCode);
+        // 重新生成修改后的代码
+        const { transformedCode } = this.transformSource(source, filePath);
+        await fs.promises.writeFile(filePath, transformedCode);
       }
 
       return results;
     } catch (error) {
-      console.error(`处理文件 ${filePath} 时发生错误:`, error);
+      Logger.error(`❌ 处理文件 ${filePath} 时发生错误:`, error);
       throw error;
     }
   }

@@ -19,6 +19,7 @@
 
 import type { I18nConfig } from "./types";
 import { I18nScanner } from "./core/I18nScanner";
+import { Logger } from "./utils/StringUtils";
 import * as path from "path";
 
 // 从当前工作目录加载配置文件
@@ -29,7 +30,7 @@ const scanner = new I18nScanner(config);
 
 if (require.main === module) {
   scanner.scan().catch((error) => {
-    console.error("扫描失败:", error);
+    Logger.error("❌ 扫描失败:", error);
     process.exit(1);
   });
 }

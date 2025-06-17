@@ -8,6 +8,7 @@ import { I18nError, I18nErrorType, ErrorHandler } from "../errors/I18nError";
 import { DeletionProgressIndicator } from "../ui/ProgressIndicator";
 import { UserInteraction } from "../ui/UserInteraction";
 import * as fs from "fs";
+import { Logger } from "../utils/StringUtils";
 
 // 删除结果接口
 export interface DeletionResult {
@@ -31,79 +32,90 @@ export class KeyDeletionService {
   }
 
   /**
-   * 检测无用Key并处理删除
+   * 检测并处理无用的Key
    */
   async detectAndHandleUnusedKeys(
     allDefinedKeys: string[],
-    referencesMap: Map<string, ExistingReference[]>
+    allReferences: Map<string, ExistingReference[]>
   ): Promise<void> {
+    let previewPath: string | null = null;
+
     try {
-      // 1. 获取真正无用的Key（排除强制保留）
+      // 1. 分析无用Key
       const unusedKeys = this.unusedKeyAnalyzer.detectUnusedKeys(
         allDefinedKeys,
-        referencesMap
+        allReferences
       );
-
-      // 2. 获取被强制保留的无用Key
       const forceKeptKeys = this.unusedKeyAnalyzer.getForceKeptUnusedKeys(
         allDefinedKeys,
-        referencesMap
+        allReferences
       );
 
-      // 3. 显示强制保留信息
+      // 2. 显示强制保留的Key信息
       if (forceKeptKeys.length > 0) {
-        console.log(`🔒 强制保留 ${forceKeptKeys.length} 个Key (配置指定):`);
-        forceKeptKeys.forEach((key) => console.log(`   - ${key}`));
-        console.log("");
+        Logger.info(`🔒 强制保留 ${forceKeptKeys.length} 个Key (配置指定):`);
+        forceKeptKeys.forEach((key: string) => Logger.info(`   - ${key}`));
+        Logger.info("");
       }
 
+      // 3. 检查是否有可删除的无用Key
       if (unusedKeys.length === 0) {
         if (forceKeptKeys.length > 0) {
-          console.log("✅ 除强制保留的Key外，没有发现其他无用的翻译Key");
+          Logger.success("✅ 除强制保留的Key外，没有发现其他无用的翻译Key");
         } else {
-          console.log("✅ 没有发现无用的翻译Key");
+          Logger.success("✅ 没有发现无用的翻译Key");
         }
         return;
       }
 
-      // 2. 展示详细信息并询问用户（会生成预览文件）
-      let previewPath: string | null = null;
+      // 4. 生成删除预览
+      previewPath = await this.unusedKeyAnalyzer.generateDeletePreview(
+        unusedKeys,
+        this.translationManager.getTranslations()
+      );
 
-      try {
-        previewPath = await this.unusedKeyAnalyzer.generateDeletePreview(
-          unusedKeys,
+      // 5. 用户确认
+      const shouldDelete = await UserInteraction.confirmDeletion(
+        unusedKeys,
+        async () => {
+          if (!previewPath) {
+            previewPath = await this.unusedKeyAnalyzer.generateDeletePreview(
+              unusedKeys,
+              this.translationManager.getTranslations()
+            );
+          }
+          return previewPath;
+        },
+        forceKeptKeys
+      );
+
+      if (shouldDelete) {
+        // 执行删除操作
+        await this.executeKeyDeletion(unusedKeys, allReferences);
+
+        // 重新同步到远程
+        Logger.info("🔄 正在重新同步删除的Key到远程...");
+        await this.googleSheetsSync.syncToSheet(
           this.translationManager.getTranslations()
         );
-        const shouldDelete = await this.askUserConfirmation(
-          unusedKeys,
-          forceKeptKeys
-        );
+        Logger.success("✅ 删除操作完成并已同步到远程");
 
-        // 3. 如果用户确认删除，执行删除并重新同步
-        if (shouldDelete) {
-          await this.executeKeyDeletion(unusedKeys, referencesMap);
-          console.log("🔄 正在重新同步删除的Key到远程...");
-          await this.googleSheetsSync.syncToSheet(
-            this.translationManager.getTranslations()
-          );
-          console.log("✅ 删除操作完成并已同步到远程");
-
-          // 清理预览文件
-          if (previewPath) {
-            await this.cleanupPreviewFile(previewPath);
-          }
-        } else {
-          console.log("❌ 用户取消删除操作");
-          console.log(`💡 预览文件保留在: ${previewPath}`);
-        }
-      } catch (error) {
-        console.error("❌ 删除流程错误:", error);
+        // 清理预览文件
         if (previewPath) {
-          console.log(`💡 预览文件保留在: ${previewPath}`);
+          await this.cleanupPreviewFile(previewPath);
+        }
+      } else {
+        Logger.info("❌ 用户取消删除操作");
+        if (previewPath) {
+          Logger.info(`💡 预览文件保留在: ${previewPath}`);
         }
       }
     } catch (error) {
-      ErrorHandler.handle(error as Error, "detectAndHandleUnusedKeys");
+      Logger.error("❌ 删除流程错误:", error);
+      // 保留预览文件以供调试
+      if (previewPath) {
+        Logger.info(`💡 预览文件保留在: ${previewPath}`);
+      }
       throw error;
     }
   }
@@ -193,32 +205,14 @@ export class KeyDeletionService {
   }
 
   /**
-   * 询问用户确认删除操作
-   */
-  protected async askUserConfirmation(
-    unusedKeys: string[],
-    forceKeptKeys: string[] = []
-  ): Promise<boolean> {
-    return await UserInteraction.confirmDeletion(
-      unusedKeys,
-      () =>
-        this.unusedKeyAnalyzer.generateDeletePreview(
-          unusedKeys,
-          this.translationManager.getTranslations()
-        ),
-      forceKeptKeys
-    );
-  }
-
-  /**
    * 清理预览文件
    */
-  async cleanupPreviewFile(previewPath: string): Promise<void> {
+  private async cleanupPreviewFile(previewPath: string): Promise<void> {
     try {
       await fs.promises.unlink(previewPath);
-      console.log(`🗑️  预览文件已清理: ${previewPath}`);
+      Logger.info(`🗑️  预览文件已清理: ${previewPath}`);
     } catch (error) {
-      console.warn(`⚠️  清理预览文件失败: ${error}`);
+      Logger.warn(`⚠️  清理预览文件失败: ${error}`);
     }
   }
 }

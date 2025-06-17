@@ -1,8 +1,6 @@
 import { I18n } from "@utils";
 import { useState } from "react";
 import Header from "./components/Header";
-import UserCard from "./components/UserCard";
-import ProductList from "./components/ProductList";
 import "./App.css";
 
 const a = "nihao";
@@ -16,7 +14,9 @@ function App() {
       <div className="app-container">
         <h1>{I18n.t("4ac6728e")}</h1>
         <div className="card">
-          <button>{I18n.t("f6eca793")}{I18n.t("0c1b17fb", {
+          <button>
+            {I18n.t("f6eca793")}
+            {I18n.t("0c1b17fb", {
               var0: count,
             })}{" "}
           </button>
@@ -34,15 +34,11 @@ function App() {
           </p>
         </div>
 
-        <UserCard />
-        <ProductList />
-
         <div className="description">
           <p>{I18n.t("e1363e9c")}</p>
           <p>{I18n.t("280a8ebc")}</p>
         </div>
       </div>
-      <Footer />
     </>
   );
 }

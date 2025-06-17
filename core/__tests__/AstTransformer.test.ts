@@ -10,7 +10,7 @@ import {
   beforeEach,
 } from "@jest/globals";
 import { AstTransformer } from "../AstTransformer";
-import { StringUtils } from "../utils/StringUtils";
+import { StringUtils } from "../../utils/StringUtils";
 import type { I18nConfig } from "../../types";
 
 const writeFile = promisify(fs.writeFile);
@@ -69,20 +69,26 @@ describe("AstTransformer", () => {
 
       const results = await transformer.transformFile(testFile);
 
-      expect(results).toHaveLength(2);
-      expect(results[0]).toEqual({
+      // 现在期望3个结果：2个带标记的文本 + 1个纯JSX文本
+      expect(results).toHaveLength(3);
+
+      // 验证带标记的文本被正确转换
+      const markedTexts = results.filter(
+        (r) => r.text === "Hello World" || r.text === "Welcome to our app"
+      );
+      expect(markedTexts).toHaveLength(2);
+
+      // 验证纯JSX文本也被转换
+      const pureText = results.find((r) => r.text === "Not translated text");
+      expect(pureText).toBeDefined();
+      expect(pureText).toEqual({
         key: expect.stringMatching(/^[a-f0-9]{8}$/),
-        text: "Hello World",
-      });
-      expect(results[1]).toEqual({
-        key: expect.stringMatching(/^[a-f0-9]{8}$/),
-        text: "Welcome to our app",
+        text: "Not translated text",
       });
 
       const transformedCode = await readFile(testFile, "utf-8");
       expect(transformedCode).toContain('import { I18n } from "@utils"');
       expect(transformedCode).toContain("I18n.t(");
-      expect(transformedCode).toContain("Not translated text");
       expect(transformedCode).toContain("{I18n.t("); // JSX expression container
     });
 
@@ -110,15 +116,46 @@ describe("AstTransformer", () => {
       expect(results[1].text).toBe("Multiple Percent");
     });
 
-    it("should not add I18n import if no translations needed", async () => {
-      const testFile = path.join(testDir, "no-translations.tsx");
+    it("should transform JSX text nodes even without markers", async () => {
+      const testFile = path.join(testDir, "jsx-text-transformation.tsx");
       const sourceCode = `
         import React from 'react';
         
         export const TestComponent = () => {
           return (
             <div>
-              <h1>No translations needed</h1>
+              <h1>JSX text will be translated</h1>
+            </div>
+          );
+        };
+      `;
+
+      await writeFile(testFile, sourceCode, "utf-8");
+
+      const results = await transformer.transformFile(testFile);
+
+      // 现在期望JSX文本被转换
+      expect(results).toHaveLength(1);
+      expect(results[0]).toEqual({
+        key: expect.stringMatching(/^[a-f0-9]{8}$/),
+        text: "JSX text will be translated",
+      });
+
+      const transformedCode = await readFile(testFile, "utf-8");
+      expect(transformedCode).toContain('import { I18n } from "@utils"');
+      expect(transformedCode).toContain("I18n.t(");
+    });
+
+    it("should not add I18n import if no text content exists", async () => {
+      const testFile = path.join(testDir, "no-text-content.tsx");
+      const sourceCode = `
+        import React from 'react';
+        
+        export const TestComponent = () => {
+          return (
+            <div>
+              <input type="text" />
+              <button onClick={() => console.log('click')} />
             </div>
           );
         };
@@ -518,8 +555,20 @@ describe("AstTransformer", () => {
 
       const results = await customTransformer.transformFile(testFile);
 
-      expect(results).toHaveLength(1);
-      expect(results[0].text).toBe("Custom Translation");
+      // 现在期望2个结果：1个自定义标记的文本 + 1个纯JSX文本
+      expect(results).toHaveLength(2);
+
+      // 验证自定义标记的文本
+      const customMarkedText = results.find(
+        (r) => r.text === "Custom Translation"
+      );
+      expect(customMarkedText).toBeDefined();
+
+      // 验证纯JSX文本也被转换
+      const pureText = results.find(
+        (r) => r.text === "%This should not match%"
+      );
+      expect(pureText).toBeDefined();
     });
 
     it("should handle different start and end markers", async () => {
@@ -548,8 +597,18 @@ describe("AstTransformer", () => {
 
       const results = await customTransformer.transformFile(testFile);
 
-      expect(results).toHaveLength(1);
-      expect(results[0].text).toBe("hello world");
+      // 现在期望2个结果：1个自定义标记的文本 + 1个纯JSX文本
+      expect(results).toHaveLength(2);
+
+      // 验证自定义标记的文本
+      const customMarkedText = results.find((r) => r.text === "hello world");
+      expect(customMarkedText).toBeDefined();
+
+      // 验证纯JSX文本也被转换
+      const pureText = results.find(
+        (r) => r.text === "%This should not match%"
+      );
+      expect(pureText).toBeDefined();
     });
   });
 
@@ -716,6 +775,99 @@ describe("AstTransformer", () => {
         "JSX text node",
         "JavaScript string",
       ]);
+    });
+
+    it("should skip JSX text that does not contain English characters", async () => {
+      const testFile = path.join(testDir, "jsx-no-english.tsx");
+      const sourceCode = `
+        import React from 'react';
+        
+        export const TestComponent = () => {
+          return (
+            <div>
+              <h1>你好世界</h1>
+              <p>123456</p>
+              <span>！@#￥%</span>
+              <button>English Text</button>
+            </div>
+          );
+        };
+      `;
+
+      await writeFile(testFile, sourceCode, "utf-8");
+
+      const results = await transformer.transformFile(testFile);
+
+      // 只有包含英文的文本应该被转换
+      expect(results).toHaveLength(1);
+      expect(results[0].text).toBe("English Text");
+    });
+
+    it("should handle mixed content with placeholders", async () => {
+      const testFile = path.join(testDir, "jsx-mixed-placeholders.tsx");
+      const sourceCode = `
+        import React from 'react';
+        
+        export const TestComponent = ({ name, count }: any) => {
+          return (
+            <div>
+              <h1>Hello {name}, welcome!</h1>
+              <p>You have {count} items in your cart</p>
+              <span>纯中文 {name} 不应该转换</span>
+              <button>Mixed: 中文 {count} English</button>
+            </div>
+          );
+        };
+      `;
+
+      await writeFile(testFile, sourceCode, "utf-8");
+
+      const results = await transformer.transformFile(testFile);
+
+      expect(results).toHaveLength(3);
+
+      // 验证占位符格式
+      const texts = results.map((r) => r.text).sort();
+      expect(texts).toEqual([
+        "Hello %{var0}, welcome!",
+        "Mixed: 中文 %{var0} English",
+        "You have %{var0} items in your cart",
+      ]);
+
+      const transformedCode = await readFile(testFile, "utf-8");
+      expect(transformedCode).toContain("var0: name");
+      expect(transformedCode).toContain("var0: count");
+      // 纯中文的应该保持不变
+      expect(transformedCode).toContain("纯中文 {name} 不应该转换");
+    });
+
+    it("should handle mixed content with multiple variables", async () => {
+      const testFile = path.join(testDir, "jsx-multiple-vars.tsx");
+      const sourceCode = `
+        import React from 'react';
+        
+        export const TestComponent = ({ user, score, level }: any) => {
+          return (
+            <div>
+              <h1>Welcome {user.name}, you are level {level} with {score} points!</h1>
+            </div>
+          );
+        };
+      `;
+
+      await writeFile(testFile, sourceCode, "utf-8");
+
+      const results = await transformer.transformFile(testFile);
+
+      expect(results).toHaveLength(1);
+      expect(results[0].text).toBe(
+        "Welcome %{var0}, you are level %{var1} with %{var2} points!"
+      );
+
+      const transformedCode = await readFile(testFile, "utf-8");
+      expect(transformedCode).toContain("var0: user.name");
+      expect(transformedCode).toContain("var1: level");
+      expect(transformedCode).toContain("var2: score");
     });
   });
 });

@@ -50,24 +50,36 @@ module.exports = {
 
   // 强制保留的键列表（即使未使用也不会被删除）
   forceKeepKeys: ["important_key", "system_message"],
+
+  // 日志级别配置
+  logLevel: "normal", // 推荐的默认设置
 };
 ```
 
 ### 配置选项说明
 
-| 选项            | 类型     | 说明                        |
-| --------------- | -------- | --------------------------- |
-| `rootDir`       | string   | 要扫描的根目录              |
-| `languages`     | string[] | 支持的语言列表              |
-| `ignore`        | string[] | 要忽略的文件/目录匹配模式   |
-| `include`       | string[] | 要包含的文件扩展名          |
-| `outputDir`     | string   | 翻译文件输出目录            |
-| `spreadsheetId` | string   | Google Sheets ID            |
-| `sheetName`     | string   | Sheet 名称                  |
-| `keyFile`       | string   | Google 服务账号密钥文件路径 |
-| `startMarker`   | string   | 开始标记符号                |
-| `endMarker`     | string   | 结尾标记符号                |
-| `forceKeepKeys` | string[] | 强制保留的键列表 ⭐ **NEW** |
+| 选项            | 类型     | 说明                                               |
+| --------------- | -------- | -------------------------------------------------- |
+| `rootDir`       | string   | 要扫描的根目录                                     |
+| `languages`     | string[] | 支持的语言列表                                     |
+| `ignore`        | string[] | 要忽略的文件/目录匹配模式                          |
+| `include`       | string[] | 要包含的文件扩展名                                 |
+| `outputDir`     | string   | 翻译文件输出目录                                   |
+| `spreadsheetId` | string   | Google Sheets ID                                   |
+| `sheetName`     | string   | Sheet 名称                                         |
+| `keyFile`       | string   | Google 服务账号密钥文件路径                        |
+| `startMarker`   | string   | 开始标记符号                                       |
+| `endMarker`     | string   | 结尾标记符号                                       |
+| `forceKeepKeys` | string[] | 强制保留的键列表 ⭐ **NEW**                        |
+| `logLevel`      | string   | 日志级别：'silent', 'normal', 'verbose' ⭐ **NEW** |
+
+### 日志级别说明 ⭐ **NEW**
+
+工具支持三种日志级别，帮助用户控制输出信息的详细程度：
+
+- **`silent`**：静默模式，不输出任何日志信息
+- **`normal`**（默认）：标准模式，只输出关键操作信息和用户友好提示
+- **`verbose`**：详细模式，输出完整的调试信息，适用于开发和问题排查
 
 ## 处理模式
 
@@ -388,32 +400,6 @@ npm test
 
 ```bash
 npm run dev
-```
-
-## 项目结构
-
-```
-i18n-google/
-├── core/                       # 核心功能模块
-│   ├── I18nScanner.ts         # 主扫描器
-│   ├── FileScanner.ts         # 文件扫描器
-│   ├── AstTransformer.ts      # AST 转换器
-│   ├── TranslationManager.ts  # 翻译管理器
-│   ├── GoogleSheetsSync.ts    # Google Sheets 同步
-│   ├── KeyDeletionService.ts  # 键删除服务 ⭐ NEW
-│   ├── UnusedKeyAnalyzer.ts   # 未使用键分析器 ⭐ NEW
-│   ├── RecordManager.ts       # 记录管理器 ⭐ NEW
-│   ├── errors/
-│   │   └── I18nError.ts       # 自定义错误类 ⭐ NEW
-│   ├── ui/
-│   │   ├── ProgressIndicator.ts # 进度指示器 ⭐ NEW
-│   │   └── UserInteraction.ts   # 用户交互界面 ⭐ NEW
-│   └── __tests__/             # 测试文件
-├── demo/                      # 示例项目
-├── delete/                    # 键删除功能文档 ⭐ NEW
-├── scan.ts                    # 入口文件
-├── types.ts                   # 类型定义
-└── package.json
 ```
 
 ## 优势

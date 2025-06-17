@@ -2,9 +2,11 @@ import { google } from "googleapis";
 import type { I18nConfig } from "../types";
 import type { TranslationData } from "./TranslationManager";
 import { I18nError, I18nErrorType, ErrorHandler } from "../errors/I18nError";
+import { Logger } from "../utils/StringUtils";
 
 export class GoogleSheetsSync {
   private googleSheets: any;
+  private isInitialized: boolean = true;
 
   constructor(private config: I18nConfig) {
     this.initGoogleSheets();
@@ -26,7 +28,8 @@ export class GoogleSheetsSync {
         auth: authClient as any,
       });
     } catch (error) {
-      console.warn("⚠️ Google Sheets API 初始化失败，将使用模拟模式:", error);
+      Logger.warn("⚠️ Google Sheets API 初始化失败，将使用模拟模式:", error);
+      this.isInitialized = false;
       // 在测试环境中提供模拟实现
       this.googleSheets = {
         spreadsheets: {
@@ -82,10 +85,7 @@ export class GoogleSheetsSync {
    * 获取 Sheet 的实际范围
    * @returns 包含数据的实际范围
    */
-  private async getSheetDimensions(): Promise<{
-    columns: number;
-    rows: number;
-  }> {
+  private async getSheetDimensions(): Promise<{ rows: number; cols: number }> {
     try {
       // 首先获取sheet的基本信息来确定有数据的范围
       const metadataResponse = await this.googleSheets.spreadsheets.get({
@@ -101,18 +101,16 @@ export class GoogleSheetsSync {
       if (sheet) {
         const gridProperties = sheet.properties.gridProperties;
         return {
-          columns: gridProperties.columnCount || 26, // 默认26列(A-Z)
           rows: gridProperties.rowCount || 1000, // 默认1000行
+          cols: gridProperties.columnCount || 26, // 默认26列(A-Z)
         };
       }
 
       // 如果无法获取元数据，使用默认值
-      return { columns: 26, rows: 1000 };
+      return { rows: 1000, cols: 26 };
     } catch (error) {
-      console.warn("获取Sheet维度失败，使用默认范围:", error);
-      // 基于配置的语言数量计算列数 (key列 + 语言列)
-      const estimatedColumns = Math.max(this.config.languages.length + 1, 26);
-      return { columns: estimatedColumns, rows: 1000 };
+      Logger.warn("获取Sheet维度失败，使用默认范围:", error);
+      return { rows: 1000, cols: 26 }; // 默认范围
     }
   }
 
@@ -120,11 +118,16 @@ export class GoogleSheetsSync {
    * 从 Google Sheets 同步翻译
    */
   public async syncFromSheet(): Promise<TranslationData> {
+    if (!this.isInitialized) {
+      Logger.info("🔄 Google Sheets 未初始化，返回空翻译");
+      return {};
+    }
+
     try {
       // 获取动态范围
       const dimensions = await this.getSheetDimensions();
       const dynamicRange = this.calculateRange(
-        dimensions.columns,
+        dimensions.cols,
         dimensions.rows
       );
 
@@ -140,7 +143,7 @@ export class GoogleSheetsSync {
 
       // 检查是否有数据
       if (rows.length === 0 || headers.length === 0) {
-        console.log("Google Sheets 中没有数据，返回空翻译");
+        Logger.info("Google Sheets 中没有数据，返回空翻译");
         return translations;
       }
 
@@ -167,38 +170,8 @@ export class GoogleSheetsSync {
 
       return translations;
     } catch (error) {
-      if (
-        (error as any).code === "ENOTFOUND" ||
-        (error as any).code === "ECONNREFUSED"
-      ) {
-        throw ErrorHandler.createNetworkError(
-          "从Google Sheets同步翻译",
-          error as Error
-        );
-      } else if ((error as any).code === 401 || (error as any).code === 403) {
-        throw new I18nError(
-          I18nErrorType.AUTHENTICATION_ERROR,
-          "Google Sheets API 认证失败",
-          { originalError: error },
-          [
-            "检查服务账号密钥文件是否正确",
-            "确认Google Sheets API是否已启用",
-            "验证Sheet权限设置",
-          ]
-        );
-      } else {
-        throw new I18nError(
-          I18nErrorType.API_ERROR,
-          "从Google Sheets读取数据失败",
-          { originalError: error },
-          [
-            "检查网络连接",
-            "确认spreadsheetId是否正确",
-            "验证sheetName是否存在",
-          ],
-          true // API错误通常是可恢复的
-        );
-      }
+      Logger.error("❌ 从 Google Sheets 同步失败:", error);
+      return {};
     }
   }
 

@@ -35,6 +35,14 @@ export class StringUtils {
   }
 
   /**
+   * 检查字符串是否包含英文字符
+   */
+  static containsEnglishCharacters(text: string): boolean {
+    // 检查是否包含英文字母（a-z, A-Z）
+    return /[a-zA-Z]/.test(text);
+  }
+
+  /**
    * 生成翻译键
    * @param filePath - 文件路径
    * @param text - 待翻译文本
@@ -48,5 +56,83 @@ export class StringUtils {
       .slice(0, 8);
 
     return hash;
+  }
+}
+
+/**
+ * 日志级别枚举
+ */
+export enum LogLevel {
+  SILENT = 0,
+  NORMAL = 1,
+  VERBOSE = 2,
+}
+
+/**
+ * 日志工具类
+ */
+export class Logger {
+  private static logLevel: LogLevel = LogLevel.NORMAL;
+
+  /**
+   * 设置日志级别
+   */
+  static setLogLevel(level: "silent" | "normal" | "verbose") {
+    switch (level) {
+      case "silent":
+        this.logLevel = LogLevel.SILENT;
+        break;
+      case "normal":
+        this.logLevel = LogLevel.NORMAL;
+        break;
+      case "verbose":
+        this.logLevel = LogLevel.VERBOSE;
+        break;
+    }
+  }
+
+  /**
+   * 普通信息日志（用户友好的关键信息）
+   */
+  static info(...args: any[]) {
+    if (this.logLevel >= LogLevel.NORMAL) {
+      console.log(...args);
+    }
+  }
+
+  /**
+   * 详细调试日志（开发调试用）
+   */
+  static debug(...args: any[]) {
+    if (this.logLevel >= LogLevel.VERBOSE) {
+      console.log(...args);
+    }
+  }
+
+  /**
+   * 警告日志
+   */
+  static warn(...args: any[]) {
+    if (this.logLevel >= LogLevel.NORMAL) {
+      console.warn(...args);
+    }
+  }
+
+  /**
+   * 错误日志
+   */
+  static error(...args: any[]) {
+    if (this.logLevel >= LogLevel.NORMAL) {
+      console.error(...args);
+    }
+  }
+
+  /**
+   * 成功日志
+   */
+  static success(...args: any[]) {
+    if (this.logLevel >= LogLevel.NORMAL) {
+      console.log(...args);
+    }
   }
 }

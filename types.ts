@@ -10,4 +10,5 @@ export interface I18nConfig {
   include: string[];
   outputDir: string;
   forceKeepKeys?: string[]; // 强制保留的Key列表
+  logLevel?: "silent" | "normal" | "verbose"; // 日志级别配置
 }

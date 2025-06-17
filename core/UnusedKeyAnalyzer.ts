@@ -1,5 +1,6 @@
 import type { I18nConfig } from "../types";
 import { ExistingReference } from "./AstTransformer";
+import { Logger } from "../utils/StringUtils";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -102,8 +103,8 @@ export class UnusedKeyAnalyzer {
     // 保存预览文件
     await fs.promises.writeFile(previewPath, JSON.stringify(preview, null, 2));
 
-    console.log(`\n📄 删除预览已生成: ${previewPath}`);
-    console.log(`   请查看文件以确认删除内容`);
+    Logger.info(`\n📄 删除预览已生成: ${previewPath}`);
+    Logger.info(`   请查看文件以确认删除内容`);
 
     return previewPath;
   }

@@ -10,6 +10,7 @@ import { ExistingReference, TransformResult } from "./AstTransformer";
 import { ErrorHandler } from "../errors/I18nError";
 import { ScanProgressIndicator } from "../ui/ProgressIndicator";
 import { UserInteraction } from "../ui/UserInteraction";
+import { Logger } from "../utils/StringUtils";
 
 export class I18nScanner {
   private fileScanner: FileScanner;
@@ -23,6 +24,9 @@ export class I18nScanner {
   private scanProgress: ScanProgressIndicator;
 
   constructor(private config: I18nConfig) {
+    // 设置日志级别
+    Logger.setLogLevel(config.logLevel || "normal");
+
     this.fileScanner = new FileScanner(config);
     this.fileTransformer = new FileTransformer(config);
     this.translationManager = new TranslationManager(config);
@@ -132,29 +136,32 @@ export class I18nScanner {
     const allReferences = new Map<string, ExistingReference[]>();
     const newTranslations: TransformResult[] = [];
 
-    console.log("🔍 [DEBUG] 开始处理文件，总数:", files.length);
+    Logger.info(`🔍 开始处理 ${files.length} 个文件...`);
 
     for (const file of files) {
-      console.log("\n📂 [DEBUG] 处理文件:", file);
+      Logger.debug("\n📂 [DEBUG] 处理文件:", file);
 
       // 使用扩展的分析方法，同时获取现有引用和新翻译
       const analysisResult = await this.fileTransformer.analyzeAndTransformFile(
         file
       );
 
-      console.log("📊 [DEBUG] 分析结果:");
-      console.log("  - 现有引用数:", analysisResult.existingReferences.length);
-      console.log("  - 新翻译数:", analysisResult.newTranslations.length);
+      Logger.debug("📊 [DEBUG] 分析结果:");
+      Logger.debug("  - 现有引用数:", analysisResult.existingReferences.length);
+      Logger.debug("  - 新翻译数:", analysisResult.newTranslations.length);
 
       if (analysisResult.existingReferences.length > 0) {
-        console.log(
+        Logger.debug(
           "  - 现有引用keys:",
           analysisResult.existingReferences.map((r) => r.key)
         );
       }
 
       if (analysisResult.newTranslations.length > 0) {
-        console.log(
+        Logger.info(
+          `📝 在 ${file} 中发现 ${analysisResult.newTranslations.length} 个新翻译`
+        );
+        Logger.debug(
           "  - 新翻译keys:",
           analysisResult.newTranslations.map((t) => t.key)
         );
@@ -166,7 +173,7 @@ export class I18nScanner {
           allReferences.set(ref.key, []);
         }
         allReferences.get(ref.key)!.push(ref);
-        console.log(
+        Logger.debug(
           `  ✅ [DEBUG] 添加现有引用: ${ref.key} -> ${ref.filePath}:${ref.lineNumber}`
         );
       });
@@ -175,30 +182,30 @@ export class I18nScanner {
       analysisResult.newTranslations.forEach((result) => {
         this.translationManager.addTranslation(result);
         newTranslations.push(result);
-        console.log(
+        Logger.debug(
           `  📝 [DEBUG] 添加新翻译: ${result.key} -> "${result.text}"`
         );
       });
 
       // 3. 收集新翻译的引用位置（通过重新分析转换后的代码）
       if (analysisResult.newTranslations.length > 0) {
-        console.log("🔄 [DEBUG] 开始收集新翻译的引用位置...");
+        Logger.debug("🔄 [DEBUG] 开始收集新翻译的引用位置...");
 
         // 添加小延迟确保文件写入完成
         await new Promise((resolve) => setTimeout(resolve, 50));
 
         const newRefs = await this.fileTransformer.collectFileReferences(file);
-        console.log("📋 [DEBUG] 重新扫描文件得到的引用数:", newRefs.length);
+        Logger.debug("📋 [DEBUG] 重新扫描文件得到的引用数:", newRefs.length);
 
         if (newRefs.length > 0) {
-          console.log(
+          Logger.debug(
             "📋 [DEBUG] 重新扫描得到的所有keys:",
             newRefs.map((r) => r.key)
           );
         }
 
         newRefs.forEach((ref) => {
-          console.log(
+          Logger.debug(
             `🔍 [DEBUG] 检查引用: ${ref.key} -> ${ref.filePath}:${ref.lineNumber}`
           );
 
@@ -207,12 +214,12 @@ export class I18nScanner {
             (newTrans) => newTrans.key === ref.key
           );
 
-          console.log(`  📌 [DEBUG] 是否为新翻译: ${isNewTranslation}`);
+          Logger.debug(`  📌 [DEBUG] 是否为新翻译: ${isNewTranslation}`);
 
           if (isNewTranslation) {
             if (!allReferences.has(ref.key)) {
               allReferences.set(ref.key, []);
-              console.log(`  🆕 [DEBUG] 为key创建新的引用数组: ${ref.key}`);
+              Logger.debug(`  🆕 [DEBUG] 为key创建新的引用数组: ${ref.key}`);
             }
             // 检查是否已经存在相同的引用
             const existingRefs = allReferences.get(ref.key)!;
@@ -223,14 +230,14 @@ export class I18nScanner {
                 existingRef.columnNumber === ref.columnNumber
             );
 
-            console.log(`  🔄 [DEBUG] 是否重复引用: ${isDuplicate}`);
+            Logger.debug(`  🔄 [DEBUG] 是否重复引用: ${isDuplicate}`);
 
             if (!isDuplicate) {
               existingRefs.push(ref);
-              console.log(
+              Logger.debug(
                 `  ✅ [DEBUG] 成功添加新引用: ${ref.key} -> ${ref.filePath}:${ref.lineNumber}`
               );
-              console.log(
+              Logger.debug(
                 `  📊 [DEBUG] 该key当前引用数: ${existingRefs.length}`
               );
             }
@@ -238,7 +245,7 @@ export class I18nScanner {
         });
       }
 
-      console.log(
+      Logger.debug(
         `📈 [DEBUG] 文件 ${file} 处理完成，当前总引用数: ${allReferences.size}`
       );
     }
@@ -246,14 +253,15 @@ export class I18nScanner {
     // 保存到实例变量供后续使用
     this.referencesMap = allReferences;
 
-    console.log("\n🎯 [DEBUG] 所有文件处理完成:");
-    console.log("  - 总引用map大小:", allReferences.size);
-    console.log("  - 总新翻译数:", newTranslations.length);
+    Logger.info(`✅ 文件处理完成，共处理 ${files.length} 个文件`);
+    Logger.debug("\n🎯 [DEBUG] 所有文件处理完成:");
+    Logger.debug("  - 总引用map大小:", allReferences.size);
+    Logger.debug("  - 总新翻译数:", newTranslations.length);
 
     // 打印每个key的引用情况
-    console.log("\n📋 [DEBUG] 最终引用统计:");
+    Logger.debug("\n📋 [DEBUG] 最终引用统计:");
     allReferences.forEach((refs, key) => {
-      console.log(
+      Logger.debug(
         `  ${key}: ${refs.length} 个引用 -> [${refs
           .map((r) => `${r.filePath}:${r.lineNumber}`)
           .join(", ")}]`
@@ -261,14 +269,14 @@ export class I18nScanner {
     });
 
     // 检查新翻译的引用情况
-    console.log("\n🆕 [DEBUG] 新翻译引用检查:");
+    Logger.debug("\n🆕 [DEBUG] 新翻译引用检查:");
     newTranslations.forEach((newTrans) => {
       const refs = allReferences.get(newTrans.key) || [];
-      console.log(
+      Logger.debug(
         `  ${newTrans.key} ("${newTrans.text}"): ${refs.length} 个引用`
       );
       if (refs.length === 0) {
-        console.log(`  ⚠️  [WARNING] 新翻译 ${newTrans.key} 没有找到引用！`);
+        Logger.warn(`  ⚠️  新翻译 ${newTrans.key} 没有找到引用！`);
       }
     });
 

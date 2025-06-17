@@ -2,6 +2,7 @@ import type { I18nConfig } from "../types";
 import { ExistingReference, TransformResult } from "./AstTransformer";
 import * as fs from "fs";
 import * as path from "path";
+import { Logger } from "../utils/StringUtils";
 
 // 完整记录的数据结构
 interface CompleteTranslationRecord {
@@ -28,7 +29,7 @@ export class RecordManager {
   constructor(private config: I18nConfig) {}
 
   /**
-   * 生成完整记录JSON
+   * 生成完整记录文件
    */
   async generateCompleteRecord(
     references: Map<string, ExistingReference[]>,
@@ -49,8 +50,10 @@ export class RecordManager {
     // 3. 保存记录
     await this.saveCompleteRecord(completeRecord);
 
-    console.log(
-      `完整记录已保存，包含 ${Object.keys(completeRecord.records).length} 个Key`
+    Logger.info(
+      `📋 完整记录已保存，包含 ${
+        Object.keys(completeRecord.records).length
+      } 个Key`
     );
   }
 
@@ -81,7 +84,7 @@ export class RecordManager {
     const jsonContent = JSON.stringify(record, null, 2);
     await fs.promises.writeFile(filePath, jsonContent, "utf-8");
 
-    console.log(`完整记录已保存到: ${filePath}`);
+    Logger.info(`📄 完整记录已保存到: ${filePath}`);
   }
 
   /**
@@ -117,7 +120,7 @@ export class RecordManager {
       // 保存更新后的记录
       await fs.promises.writeFile(recordPath, JSON.stringify(record, null, 2));
     } catch (error) {
-      console.warn("⚠️  更新记录文件失败:", error);
+      Logger.warn("⚠️  更新记录文件失败:", error);
     }
   }
 
@@ -130,10 +133,10 @@ export class RecordManager {
     currentReferences: Map<string, ExistingReference[]>,
     newTranslations: TransformResult[]
   ): CompleteRecordFile {
-    console.log("\n📋 [DEBUG] RecordManager.mergeRecordData 开始");
-    console.log("  - 现有记录:", existing ? "存在" : "不存在");
-    console.log("  - 当前引用Map大小:", currentReferences.size);
-    console.log("  - 新翻译数量:", newTranslations.length);
+    Logger.debug("\n📋 [DEBUG] RecordManager.mergeRecordData 开始");
+    Logger.debug("  - 现有记录:", existing ? "存在" : "不存在");
+    Logger.debug("  - 当前引用Map大小:", currentReferences.size);
+    Logger.debug("  - 新翻译数量:", newTranslations.length);
 
     const records: CompleteTranslationRecord = {};
     const scanTime = new Date().toISOString();
@@ -144,42 +147,42 @@ export class RecordManager {
     const refKeys = Array.from(currentReferences.keys());
     const newKeys = newTranslations.map((t) => t.key);
 
-    console.log("📊 [DEBUG] Key来源统计:");
-    console.log(`  - 中文翻译文件: ${zhKeys.length} 个keys`);
-    console.log(`  - 英文翻译文件: ${enKeys.length} 个keys`);
-    console.log(`  - 引用Map: ${refKeys.length} 个keys`);
-    console.log(`  - 新翻译: ${newKeys.length} 个keys`);
+    Logger.debug("📊 [DEBUG] Key来源统计:");
+    Logger.debug(`  - 中文翻译文件: ${zhKeys.length} 个keys`);
+    Logger.debug(`  - 英文翻译文件: ${enKeys.length} 个keys`);
+    Logger.debug(`  - 引用Map: ${refKeys.length} 个keys`);
+    Logger.debug(`  - 新翻译: ${newKeys.length} 个keys`);
 
     if (zhKeys.length > 0) {
-      console.log(`  - 中文keys前5个: [${zhKeys.slice(0, 5).join(", ")}]`);
+      Logger.debug(`  - 中文keys前5个: [${zhKeys.slice(0, 5).join(", ")}]`);
     }
     if (refKeys.length > 0) {
-      console.log(`  - 引用keys前5个: [${refKeys.slice(0, 5).join(", ")}]`);
+      Logger.debug(`  - 引用keys前5个: [${refKeys.slice(0, 5).join(", ")}]`);
     }
     if (newKeys.length > 0) {
-      console.log(`  - 新翻译keys: [${newKeys.join(", ")}]`);
+      Logger.debug(`  - 新翻译keys: [${newKeys.join(", ")}]`);
     }
 
     const allKeys = new Set([...zhKeys, ...enKeys, ...refKeys, ...newKeys]);
 
-    console.log(`🔗 [DEBUG] 合并后总Key数: ${allKeys.size}`);
+    Logger.debug(`🔗 [DEBUG] 合并后总Key数: ${allKeys.size}`);
 
     allKeys.forEach((key) => {
       // 获取引用的文件列表（去重）
       const refs = currentReferences.get(key) || [];
       const files = [...new Set(refs.map((r) => r.filePath))];
 
-      console.log(`🔍 [DEBUG] 处理key: ${key}`);
-      console.log(`  - 引用数: ${refs.length}`);
-      console.log(`  - 文件数: ${files.length}`);
-      console.log(`  - 文件列表: [${files.join(", ")}]`);
+      Logger.debug(`🔍 [DEBUG] 处理key: ${key}`);
+      Logger.debug(`  - 引用数: ${refs.length}`);
+      Logger.debug(`  - 文件数: ${files.length}`);
+      Logger.debug(`  - 文件列表: [${files.join(", ")}]`);
 
       // 检查是否是新翻译
       const isNewTranslation = newTranslations.some((t) => t.key === key);
       if (isNewTranslation) {
-        console.log(`  - ✨ 这是新翻译`);
+        Logger.debug(`  - ✨ 这是新翻译`);
         if (files.length === 0) {
-          console.log(`  - ⚠️  新翻译没有引用文件！`);
+          Logger.warn(`  - ⚠️  新翻译没有引用文件！`);
         }
       }
 
@@ -189,7 +192,7 @@ export class RecordManager {
       };
     });
 
-    console.log(
+    Logger.debug(
       `📋 [DEBUG] RecordManager.mergeRecordData 完成，生成 ${
         Object.keys(records).length
       } 条记录`

@@ -13,7 +13,7 @@ const Header: React.FC = () => {
             var0: "dddd",
           })}
         </h1>
-        <div>1111</div>
+        <div>{I18n.t("e1c383f7")}</div>
       </div>
     </header>
   );

@@ -7,6 +7,7 @@ import {
   FileAnalysisResult,
 } from "./AstTransformer";
 import type { I18nConfig } from "../types";
+import { Logger } from "../utils/StringUtils";
 
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
@@ -59,16 +60,16 @@ export class FileTransformer {
     filePath: string
   ): Promise<ExistingReference[]> {
     try {
-      console.log(
+      Logger.debug(
         `🔍 [DEBUG] FileTransformer.collectFileReferences: ${filePath}`
       );
 
       // 读取文件内容
       const source = await readFile(filePath, "utf-8");
-      console.log(`📖 [DEBUG] 重新读取文件内容长度: ${source.length} 字符`);
+      Logger.debug(`📖 [DEBUG] 重新读取文件内容长度: ${source.length} 字符`);
 
       // 显示文件的前200个字符用于验证内容
-      console.log(`📝 [DEBUG] 文件内容预览: "${source.substring(0, 200)}..."`);
+      Logger.debug(`📝 [DEBUG] 文件内容预览: "${source.substring(0, 200)}..."`);
 
       // 使用 AstTransformer 收集引用
       const references = this.astTransformer.collectExistingI18nCalls(
@@ -76,9 +77,9 @@ export class FileTransformer {
         filePath
       );
 
-      console.log(`📋 [DEBUG] 收集到 ${references.length} 个引用`);
+      Logger.debug(`📋 [DEBUG] 收集到 ${references.length} 个引用`);
       references.forEach((ref, index) => {
-        console.log(
+        Logger.debug(
           `  ${index + 1}. ${ref.key} -> ${ref.filePath}:${ref.lineNumber}:${
             ref.columnNumber
           } (${ref.callExpression})`
@@ -87,7 +88,7 @@ export class FileTransformer {
 
       return references;
     } catch (error) {
-      console.error(`❌ [DEBUG] 收集文件引用 ${filePath} 时发生错误:`, error);
+      Logger.error(`❌ 收集文件引用 ${filePath} 时发生错误:`, error);
       throw error;
     }
   }
@@ -101,13 +102,13 @@ export class FileTransformer {
     filePath: string
   ): Promise<FileAnalysisResult> {
     try {
-      console.log(
+      Logger.debug(
         `📁 [DEBUG] FileTransformer.analyzeAndTransformFile: ${filePath}`
       );
 
       // 读取文件内容
       const source = await readFile(filePath, "utf-8");
-      console.log(`📖 [DEBUG] 读取文件内容长度: ${source.length} 字符`);
+      Logger.debug(`📖 [DEBUG] 读取文件内容长度: ${source.length} 字符`);
 
       // 使用 AstTransformer 进行分析和转换
       const result = this.astTransformer.analyzeAndTransformSource(
@@ -115,23 +116,23 @@ export class FileTransformer {
         filePath
       );
 
-      console.log(`🔍 [DEBUG] AstTransformer 返回结果:`);
-      console.log(`  - 现有引用: ${result.existingReferences.length}`);
-      console.log(`  - 新翻译: ${result.newTranslations.length}`);
-      console.log(`  - 转换后代码长度: ${result.transformedCode.length} 字符`);
+      Logger.debug(`🔍 [DEBUG] AstTransformer 返回结果:`);
+      Logger.debug(`  - 现有引用: ${result.existingReferences.length}`);
+      Logger.debug(`  - 新翻译: ${result.newTranslations.length}`);
+      Logger.debug(`  - 转换后代码长度: ${result.transformedCode.length} 字符`);
 
       // 如果有新翻译，写入修改后的文件
       if (result.newTranslations.length > 0) {
-        console.log(`💾 [DEBUG] 写入修改后的文件: ${filePath}`);
+        Logger.debug(`💾 [DEBUG] 写入修改后的文件: ${filePath}`);
         await writeFile(filePath, result.transformedCode);
-        console.log(`✅ [DEBUG] 文件写入完成`);
+        Logger.debug(`✅ [DEBUG] 文件写入完成`);
       } else {
-        console.log(`📄 [DEBUG] 没有新翻译，跳过文件写入`);
+        Logger.debug(`📄 [DEBUG] 没有新翻译，跳过文件写入`);
       }
 
       return result;
     } catch (error) {
-      console.error(`❌ [DEBUG] 分析和转换文件 ${filePath} 时发生错误:`, error);
+      Logger.error(`❌ 分析和转换文件 ${filePath} 时发生错误:`, error);
       throw error;
     }
   }
