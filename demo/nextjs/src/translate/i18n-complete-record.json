@@ -1,0 +1,138 @@
+{
+  "app/page.ts": {
+    "Demo: %{var0} - %{var1}": {
+      "de": "Demo: %{var0} - %{var1}",
+      "en": "Demo: %{var0} - %{var1}",
+      "es": "Demo: %{var0} - %{var1}",
+      "ko": "Demo: %{var0} - %{var1}",
+      "tr": "Demo: %{var0} - %{var1}",
+      "vi": "Demo: %{var0} - %{var1}",
+      "zh-CN": "Demo: %{var0} - %{var1}",
+      "zh-TC": "Demo: %{var0} - %{var1}"
+    },
+    "Deploy now": {
+      "de": "Deploy now",
+      "en": "Deploy now",
+      "es": "Deploy now",
+      "ko": "Deploy now",
+      "tr": "Deploy now",
+      "vi": "Deploy now",
+      "zh-CN": "Deploy now",
+      "zh-TC": "Deploy now"
+    },
+    "nihao": {
+      "de": "nihao",
+      "en": "nihao",
+      "es": "nihao",
+      "ko": "nihao",
+      "tr": "nihao",
+      "vi": "nihao",
+      "zh-CN": "nihao",
+      "zh-TC": "nihao"
+    },
+    "I18n3": {
+      "de": "I18n3",
+      "en": "I18n3",
+      "es": "I18n3",
+      "ko": "I18n3",
+      "tr": "I18n3",
+      "vi": "I18n3",
+      "zh-CN": "I18n3",
+      "zh-TC": "I18n3"
+    }
+  },
+  "components/Button/index.ts": {
+    "nihaoma": {
+      "de": "nihaoma",
+      "en": "nihaoma",
+      "es": "nihaoma",
+      "ko": "nihaoma",
+      "tr": "nihaoma",
+      "vi": "nihaoma",
+      "zh-CN": "nihaoma",
+      "zh-TC": "nihaoma"
+    },
+    "I18n": {
+      "de": "I18n",
+      "en": "I18n",
+      "es": "I18n",
+      "ko": "I18n",
+      "tr": "I18n",
+      "vi": "I18n",
+      "zh-CN": "I18n",
+      "zh-TC": "I18n"
+    },
+    "I18n2": {
+      "de": "I18n2",
+      "en": "I18n2",
+      "es": "I18n2",
+      "ko": "I18n2",
+      "tr": "I18n2",
+      "vi": "I18n2",
+      "zh-CN": "I18n2",
+      "zh-TC": "I18n2"
+    },
+    "I18n3": {
+      "de": "I18n3",
+      "en": "I18n3",
+      "es": "I18n3",
+      "ko": "I18n3",
+      "tr": "I18n3",
+      "vi": "I18n3",
+      "zh-CN": "I18n3",
+      "zh-TC": "I18n3"
+    },
+    "I18n5": {
+      "de": "I18n5",
+      "en": "I18n5",
+      "es": "I18n5",
+      "ko": "I18n5",
+      "tr": "I18n5",
+      "vi": "I18n5",
+      "zh-CN": "I18n5",
+      "zh-TC": "I18n5"
+    },
+    "I18n4": {
+      "de": "I18n4",
+      "en": "I18n4",
+      "es": "I18n4",
+      "ko": "I18n4",
+      "tr": "I18n4",
+      "vi": "I18n4",
+      "zh-CN": "I18n4",
+      "zh-TC": "I18n4"
+    },
+    "I18n6": {
+      "de": "I18n6",
+      "en": "I18n6",
+      "es": "I18n6",
+      "ko": "I18n6",
+      "tr": "I18n6",
+      "vi": "I18n6",
+      "zh-CN": "I18n6",
+      "zh-TC": "I18n6"
+    }
+  },
+  "const/const.ts": {
+    "1111": {
+      "de": "1111",
+      "en": "1111",
+      "es": "1111",
+      "ko": "1111",
+      "tr": "1111",
+      "vi": "1111",
+      "zh-CN": "1111",
+      "zh-TC": "1111"
+    },
+    "2222%{var0}": {
+      "de": "2222%{var0}",
+      "en": "2222%{var0}",
+      "es": "2222%{var0}",
+      "ko": "2222%{var0}",
+      "tr": "2222%{var0}",
+      "vi": "2222%{var0}",
+      "zh-CN": "2222%{var0}",
+      "zh-TC": "2222%{var0}"
+    }
+  }
+}

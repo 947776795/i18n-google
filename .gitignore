@@ -5,4 +5,3 @@ i18n.config.js
 serviceAccountKeyFile.json
 dist/*
 .DS_Store
-**/translate/*
