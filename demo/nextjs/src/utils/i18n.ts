@@ -8,7 +8,7 @@ import {
 } from "./i18n.types";
 
 // 导出常量以保持向后兼容
-export const { ZHTC, EN, ZHCN, KO, ES, TR, DE, VI } = LOCALES;
+export const { EN, ZHCN, ZHTW, KO } = LOCALES;
 
 // 重新导出类型
 export type { Locale, TranslationKey, TranslationDictionary, MessageOptions };
@@ -16,22 +16,14 @@ export type { Locale, TranslationKey, TranslationDictionary, MessageOptions };
 export const locales: readonly Locale[] = Object.values(LOCALES);
 
 export const languageOptions: readonly LanguageOption[] = [
-  // 繁体中文（台湾/香港）
-  { label: "中文（繁體）", value: ZHTC },
-  // 英语（国际）
+  // 英语（默认）
   { label: "English", value: EN },
-  // 简体中文（中国大陆）
+  // 简体中文（使用简体汉字）
   { label: "中文（简体）", value: ZHCN },
+  // 繁体中文（使用繁体汉字）
+  { label: "中文（繁體）", value: ZHTW },
   // 韩语
   { label: "한국어", value: KO },
-  // 西班牙语
-  { label: "Español", value: ES },
-  // 土耳其语
-  { label: "Türkçe", value: TR },
-  // 德语
-  { label: "Deutsch", value: DE },
-  // 越南语
-  { label: "Tiếng Việt", value: VI },
 ] as const;
 
 /**
@@ -47,63 +39,60 @@ interface ModuleTranslations {
 type InterpolationVariables = Record<string, string | number | boolean>;
 
 /**
- * I18n 工具类 - 真正统一的方案
+ * I18n 工具类 - 从 URL 路径获取语言（适配 Next.js）
  */
 class I18nUtil {
   /**
-   * 创建翻译实例 - 统一方法
+   * 创建翻译实例 - 适配 Next.js 路由
    * @param translations 模块翻译数据
-   * @param searchParams 可选的 searchParams（服务端组件必须传入）
+   * @param locale 可选的直接传入语言代码（用于服务端组件）
    * @returns 翻译实例，包含 t 方法
    */
-  static createScoped(
-    translations: ModuleTranslations,
-    searchParams?: { [key: string]: string | string[] | undefined }
-  ) {
-    const locale = this.getCurrentLocale(searchParams);
+  static createScoped(translations: ModuleTranslations, locale?: string) {
+    const currentLocale = locale || this.getCurrentLocale();
 
     return {
       t: (key: string, options?: InterpolationVariables): string => {
-        return this.translate(translations, locale, key, options);
+        return this.translate(translations, currentLocale, key, options);
       },
+      locale: currentLocale,
     };
   }
 
   /**
-   * 获取当前语言 - 统一方法
-   * @param searchParams 可选的 searchParams
+   * 获取当前语言 - 从 URL 路径获取（Next.js 方式）
    * @returns 语言代码，默认 'en'
    */
-  static getCurrentLocale(searchParams?: {
-    [key: string]: string | string[] | undefined;
-  }): string {
-    // 1. 优先从 searchParams 获取（服务端和客户端都支持）
-    if (searchParams?.lang) {
-      const lang = Array.isArray(searchParams.lang)
-        ? searchParams.lang[0]
-        : searchParams.lang;
-
-      if (this.isValidLocale(lang)) {
-        return lang;
-      }
+  static getCurrentLocale(): string {
+    // 服务端渲染时返回默认语言
+    if (typeof window === "undefined") {
+      return "en";
     }
 
-    // 2. 客户端从 window.location.search 获取
-    if (typeof window !== "undefined") {
-      try {
-        const params = new URLSearchParams(window.location.search);
-        const urlLang = params.get("lang");
+    try {
+      // 从 URL 路径中获取语言代码
+      // Next.js i18n 路由格式：
+      // /zh-Hans/about -> zh-Hans
+      // /ko/contact -> ko
+      // /about -> en (默认语言，路径中不显示)
+      const pathname = window.location.pathname;
+      const segments = pathname.split("/").filter(Boolean);
 
-        if (urlLang && this.isValidLocale(urlLang)) {
-          return urlLang;
+      if (segments.length > 0) {
+        const potentialLocale = segments[0];
+
+        // 检查第一个路径段是否为有效语言代码
+        if (this.isValidLocale(potentialLocale)) {
+          return potentialLocale;
         }
-      } catch (error) {
-        console.warn("Error getting locale from URL:", error);
       }
-    }
 
-    // 3. 默认语言
-    return "en";
+      // 如果路径中没有语言代码，说明是默认语言
+      return "en";
+    } catch (error) {
+      console.warn("Error getting locale from URL path:", error);
+      return "en";
+    }
   }
 
   /**
@@ -143,7 +132,7 @@ class I18nUtil {
   }
 
   /**
-   * 切换语言（通过 URL 跳转）
+   * 切换语言（通过 Next.js 路由跳转）
    * @param newLocale 新的语言代码
    */
   static switchLocale(newLocale: string): void {
@@ -155,11 +144,33 @@ class I18nUtil {
     }
 
     try {
-      const url = new URL(window.location.href);
-      url.searchParams.set("lang", newLocale);
+      const currentPath = window.location.pathname;
+      const segments = currentPath.split("/").filter(Boolean);
+
+      // 移除当前语言代码（如果存在）
+      if (segments.length > 0 && this.isValidLocale(segments[0])) {
+        segments.shift(); // 移除第一个语言段
+      }
+
+      // // 构建新的路径
+      let newPath: string;
+      // if (newLocale === "en") {
+      //   // 英语为默认语言，不需要在路径中显示
+      //   newPath = "/" + segments.join("/");
+      // } else {
+      //   // 其他语言需要在路径前加上语言代码
+      // }
+      newPath = "/" + newLocale + "/" + segments.join("/");
+
+      // 确保路径以 / 结尾（如果原路径有的话）
+      if (newPath === "") newPath = "/";
+
+      // 保持查询参数和锚点
+      const search = window.location.search;
+      const hash = window.location.hash;
 
       // 跳转到新 URL
-      window.location.href = url.toString();
+      window.location.href = newPath + search + hash;
     } catch (error) {
       console.error("Failed to switch locale:", error);
     }
@@ -193,6 +204,13 @@ class I18nUtil {
    */
   static isValidLocale(locale: string): locale is Locale {
     return this.getSupportedLocales().includes(locale as Locale);
+  }
+
+  /**
+   * 获取语言选项列表（用于语言切换器）
+   */
+  static getLanguageOptions(): readonly LanguageOption[] {
+    return languageOptions;
   }
 }
 

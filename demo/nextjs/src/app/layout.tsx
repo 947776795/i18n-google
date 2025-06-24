@@ -1,8 +1,6 @@
-import type { Metadata } from "next";
+"use client";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { I18nUtil } from "@utils";
-import metadataTranslations from "@translate/metadata";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,27 +12,15 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export async function generateMetadata({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
-}): Promise<Metadata> {
-  // 服务端使用统一的 createScoped 方法
-  const i18n = I18nUtil.createScoped(metadataTranslations, searchParams);
-
-  return {
-    title: i18n.t("site.title"),
-    description: i18n.t("site.description"),
-  };
-}
-
 export default function RootLayout({
   children,
-}: Readonly<{
+  params,
+}: {
   children: React.ReactNode;
-}>) {
+  params: { locale?: string };
+}) {
   return (
-    <html lang="en">
+    <html lang={params?.locale || "en"}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

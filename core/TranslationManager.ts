@@ -131,7 +131,7 @@ export class TranslationManager {
   async saveCompleteRecord(allReferences: Map<string, any[]>): Promise<void> {
     console.log("🔧 [DEBUG] TranslationManager.saveCompleteRecord 被调用");
 
-    const completeRecord = this.buildCompleteRecord(allReferences);
+    const completeRecord = await this.buildCompleteRecord(allReferences);
 
     // 确保输出目录存在
     await mkdir(this.config.outputDir, { recursive: true });
@@ -162,7 +162,7 @@ export class TranslationManager {
       const existingRecord = await this.loadCompleteRecord();
 
       // 2. 构建基于新引用的记录
-      const newRecord = this.buildCompleteRecord(allReferences);
+      const newRecord = await this.buildCompleteRecord(allReferences);
 
       // 3. 合并记录：现有记录优先（保留无用Key），新记录补充
       const mergedRecord: CompleteTranslationRecord = { ...existingRecord };
@@ -204,38 +204,78 @@ export class TranslationManager {
   }
 
   /**
-   * 构建新格式的完整记录 - 优化版本
-   * 1. 先正确分类所有翻译key到对应路径
-   * 2. 然后构建完整的翻译记录
+   * 构建新格式的完整记录 - 智能合并版本
+   * 1. 先加载现有完整记录（包含远程翻译数据）
+   * 2. 分类所有翻译key到对应路径
+   * 3. 构建完整的翻译记录，优先保留现有翻译，新key使用原文案
    */
-  private buildCompleteRecord(
+  private async buildCompleteRecord(
     allReferences: Map<string, any[]>
-  ): CompleteTranslationRecord {
-    console.log("=== BUILD COMPLETE RECORD START (OPTIMIZED) ===");
+  ): Promise<CompleteTranslationRecord> {
+    console.log("🏗️ [DEBUG] 开始构建完整记录（智能合并模式）...");
+
+    // 第一步：加载现有的完整记录（包含远程翻译数据）
+    const existingRecord = await this.loadCompleteRecord();
     console.log(
-      `🏗️ [DEBUG] buildCompleteRecord 开始，总引用数: ${allReferences.size}`
+      `📖 [DEBUG] 加载现有记录，包含 ${
+        Object.keys(existingRecord).length
+      } 个模块`
     );
 
-    // 第一步：分析所有key的路径分类
+    // 第二步：按路径分类所有翻译key
     const pathClassification = this.classifyKeysByPath(allReferences);
+    console.log(
+      `🔍 [DEBUG] 按路径分类完成，共 ${
+        Object.keys(pathClassification).length
+      } 个模块路径`
+    );
 
-    // 第二步：构建完整记录
+    // 第三步：构建新的完整记录，智能合并翻译数据
     const record: CompleteTranslationRecord = {};
 
     Object.entries(pathClassification).forEach(([modulePath, keys]) => {
       console.log(
-        `📁 [DEBUG] 处理模块路径: "${modulePath}", 包含 ${keys.length} 个key`
+        `📁 [DEBUG] 处理模块路径: "${modulePath}" (${keys.length} 个keys)`
       );
 
+      // 初始化模块
       record[modulePath] = {};
 
       keys.forEach((key) => {
+        console.log(`🔑 [DEBUG] 处理key: "${key}"`);
         record[modulePath][key] = {};
 
-        // 添加所有语言的翻译
+        // 检查现有记录中是否有这个key的翻译数据
+        let existingTranslations: Record<string, string> | null = null;
+
+        // 在现有记录的所有模块中查找这个key
+        for (const [existingModulePath, existingModuleKeys] of Object.entries(
+          existingRecord
+        )) {
+          if (existingModuleKeys[key]) {
+            existingTranslations = existingModuleKeys[key];
+            console.log(
+              `✅ [DEBUG] 在模块 "${existingModulePath}" 中找到key "${key}" 的现有翻译`
+            );
+            break;
+          }
+        }
+
+        // 为每种语言设置翻译值
         this.config.languages.forEach((lang) => {
-          // 基于 CompleteRecord 的系统，使用原文案作为初始值
-          record[modulePath][key][lang] = key;
+          if (existingTranslations && existingTranslations[lang]) {
+            // 优先使用现有翻译数据
+            record[modulePath][key][lang] = existingTranslations[lang];
+            console.log(
+              `🔄 [DEBUG] key "${key}" 语言 "${lang}" 使用现有翻译: "${existingTranslations[lang]}"`
+            );
+          } else {
+            // 没有现有翻译时，使用原文案作为默认值
+            record[modulePath][key][lang] = key;
+            console.log(
+              `🆕 [DEBUG] key "${key}" 语言 "${lang}" 使用默认值: "${key}"`
+            );
+          }
         });
       });
     });
@@ -246,7 +286,7 @@ export class TranslationManager {
         .join(", ")}`
     );
 
-    // 第三步：输出详细的分类结果用于调试
+    // 第四步：输出详细的分类结果用于调试
     this.logPathClassificationDetails(pathClassification);
 
     return record;

@@ -1,35 +1,31 @@
 const constTranslations = {
-  "de": {
-    "1111": "1111",
-    "2222%{var0}": "2222%{var0}"
-  },
   "en": {
-    "1111": "1111",
-    "2222%{var0}": "2222%{var0}"
+    "sadasdad_en": "sadasdad_en",
+    "fffff_en": "fffff_en",
+    "bbb_en": "bbb_en",
+    "sadasdad": "sadasdad",
+    "bbb": "bbb"
   },
-  "es": {
-    "1111": "1111",
-    "2222%{var0}": "2222%{var0}"
+  "zh-Hans": {
+    "sadasdad_en": "sadasdad",
+    "fffff_en": "fffff_hans",
+    "bbb_en": "bbb",
+    "sadasdad": "sadasdad_hans",
+    "bbb": "bbb_hans"
+  },
+  "zh-Hant": {
+    "sadasdad_en": "sadasdad",
+    "fffff_en": "fffff",
+    "bbb_en": "bbb",
+    "sadasdad": "sadasdad",
+    "bbb": "bbb_hant"
   },
   "ko": {
-    "1111": "1111",
-    "2222%{var0}": "2222%{var0}"
-  },
-  "tr": {
-    "1111": "1111",
-    "2222%{var0}": "2222%{var0}"
-  },
-  "vi": {
-    "1111": "1111",
-    "2222%{var0}": "2222%{var0}"
-  },
-  "zh-CN": {
-    "1111": "1111",
-    "2222%{var0}": "2222%{var0}"
-  },
-  "zh-TC": {
-    "1111": "1111",
-    "2222%{var0}": "2222%{var0}"
+    "sadasdad_en": "sadasdad",
+    "fffff_en": "fffff",
+    "bbb_en": "bbb",
+    "sadasdad": "sadasdad",
+    "bbb": "bbb"
   }
 };
 

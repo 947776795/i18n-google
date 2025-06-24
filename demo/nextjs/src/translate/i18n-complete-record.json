@@ -1,148 +1,116 @@
 {
-  "app/page.ts": {
-    "Demo: %{var0} - %{var1}": {
-      "de": "Demo: %{var0} - %{var1}",
-      "en": "Demo: %{var0} - %{var1}",
-      "es": "Demo: %{var0} - %{var1}",
-      "ko": "Demo: %{var0} - %{var1}",
-      "tr": "Demo: %{var0} - %{var1}",
-      "vi": "Demo: %{var0} - %{var1}",
-      "zh-CN": "Demo: %{var0} - %{var1}",
-      "zh-TC": "Demo: %{var0} - %{var1}"
+  "app/[local]/page.ts": {
+    "get_started_by_editing": {
+      "en": "get_started_by_editing",
+      "zh-Hans": "get_started_by_editing",
+      "zh-Hant": "get_started_by_editing",
+      "ko": "get_started_by_editing"
     },
-    "Deploy now": {
-      "de": "Deploy now",
-      "en": "Deploy now",
-      "es": "Deploy now",
-      "ko": "Deploy now",
-      "tr": "Deploy now",
-      "vi": "Deploy now",
-      "zh-CN": "Deploy now",
-      "zh-TC": "Deploy now"
+    "src/app/page.tsx": {
+      "en": "src/app/page.tsx",
+      "zh-Hans": "src/app/page.tsx",
+      "zh-Hant": "src/app/page.tsx",
+      "ko": "src/app/page.tsx"
     },
-    "nihao": {
-      "de": "nihao",
-      "en": "nihao",
-      "es": "nihao",
-      "ko": "nihao",
-      "tr": "nihao",
-      "vi": "nihao",
-      "zh-CN": "nihao",
-      "zh-TC": "nihao"
+    "save_and_see_changes_instantly": {
+      "en": "save_and_see_changes_instantly",
+      "zh-Hans": "save_and_see_changes_instantly",
+      "zh-Hant": "save_and_see_changes_instantly",
+      "ko": "save_and_see_changes_instantly"
     },
-    "I18n3": {
-      "de": "I18n3",
-      "en": "I18n3",
-      "es": "I18n3",
-      "ko": "I18n3",
-      "tr": "I18n3",
-      "vi": "I18n3",
-      "zh-CN": "I18n3",
-      "zh-TC": "I18n3"
+    "deploy_now": {
+      "en": "deploy_now",
+      "zh-Hans": "deploy_now",
+      "zh-Hant": "deploy_now",
+      "ko": "deploy_now"
+    },
+    "read_our_docs": {
+      "en": "read_our_docs",
+      "zh-Hans": "read_our_docs",
+      "zh-Hant": "read_our_docs",
+      "ko": "read_our_docs"
+    },
+    "const_test": {
+      "en": "const_test",
+      "zh-Hans": "const_test",
+      "zh-Hant": "const_test",
+      "ko": "const_test"
+    },
+    "const_test2": {
+      "en": "const_test2",
+      "zh-Hans": "const_test2",
+      "zh-Hant": "const_test2",
+      "ko": "const_test2"
+    },
+    "learn": {
+      "en": "learn",
+      "zh-Hans": "learn",
+      "zh-Hant": "learn",
+      "ko": "learn"
+    },
+    "examples": {
+      "en": "examples",
+      "zh-Hans": "examples",
+      "zh-Hant": "examples",
+      "ko": "examples"
+    },
+    "go_to_nextjs": {
+      "en": "go_to_nextjs",
+      "zh-Hans": "go_to_nextjs",
+      "zh-Hant": "go_to_nextjs",
+      "ko": "go_to_nextjs"
     }
   },
   "components/Button/index.ts": {
-    "nihaoma": {
-      "de": "nihaoma",
-      "en": "nihaoma",
-      "es": "nihaoma",
-      "ko": "nihaoma",
-      "tr": "nihaoma",
-      "vi": "nihaoma",
-      "zh-CN": "nihaoma",
-      "zh-TC": "nihaoma"
-    },
-    "I18n": {
-      "de": "I18n",
-      "en": "I18n",
-      "es": "I18n",
-      "ko": "I18n",
-      "tr": "I18n",
-      "vi": "I18n",
-      "zh-CN": "I18n",
-      "zh-TC": "I18n"
-    },
-    "I18n2": {
-      "de": "I18n2",
-      "en": "I18n2",
-      "es": "I18n2",
-      "ko": "I18n2",
-      "tr": "I18n2",
-      "vi": "I18n2",
-      "zh-CN": "I18n2",
-      "zh-TC": "I18n2"
-    },
-    "I18n3": {
-      "de": "I18n3",
-      "en": "I18n3",
-      "es": "I18n3",
-      "ko": "I18n3",
-      "tr": "I18n3",
-      "vi": "I18n3",
-      "zh-CN": "I18n3",
-      "zh-TC": "I18n3"
+    "I18n22": {
+      "en": "I18n22",
+      "zh-Hans": "I18n22",
+      "zh-Hant": "I18n22",
+      "ko": "I18n22"
     },
     "I18n5": {
-      "de": "I18n5",
       "en": "I18n5",
-      "es": "I18n5",
-      "ko": "I18n5",
-      "tr": "I18n5",
-      "vi": "I18n5",
-      "zh-CN": "I18n5",
-      "zh-TC": "I18n5"
+      "zh-Hans": "I18n5",
+      "zh-Hant": "I18n5",
+      "ko": "I18n5"
     },
     "I18n4": {
-      "de": "I18n4",
       "en": "I18n4",
-      "es": "I18n4",
-      "ko": "I18n4",
-      "tr": "I18n4",
-      "vi": "I18n4",
-      "zh-CN": "I18n4",
-      "zh-TC": "I18n4"
-    },
-    "I18n6": {
-      "de": "I18n6",
-      "en": "I18n6",
-      "es": "I18n6",
-      "ko": "I18n6",
-      "tr": "I18n6",
-      "vi": "I18n6",
-      "zh-CN": "I18n6",
-      "zh-TC": "I18n6"
-    },
-    "I18n22": {
-      "de": "I18n22",
-      "en": "I18n22",
-      "es": "I18n22",
-      "ko": "I18n22",
-      "tr": "I18n22",
-      "vi": "I18n22",
-      "zh-CN": "I18n22",
-      "zh-TC": "I18n22"
+      "zh-Hans": "I18n4",
+      "zh-Hant": "I18n4",
+      "ko": "I18n4"
     }
   },
   "const/const.ts": {
-    "1111": {
-      "de": "1111",
-      "en": "1111",
-      "es": "1111",
-      "ko": "1111",
-      "tr": "1111",
-      "vi": "1111",
-      "zh-CN": "1111",
-      "zh-TC": "1111"
+    "sadasdad_en": {
+      "en": "sadasdad_en",
+      "zh-Hans": "sadasdad",
+      "zh-Hant": "sadasdad",
+      "ko": "sadasdad"
     },
-    "2222%{var0}": {
-      "de": "2222%{var0}",
-      "en": "2222%{var0}",
-      "es": "2222%{var0}",
-      "ko": "2222%{var0}",
-      "tr": "2222%{var0}",
-      "vi": "2222%{var0}",
-      "zh-CN": "2222%{var0}",
-      "zh-TC": "2222%{var0}"
+    "fffff_en": {
+      "en": "fffff_en",
+      "zh-Hans": "fffff_hans",
+      "zh-Hant": "fffff",
+      "ko": "fffff"
+    },
+    "bbb_en": {
+      "en": "bbb_en",
+      "zh-Hans": "bbb",
+      "zh-Hant": "bbb",
+      "ko": "bbb"
+    },
+    "sadasdad": {
+      "en": "sadasdad",
+      "zh-Hans": "sadasdad_hans",
+      "zh-Hant": "sadasdad",
+      "ko": "sadasdad"
+    },
+    "bbb": {
+      "en": "bbb",
+      "zh-Hans": "bbb_hans",
+      "zh-Hant": "bbb_hant",
+      "ko": "bbb"
     }
   }
 }

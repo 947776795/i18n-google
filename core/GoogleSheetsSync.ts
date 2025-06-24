@@ -6,16 +6,24 @@ import { Logger } from "../utils/StringUtils";
 
 export class GoogleSheetsSync {
   private googleSheets: any;
-  private isInitialized: boolean = true;
+  private isInitialized: boolean = false;
+  private initPromise: Promise<void>;
 
   constructor(private config: I18nConfig) {
-    this.initGoogleSheets();
+    this.initPromise = this.initGoogleSheets();
+  }
+
+  /**
+   * 确保初始化完成
+   */
+  private async ensureInitialized(): Promise<void> {
+    await this.initPromise;
   }
 
   /**
    * 初始化 Google Sheets API
    */
-  private async initGoogleSheets() {
+  private async initGoogleSheets(): Promise<void> {
     try {
       const auth = new google.auth.GoogleAuth({
         keyFile: this.config.keyFile,
@@ -27,6 +35,9 @@ export class GoogleSheetsSync {
         version: "v4",
         auth: authClient as any,
       });
+
+      this.isInitialized = true;
+      Logger.info("✅ Google Sheets API 初始化成功");
     } catch (error) {
       Logger.warn("⚠️ Google Sheets API 初始化失败，将使用模拟模式:", error);
       this.isInitialized = false;
@@ -86,6 +97,8 @@ export class GoogleSheetsSync {
    * @returns 包含数据的实际范围
    */
   private async getSheetDimensions(): Promise<{ rows: number; cols: number }> {
+    await this.ensureInitialized();
+
     try {
       // 首先获取sheet的基本信息来确定有数据的范围
       const metadataResponse = await this.googleSheets.spreadsheets.get({
@@ -118,6 +131,8 @@ export class GoogleSheetsSync {
    * 从 Google Sheets 同步 CompleteTranslationRecord
    */
   public async syncCompleteRecordFromSheet(): Promise<CompleteTranslationRecord> {
+    await this.ensureInitialized();
+
     if (!this.isInitialized) {
       Logger.info("🔄 Google Sheets 未初始化，返回空翻译");
       return {};
@@ -160,8 +175,9 @@ export class GoogleSheetsSync {
 
         if (!combinedKey) continue;
 
-        // 解析组合键: [demo/src/components.tsx][Apply Changes]
-        const match = combinedKey.match(/^\[([^\]]+)\]\[([^\]]+)\]$/);
+        // 解析组合键: [demo/src/components.tsx][Apply Changes] 或 [app/[local]/page.ts][get_started_by_editing]
+        // 使用更精确的正则表达式来处理嵌套的方括号
+        const match = combinedKey.match(/^\[(.+)\]\[([^\]]+)\]$/);
         if (!match) {
           Logger.warn(`⚠️ 无法解析组合键格式: ${combinedKey}`);
           continue;
@@ -218,6 +234,8 @@ export class GoogleSheetsSync {
   public async syncCompleteRecordToSheet(
     completeRecord: CompleteTranslationRecord
   ): Promise<void> {
+    await this.ensureInitialized(); // 确保初始化完成
+
     if (!this.isInitialized) {
       Logger.info("🔄 Google Sheets 未初始化，跳过同步");
       return;

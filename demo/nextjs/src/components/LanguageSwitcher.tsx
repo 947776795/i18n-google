@@ -1,7 +1,6 @@
 "use client";
 
 import { I18nUtil, languageOptions } from "@utils";
-import languageSwitcherTranslations from "@translate/components/LanguageSwitcher";
 import { useState, useEffect } from "react";
 
 interface LanguageSwitcherProps {
@@ -30,6 +29,21 @@ export default function LanguageSwitcher({
       (option) => option.value === currentLocale
     );
     return currentOption?.label || "English";
+  };
+
+  const getFlagForLocale = (locale: string) => {
+    switch (locale) {
+      case "zh-Hant":
+        return "🇹🇼"; // 台湾旗帜代表繁体中文
+      case "en":
+        return "🇺🇸"; // 美国旗帜代表英语
+      case "zh-Hans":
+        return "🇨🇳"; // 中国旗帜代表简体中文
+      case "ko":
+        return "🇰🇷"; // 韩国旗帜
+      default:
+        return "🌐"; // 默认地球图标
+    }
   };
 
   return (
@@ -74,14 +88,7 @@ export default function LanguageSwitcher({
                 onClick={() => handleLanguageChange(option.value)}
               >
                 <span className="mr-3 text-lg">
-                  {option.value === "zh-TC" && "🇹🇼"}
-                  {option.value === "en" && "🇺🇸"}
-                  {option.value === "zh-CN" && "🇨🇳"}
-                  {option.value === "ko" && "🇰🇷"}
-                  {option.value === "es" && "🇪🇸"}
-                  {option.value === "tr" && "🇹🇷"}
-                  {option.value === "de" && "🇩🇪"}
-                  {option.value === "vi" && "🇻🇳"}
+                  {getFlagForLocale(option.value)}
                 </span>
                 {option.label}
                 {currentLocale === option.value && (

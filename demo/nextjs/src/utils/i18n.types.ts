@@ -1,12 +1,8 @@
 export const LOCALES = {
-  ZHTC: "zh-TC",
-  EN: "en",
-  ZHCN: "zh-CN",
-  KO: "ko",
-  ES: "es",
-  TR: "tr",
-  DE: "de",
-  VI: "vi",
+  EN: "en", // 英语（默认语言）
+  ZHCN: "zh-Hans", // 中文简体（使用简体汉字）
+  ZHTW: "zh-Hant", // 中文繁体（使用繁体汉字）
+  KO: "ko", // 韩语
 } as const;
 
 export type Locale = (typeof LOCALES)[keyof typeof LOCALES];
