@@ -4,7 +4,7 @@ import { namedTypes as n } from "ast-types";
 import type { I18nConfig } from "../types";
 import { StringUtils, Logger } from "../utils/StringUtils";
 import { AstUtils } from "../utils/AstUtils";
-import * as fs from "fs";
+import { PathUtils } from "../utils/PathUtils";
 
 export interface TransformResult {
   key: string;
@@ -64,9 +64,9 @@ export class AstTransformer {
     // 查找需要翻译的JSX文本节点（纯文本）
     this.transformJSXTextNodes(root, j, filePath, results);
 
-    // 添加 I18n 导入
+    // 添加模块化导入
     if (results.length > 0) {
-      this.addI18nImport(j, root);
+      this.addModularImports(j, root, filePath);
     }
 
     const transformedCode = root.toSource();
@@ -587,10 +587,68 @@ export class AstTransformer {
   }
 
   /**
-   * 添加 I18n 导入
+   * 添加模块化导入和初始化
    */
-  private addI18nImport(j: JSCodeshiftAPI, root: JSCodeshiftCollection): void {
-    const hasI18nImport = root
+  private addModularImports(
+    j: JSCodeshiftAPI,
+    root: JSCodeshiftCollection,
+    filePath: string
+  ): void {
+    // 1. 添加翻译文件导入
+    const modulePath = PathUtils.getModulePathForFile(filePath);
+    const translationImportPath = PathUtils.getTranslationImportPath(
+      filePath,
+      modulePath,
+      this.config
+    );
+
+    this.addTranslationImport(
+      j,
+      root,
+      "Translations", // 统一使用 "Translations" 变量名
+      translationImportPath
+    );
+
+    // 2. 添加 I18nUtil 导入
+    this.addI18nUtilImport(j, root);
+
+    // 3. 在组件/函数开头添加 scoped 初始化
+    this.addScopedInitialization(j, root, "Translations");
+  }
+
+  /**
+   * 添加翻译文件导入（使用默认导入）
+   */
+  private addTranslationImport(
+    j: JSCodeshiftAPI,
+    root: JSCodeshiftCollection,
+    varName: string,
+    importPath: string
+  ): void {
+    const hasTranslationImport = root
+      .find(j.ImportDeclaration)
+      .some((path: ASTPath<n.ImportDeclaration>) => {
+        return path.node.source?.value === importPath;
+      });
+
+    if (!hasTranslationImport) {
+      // 使用统一的 "Translations" 变量名进行默认导入
+      const importDecl = j.importDeclaration(
+        [j.importDefaultSpecifier(j.identifier("Translations"))],
+        j.literal(importPath)
+      );
+      root.get().node.program.body.unshift(importDecl);
+    }
+  }
+
+  /**
+   * 添加 I18nUtil 导入
+   */
+  private addI18nUtilImport(
+    j: JSCodeshiftAPI,
+    root: JSCodeshiftCollection
+  ): void {
+    const hasI18nUtilImport = root
       .find(j.ImportDeclaration)
       .some((path: ASTPath<n.ImportDeclaration>) => {
         const nodeSource = path.node.source;
@@ -599,52 +657,186 @@ export class AstTransformer {
         return !!(
           nodeSource?.value === "@utils" &&
           nodeSpecs?.some(
-            (
-              spec:
-                | n.ImportSpecifier
-                | n.ImportDefaultSpecifier
-                | n.ImportNamespaceSpecifier
-            ) => n.ImportSpecifier.check(spec) && spec.imported.name === "I18n"
+            (spec) =>
+              n.ImportSpecifier.check(spec) && spec.imported.name === "I18nUtil"
           )
         );
       });
 
-    if (!hasI18nImport) {
+    if (!hasI18nUtilImport) {
       root
         .get()
         .node.program.body.unshift(
           j.importDeclaration(
-            [j.importSpecifier(j.identifier("I18n"), j.identifier("I18n"))],
+            [
+              j.importSpecifier(
+                j.identifier("I18nUtil"),
+                j.identifier("I18nUtil")
+              ),
+            ],
             j.literal("@utils")
           )
         );
     }
   }
 
-  // ===========================================
-  // 向后兼容的方法（为了不破坏现有测试）
-  // 将来应该使用 FileTransformer 代替
-  // ===========================================
+  /**
+   * 添加 scoped 初始化（统一在文件顶部添加）
+   */
+  private addScopedInitialization(
+    j: JSCodeshiftAPI,
+    root: JSCodeshiftCollection,
+    translationVarName: string
+  ): void {
+    // 检查是否已经有 I18n scoped 初始化
+    const hasExistingInit = this.hasExistingScopedInit(j, root);
+
+    if (hasExistingInit) {
+      return; // 如果已经存在，跳过添加
+    }
+
+    // 统一在文件顶部（导入语句之后）添加 I18n 初始化，使用 "Translations" 变量名
+    const scopedInit = this.createScopedInitStatement(j, "Translations");
+    this.insertStatementAtFileTop(j, root, scopedInit);
+  }
 
   /**
-   * @deprecated 使用 FileTransformer.transformFile() 代替
-   * 这个方法保留用于向后兼容
+   * 检查是否已经有 scoped 初始化
    */
-  public async transformFile(filePath: string): Promise<TransformResult[]> {
-    try {
-      const source = await fs.promises.readFile(filePath, "utf-8");
-      const { results } = this.transformSource(source, filePath);
+  private hasExistingScopedInit(
+    j: JSCodeshiftAPI,
+    root: JSCodeshiftCollection
+  ): boolean {
+    let hasInit = false;
 
-      if (results.length > 0) {
-        // 重新生成修改后的代码
-        const { transformedCode } = this.transformSource(source, filePath);
-        await fs.promises.writeFile(filePath, transformedCode);
+    root.find(j.VariableDeclarator).forEach((path) => {
+      const node = path.node;
+      if (
+        n.Identifier.check(node.id) &&
+        node.id.name === "I18n" &&
+        n.CallExpression.check(node.init) &&
+        n.MemberExpression.check(node.init.callee) &&
+        n.Identifier.check(node.init.callee.object) &&
+        node.init.callee.object.name === "I18nUtil" &&
+        n.Identifier.check(node.init.callee.property) &&
+        node.init.callee.property.name === "createScoped"
+      ) {
+        hasInit = true;
       }
+    });
 
-      return results;
-    } catch (error) {
-      Logger.error(`❌ 处理文件 ${filePath} 时发生错误:`, error);
-      throw error;
+    return hasInit;
+  }
+
+  /**
+   * 创建 scoped 初始化语句
+   */
+  private createScopedInitStatement(
+    j: JSCodeshiftAPI,
+    translationVarName: string
+  ): n.VariableDeclaration {
+    return j.variableDeclaration("const", [
+      j.variableDeclarator(
+        j.identifier("I18n"),
+        j.callExpression(
+          j.memberExpression(
+            j.identifier("I18nUtil"),
+            j.identifier("createScoped")
+          ),
+          [j.identifier("Translations")]
+        )
+      ),
+    ]);
+  }
+
+  /**
+   * 查找组件定义
+   */
+  private findComponentDefinitions(
+    j: JSCodeshiftAPI,
+    root: JSCodeshiftCollection
+  ): ASTPath<any>[] {
+    const components: ASTPath<any>[] = [];
+
+    // 查找函数组件 (function declarations)
+    root.find(j.FunctionDeclaration).forEach((path) => {
+      if (this.isReactComponent(path.node)) {
+        components.push(path);
+      }
+    });
+
+    // 查找箭头函数组件 (const Component = () => {})
+    root.find(j.VariableDeclarator).forEach((path) => {
+      if (n.ArrowFunctionExpression.check(path.node.init)) {
+        const func = path.node.init;
+        if (this.isReactComponent(func)) {
+          components.push(path);
+        }
+      }
+    });
+
+    return components;
+  }
+
+  /**
+   * 检查是否是 React 组件
+   */
+  private isReactComponent(
+    node: n.Function | n.ArrowFunctionExpression
+  ): boolean {
+    // 简单检查：如果函数返回JSX，认为是React组件
+    // 这里可以根据实际需要完善逻辑
+    return true; // 简化实现
+  }
+
+  /**
+   * 在函数/组件开头插入语句
+   */
+  private insertStatementAtBeginning(
+    componentPath: ASTPath<any>,
+    statement: n.VariableDeclaration
+  ): void {
+    const node = componentPath.node;
+
+    if (n.FunctionDeclaration.check(node)) {
+      // 函数声明
+      if (node.body && node.body.body) {
+        node.body.body.unshift(statement as any);
+      }
+    } else if (
+      n.VariableDeclarator.check(node) &&
+      n.ArrowFunctionExpression.check(node.init)
+    ) {
+      // 箭头函数
+      const arrowFunc = node.init;
+      if (n.BlockStatement.check(arrowFunc.body)) {
+        arrowFunc.body.body.unshift(statement as any);
+      }
     }
+  }
+
+  /**
+   * 在文件顶部插入语句（用于非组件文件）
+   */
+  private insertStatementAtFileTop(
+    j: JSCodeshiftAPI,
+    root: JSCodeshiftCollection,
+    statement: n.VariableDeclaration
+  ): void {
+    // 在所有导入语句之后插入
+    const program = root.get().node.program;
+
+    // 找到最后一个导入语句的位置
+    let insertIndex = 0;
+    for (let i = 0; i < program.body.length; i++) {
+      if (n.ImportDeclaration.check(program.body[i])) {
+        insertIndex = i + 1;
+      } else {
+        break;
+      }
+    }
+
+    // 在导入语句之后插入初始化语句
+    program.body.splice(insertIndex, 0, statement as any);
   }
 }

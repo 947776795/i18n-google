@@ -48,6 +48,16 @@ export class StringUtils {
    * @param text - 待翻译文本
    */
   static generateTranslationKey(filePath: string, text: string): string {
+    // 新实现：直接使用原文案作为key
+    return text;
+  }
+
+  /**
+   * 生成哈希翻译键（保留作为备用方法）
+   * @param filePath - 文件路径
+   * @param text - 待翻译文本
+   */
+  static generateHashTranslationKey(filePath: string, text: string): string {
     const locationString = JSON.stringify({ path: filePath, text });
     const hash = crypto
       .createHash("md5")

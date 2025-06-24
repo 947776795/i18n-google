@@ -1,0 +1,266 @@
+{
+  "TestFixedComponent.ts": {
+    "Fixed path test component": {
+      "de": "Fixed path test component",
+      "en": "Fixed path test component",
+      "es": "Fixed path test component",
+      "ko": "Fixed path test component",
+      "tr": "Fixed path test component",
+      "vi": "Fixed path test component",
+      "zh-CN": "Fixed path test component",
+      "zh-TC": "Fixed path test component"
+    },
+    "User Profile Settings": {
+      "de": "User Profile Settings",
+      "en": "User Profile Settings",
+      "es": "User Profile Settings",
+      "ko": "User Profile Settings",
+      "tr": "User Profile Settings",
+      "vi": "User Profile Settings",
+      "zh-CN": "User Profile Settings",
+      "zh-TC": "User Profile Settings"
+    },
+    "Apply Changes": {
+      "de": "Apply Changes",
+      "en": "Apply Changes",
+      "es": "Apply Changes",
+      "ko": "Apply Changes",
+      "tr": "Apply Changes",
+      "vi": "Apply Changes",
+      "zh-CN": "Apply Changes",
+      "zh-TC": "Apply Changes"
+    },
+    "Welcome %{var0}, you have %{var1} pending tasks": {
+      "de": "Welcome %{var0}, you have %{var1} pending tasks",
+      "en": "Welcome %{var0}, you have %{var1} pending tasks",
+      "es": "Welcome %{var0}, you have %{var1} pending tasks",
+      "ko": "Welcome %{var0}, you have %{var1} pending tasks",
+      "tr": "Welcome %{var0}, you have %{var1} pending tasks",
+      "vi": "Welcome %{var0}, you have %{var1} pending tasks",
+      "zh-CN": "Welcome %{var0}, you have %{var1} pending tasks",
+      "zh-TC": "Welcome %{var0}, you have %{var1} pending tasks"
+    }
+  },
+  "page/home.ts": {
+    "Fixed path test component": {
+      "de": "Fixed path test component",
+      "en": "Fixed path test component",
+      "es": "Fixed path test component",
+      "ko": "Fixed path test component",
+      "tr": "Fixed path test component",
+      "vi": "Fixed path test component",
+      "zh-CN": "Fixed path test component",
+      "zh-TC": "Fixed path test component"
+    },
+    "User Profile Settings": {
+      "de": "User Profile Settings",
+      "en": "User Profile Settings",
+      "es": "User Profile Settings",
+      "ko": "User Profile Settings",
+      "tr": "User Profile Settings",
+      "vi": "User Profile Settings",
+      "zh-CN": "User Profile Settings",
+      "zh-TC": "User Profile Settings"
+    },
+    "Apply Changes": {
+      "de": "Apply Changes",
+      "en": "Apply Changes",
+      "es": "Apply Changes",
+      "ko": "Apply Changes",
+      "tr": "Apply Changes",
+      "vi": "Apply Changes",
+      "zh-CN": "Apply Changes",
+      "zh-TC": "Apply Changes"
+    },
+    "Welcome %{var0}, you have %{var1} pending tasks": {
+      "de": "Welcome %{var0}, you have %{var1} pending tasks",
+      "en": "Welcome %{var0}, you have %{var1} pending tasks",
+      "es": "Welcome %{var0}, you have %{var1} pending tasks",
+      "ko": "Welcome %{var0}, you have %{var1} pending tasks",
+      "tr": "Welcome %{var0}, you have %{var1} pending tasks",
+      "vi": "Welcome %{var0}, you have %{var1} pending tasks",
+      "zh-CN": "Welcome %{var0}, you have %{var1} pending tasks",
+      "zh-TC": "Welcome %{var0}, you have %{var1} pending tasks"
+    }
+  },
+  "components/Header2.ts": {
+    "User Profile Settings": {
+      "de": "User Profile Settings",
+      "en": "User Profile Settings",
+      "es": "User Profile Settings",
+      "ko": "User Profile Settings",
+      "tr": "User Profile Settings",
+      "vi": "User Profile Settings",
+      "zh-CN": "User Profile Settings",
+      "zh-TC": "User Profile Settings"
+    }
+  },
+  "components/components/Header2.ts": {
+    "Welcome %{var0}, you have %{var1} pending tasks": {
+      "de": "Welcome %{var0}, you have %{var1} pending tasks",
+      "en": "Welcome %{var0}, you have %{var1} pending tasks",
+      "es": "Welcome %{var0}, you have %{var1} pending tasks",
+      "ko": "Welcome %{var0}, you have %{var1} pending tasks",
+      "tr": "Welcome %{var0}, you have %{var1} pending tasks",
+      "vi": "Welcome %{var0}, you have %{var1} pending tasks",
+      "zh-CN": "Welcome %{var0}, you have %{var1} pending tasks",
+      "zh-TC": "Welcome %{var0}, you have %{var1} pending tasks"
+    }
+  },
+  "TestModular.ts": {
+    "Welcome to our new system": {
+      "de": "Welcome to our new system",
+      "en": "Welcome to our new system",
+      "es": "Welcome to our new system",
+      "ko": "Welcome to our new system",
+      "tr": "Welcome to our new system",
+      "vi": "Welcome to our new system",
+      "zh-CN": "Welcome to our new system",
+      "zh-TC": "Welcome to our new system"
+    },
+    "This is a test for modular translation": {
+      "de": "This is a test for modular translation",
+      "en": "This is a test for modular translation",
+      "es": "This is a test for modular translation",
+      "ko": "This is a test for modular translation",
+      "tr": "This is a test for modular translation",
+      "vi": "This is a test for modular translation",
+      "zh-CN": "This is a test for modular translation",
+      "zh-TC": "This is a test for modular translation"
+    },
+    "User Dashboard": {
+      "de": "User Dashboard",
+      "en": "User Dashboard",
+      "es": "User Dashboard",
+      "ko": "User Dashboard",
+      "tr": "User Dashboard",
+      "vi": "User Dashboard",
+      "zh-CN": "User Dashboard",
+      "zh-TC": "User Dashboard"
+    },
+    "Save Changes": {
+      "de": "Save Changes",
+      "en": "Save Changes",
+      "es": "Save Changes",
+      "ko": "Save Changes",
+      "tr": "Save Changes",
+      "vi": "Save Changes",
+      "zh-CN": "Save Changes",
+      "zh-TC": "Save Changes"
+    },
+    "Hello %{var0}, you have %{var1} new notifications": {
+      "de": "Hello %{var0}, you have %{var1} new notifications",
+      "en": "Hello %{var0}, you have %{var1} new notifications",
+      "es": "Hello %{var0}, you have %{var1} new notifications",
+      "ko": "Hello %{var0}, you have %{var1} new notifications",
+      "tr": "Hello %{var0}, you have %{var1} new notifications",
+      "vi": "Hello %{var0}, you have %{var1} new notifications",
+      "zh-CN": "Hello %{var0}, you have %{var1} new notifications",
+      "zh-TC": "Hello %{var0}, you have %{var1} new notifications"
+    },
+    "Please check your settings": {
+      "de": "Please check your settings",
+      "en": "Please check your settings",
+      "es": "Please check your settings",
+      "ko": "Please check your settings",
+      "tr": "Please check your settings",
+      "vi": "Please check your settings",
+      "zh-CN": "Please check your settings",
+      "zh-TC": "Please check your settings"
+    }
+  },
+  "TestNewComponent.ts": {
+    "Welcome to our new system": {
+      "de": "Welcome to our new system",
+      "en": "Welcome to our new system",
+      "es": "Welcome to our new system",
+      "ko": "Welcome to our new system",
+      "tr": "Welcome to our new system",
+      "vi": "Welcome to our new system",
+      "zh-CN": "Welcome to our new system",
+      "zh-TC": "Welcome to our new system"
+    },
+    "This is a test for modular translation": {
+      "de": "This is a test for modular translation",
+      "en": "This is a test for modular translation",
+      "es": "This is a test for modular translation",
+      "ko": "This is a test for modular translation",
+      "tr": "This is a test for modular translation",
+      "vi": "This is a test for modular translation",
+      "zh-CN": "This is a test for modular translation",
+      "zh-TC": "This is a test for modular translation"
+    },
+    "User Dashboard": {
+      "de": "User Dashboard",
+      "en": "User Dashboard",
+      "es": "User Dashboard",
+      "ko": "User Dashboard",
+      "tr": "User Dashboard",
+      "vi": "User Dashboard",
+      "zh-CN": "User Dashboard",
+      "zh-TC": "User Dashboard"
+    },
+    "Save Changes": {
+      "de": "Save Changes",
+      "en": "Save Changes",
+      "es": "Save Changes",
+      "ko": "Save Changes",
+      "tr": "Save Changes",
+      "vi": "Save Changes",
+      "zh-CN": "Save Changes",
+      "zh-TC": "Save Changes"
+    },
+    "Hello %{var0}, you have %{var1} new notifications": {
+      "de": "Hello %{var0}, you have %{var1} new notifications",
+      "en": "Hello %{var0}, you have %{var1} new notifications",
+      "es": "Hello %{var0}, you have %{var1} new notifications",
+      "ko": "Hello %{var0}, you have %{var1} new notifications",
+      "tr": "Hello %{var0}, you have %{var1} new notifications",
+      "vi": "Hello %{var0}, you have %{var1} new notifications",
+      "zh-CN": "Hello %{var0}, you have %{var1} new notifications",
+      "zh-TC": "Hello %{var0}, you have %{var1} new notifications"
+    },
+    "Please check your settings": {
+      "de": "Please check your settings",
+      "en": "Please check your settings",
+      "es": "Please check your settings",
+      "ko": "Please check your settings",
+      "tr": "Please check your settings",
+      "vi": "Please check your settings",
+      "zh-CN": "Please check your settings",
+      "zh-TC": "Please check your settings"
+    }
+  },
+  "const/const.ts": {
+    "test": {
+      "de": "test",
+      "en": "test",
+      "es": "test",
+      "ko": "test",
+      "tr": "test",
+      "vi": "test",
+      "zh-CN": "test",
+      "zh-TC": "test"
+    },
+    "test2": {
+      "de": "test2",
+      "en": "test2",
+      "es": "test2",
+      "ko": "test2",
+      "tr": "test2",
+      "vi": "test2",
+      "zh-CN": "test2",
+      "zh-TC": "test2"
+    },
+    "ddd%{var0}": {
+      "de": "ddd%{var0}",
+      "en": "ddd%{var0}",
+      "es": "ddd%{var0}",
+      "ko": "ddd%{var0}",
+      "tr": "ddd%{var0}",
+      "vi": "ddd%{var0}",
+      "zh-CN": "ddd%{var0}",
+      "zh-TC": "ddd%{var0}"
+    }
+  }
+}

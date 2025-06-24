@@ -1,0 +1,30 @@
+{
+  "timestamp": "2025-06-20T11:27:38.074Z",
+  "totalKeysToDelete": 1,
+  "keysToDelete": [
+    {
+      "key": "User Profile Settings",
+      "translations": {
+        "de": "User Profile Settings",
+        "en": "User Profile Settings",
+        "es": "User Profile Settings",
+        "ko": "User Profile Settings",
+        "tr": "User Profile Settings",
+        "vi": "User Profile Settings",
+        "zh-CN": "User Profile Settings",
+        "zh-TC": "User Profile Settings"
+      },
+      "reason": "未在代码中找到引用"
+    }
+  ],
+  "affectedLanguages": [
+    "de",
+    "en",
+    "es",
+    "ko",
+    "tr",
+    "vi",
+    "zh-CN",
+    "zh-TC"
+  ]
+}

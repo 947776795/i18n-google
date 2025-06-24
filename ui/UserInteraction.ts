@@ -16,13 +16,14 @@ export class UserInteraction {
    */
   static async confirmDeletion(
     unusedKeys: string[],
-    generatePreviewFn: () => Promise<string>,
+    previewFilePath: string,
     forceKeptKeys: string[] = []
   ): Promise<boolean> {
     const summary: DeletionSummary = {
       keysToDelete: unusedKeys,
       totalKeys: unusedKeys.length,
       affectedLanguages: [], // 在实际使用时填充
+      previewFilePath,
     };
 
     // 显示强制保留信息
@@ -44,39 +45,18 @@ export class UserInteraction {
       });
       console.log("");
     } else {
-      // 如果Key数量较多，提供预览选项
-      const { viewPreview } = await inquirer.prompt([
+      // 显示预览文件信息
+      console.log(`\n📄 详细预览已生成: ${previewFilePath}`);
+      console.log("   请查看文件内容，然后返回继续操作\n");
+
+      // 等待用户查看文件
+      await inquirer.prompt([
         {
-          type: "confirm",
-          name: "viewPreview",
-          message: `发现 ${summary.totalKeys} 个无用Key（较多），是否查看详细预览？`,
-          default: true,
+          type: "input",
+          name: "continue",
+          message: "查看完预览文件后，按 Enter 继续...",
         },
       ]);
-
-      if (viewPreview) {
-        try {
-          const previewPath = await generatePreviewFn();
-          summary.previewFilePath = previewPath;
-
-          console.log(`\n📄 详细预览已生成: ${previewPath}`);
-          console.log("   请查看文件内容，然后返回继续操作\n");
-
-          // 等待用户查看文件
-          await inquirer.prompt([
-            {
-              type: "input",
-              name: "continue",
-              message: "查看完预览文件后，按 Enter 继续...",
-            },
-          ]);
-        } catch (error) {
-          console.warn("⚠️  生成预览文件失败，继续显示简要信息");
-          this.displayBriefSummary(unusedKeys);
-        }
-      } else {
-        this.displayBriefSummary(unusedKeys);
-      }
     }
 
     // 最终确认
@@ -103,6 +83,50 @@ export class UserInteraction {
         return finalConfirm;
       }
     }
+
+    return confirmDeletion;
+  }
+
+  /**
+   * 确认模块级别的Key删除
+   */
+  static async confirmModuleLevelDeletion(moduleLevelUnusedKeys: {
+    [modulePath: string]: string[];
+  }): Promise<boolean> {
+    const totalKeys = Object.values(moduleLevelUnusedKeys).reduce(
+      (total, keys) => total + keys.length,
+      0
+    );
+    const moduleCount = Object.keys(moduleLevelUnusedKeys).length;
+
+    console.log(
+      `\n🧹 发现 ${totalKeys} 个模块级无用Key，分布在 ${moduleCount} 个模块中\n`
+    );
+
+    // 显示详细信息
+    console.log("📁 模块级无用Key详情:");
+    Object.entries(moduleLevelUnusedKeys).forEach(
+      ([modulePath, keys], index) => {
+        console.log(`   ${index + 1}. ${modulePath} (${keys.length} 个key)`);
+        if (keys.length <= 5) {
+          keys.forEach((key) => console.log(`      - ${key}`));
+        } else {
+          keys.slice(0, 3).forEach((key) => console.log(`      - ${key}`));
+          console.log(`      ... 还有 ${keys.length - 3} 个`);
+        }
+      }
+    );
+    console.log("");
+
+    // 确认删除
+    const { confirmDeletion } = await inquirer.prompt([
+      {
+        type: "confirm",
+        name: "confirmDeletion",
+        message: `⚠️  确认从这些模块中删除无用的Key吗？此操作不可撤销！`,
+        default: false,
+      },
+    ]);
 
     return confirmDeletion;
   }

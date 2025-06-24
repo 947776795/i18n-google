@@ -1,32 +1,40 @@
-import * as fs from "fs";
-import * as path from "path";
-import { promisify } from "util";
+import path from "path";
+import fs from "fs";
+import { readFile, writeFile, mkdir } from "fs/promises";
 import type { I18nConfig } from "../types";
 import type { TransformResult } from "./AstTransformer";
-import { I18nError, I18nErrorType, ErrorHandler } from "../errors/I18nError";
-
-const readFile = promisify(fs.readFile);
-const writeFile = promisify(fs.writeFile);
-const mkdir = promisify(fs.mkdir);
+import { GoogleSheetsSync } from "./GoogleSheetsSync";
+import { I18nError, I18nErrorType } from "../errors/I18nError";
+import { PathUtils } from "../utils/PathUtils";
 
 export interface TranslationMap {
   [key: string]: string;
 }
 
-export interface TranslationData {
-  [language: string]: TranslationMap;
+// 新增：模块化翻译相关类型定义
+export interface ModuleTranslations {
+  [locale: string]: { [key: string]: string };
 }
 
-export interface TranslationBackup {
-  timestamp: string;
-  data: TranslationData;
-  checksum: string;
+export interface ModularTranslationData {
+  [modulePath: string]: ModuleTranslations;
+}
+
+// 新的完整记录格式
+export interface CompleteTranslationRecord {
+  [translationPath: string]: {
+    [translationKey: string]: {
+      [languageKey: string]: string;
+    };
+  };
 }
 
 export class TranslationManager {
-  private translations: TranslationData = {};
+  private googleSheetsSync: GoogleSheetsSync;
 
-  constructor(private config: I18nConfig) {}
+  constructor(private config: I18nConfig) {
+    this.googleSheetsSync = new GoogleSheetsSync(config);
+  }
 
   /**
    * 初始化翻译管理器
@@ -34,7 +42,6 @@ export class TranslationManager {
   public async initialize(): Promise<void> {
     try {
       await this.checkOutputDir();
-      await this.loadExistingTranslations();
     } catch (error) {
       if (error instanceof I18nError) {
         throw error;
@@ -49,66 +56,12 @@ export class TranslationManager {
   }
 
   /**
-   * 添加新的翻译项
-   */
-  public addTranslation(result: TransformResult): void {
-    this.config.languages.forEach((lang) => {
-      if (!this.translations[lang]) {
-        this.translations[lang] = {};
-      }
-      if (!this.translations[lang][result.key]) {
-        this.translations[lang][result.key] = result.text;
-      }
-    });
-  }
-
-  /**
-   * 获取所有翻译
-   */
-  public getTranslations(): TranslationData {
-    return this.translations;
-  }
-
-  /**
-   * 更新翻译 - 合并远程翻译到本地翻译
-   */
-  public updateTranslations(remoteTranslations: TranslationData): void {
-    // 合并远程翻译到本地翻译，而不是覆盖
-    Object.entries(remoteTranslations).forEach(([lang, translations]) => {
-      if (!this.translations[lang]) {
-        this.translations[lang] = {};
-      }
-      // 远程翻译优先，但保留本地新增的翻译
-      Object.assign(this.translations[lang], translations);
-    });
-  }
-
-  /**
-   * 保存翻译到文件
+   * 保存翻译到文件（已禁用，现在使用模块化翻译文件）
    */
   public async saveTranslations(): Promise<void> {
-    try {
-      await Promise.all(
-        Object.entries(this.translations).map(async ([lang, translations]) => {
-          const filePath = path.join(this.config.outputDir, `${lang}.json`);
-          try {
-            await writeFile(filePath, JSON.stringify(translations, null, 2));
-          } catch (error) {
-            throw ErrorHandler.createFileWriteError(filePath, error as Error);
-          }
-        })
-      );
-    } catch (error) {
-      if (error instanceof I18nError) {
-        throw error;
-      }
-      throw new I18nError(
-        I18nErrorType.FILE_WRITE_ERROR,
-        "保存翻译文件失败",
-        { originalError: error },
-        ["检查输出目录权限", "确认磁盘空间是否充足"]
-      );
-    }
+    // 模块化翻译系统不再需要生成语言JSON文件
+    // 翻译文件现在通过 generateModularFilesFromCompleteRecord() 生成
+    console.log("🔄 使用模块化翻译文件，跳过语言JSON文件生成");
   }
 
   /**
@@ -130,157 +83,529 @@ export class TranslationManager {
     }
   }
 
+  // ========== 模块化翻译相关方法 ==========
+
   /**
-   * 加载已存在的翻译
+   * 按模块路径分组翻译数据
+   * 现在基于 CompleteRecord 而不是 TranslationData
    */
-  private async loadExistingTranslations(): Promise<void> {
-    await Promise.all(
-      this.config.languages.map(async (lang) => {
-        const filePath = path.join(this.config.outputDir, `${lang}.json`);
-        try {
-          const content = await readFile(filePath, "utf-8");
-          try {
-            this.translations[lang] = JSON.parse(content);
-            this.validateTranslationData(this.translations[lang], lang);
-          } catch (parseError) {
-            throw ErrorHandler.createDataCorruptionError(
-              `翻译文件 ${lang}.json`,
-              { filePath, parseError: (parseError as Error).message }
+  private groupTranslationsByModule(
+    allReferences: Map<string, any[]>
+  ): ModularTranslationData {
+    const modularData: ModularTranslationData = {};
+
+    // 从 CompleteRecord 加载数据而不是从 this.translations
+    console.log(
+      "🔄 模块化翻译数据现在直接基于 CompleteRecord，此方法可能不再需要"
+    );
+
+    return modularData;
+  }
+
+  /**
+   * 根据Key和引用信息确定模块路径
+   */
+  private getModulePathForKey(
+    key: string,
+    allReferences: Map<string, any[]>
+  ): string {
+    console.log(`🔧 [DEBUG] getModulePathForKey 被调用，key: ${key}`);
+    const refs = allReferences.get(key);
+    if (!refs || refs.length === 0) {
+      console.log(`🔧 [DEBUG] 没有找到引用，使用默认路径: common`);
+      return "common"; // 默认路径
+    }
+
+    // 使用第一个引用的文件路径来确定模块路径
+    const filePath = refs[0].filePath;
+    console.log(`🔧 [DEBUG] 第一个引用的文件路径: ${filePath}`);
+    // 转换文件路径为模块路径：src/components/Header.tsx -> src/components/Header
+    const result = PathUtils.convertFilePathToModulePath(filePath, this.config);
+    console.log(`🔧 [DEBUG] 转换后的模块路径: ${result}`);
+    return result;
+  }
+
+  /**
+   * 保存新格式的完整记录
+   */
+  async saveCompleteRecord(allReferences: Map<string, any[]>): Promise<void> {
+    console.log("🔧 [DEBUG] TranslationManager.saveCompleteRecord 被调用");
+
+    const completeRecord = await this.buildCompleteRecord(allReferences);
+
+    // 确保输出目录存在
+    await mkdir(this.config.outputDir, { recursive: true });
+
+    const outputPath = path.join(
+      this.config.outputDir,
+      "i18n-complete-record.json"
+    );
+    await writeFile(
+      outputPath,
+      JSON.stringify(completeRecord, null, 2),
+      "utf-8"
+    );
+
+    console.log("💾 [DEBUG] TranslationManager 保存完成");
+  }
+
+  /**
+   * 合并新引用与现有记录，保留用户选择不删除的无用Key
+   */
+  async mergeWithExistingRecord(
+    allReferences: Map<string, any[]>
+  ): Promise<void> {
+    console.log("🔧 [DEBUG] TranslationManager.mergeWithExistingRecord 被调用");
+
+    try {
+      // 1. 加载现有的完整记录
+      const existingRecord = await this.loadCompleteRecord();
+
+      // 2. 构建基于新引用的记录
+      const newRecord = await this.buildCompleteRecord(allReferences);
+
+      // 3. 合并记录：现有记录优先（保留无用Key），新记录补充
+      const mergedRecord: CompleteTranslationRecord = { ...existingRecord };
+
+      // 遍历新记录，添加或更新翻译
+      Object.entries(newRecord).forEach(([modulePath, moduleKeys]) => {
+        if (!mergedRecord[modulePath]) {
+          // 新模块，直接添加
+          mergedRecord[modulePath] = moduleKeys;
+        } else {
+          // 现有模块，合并Key
+          Object.entries(moduleKeys).forEach(([key, translations]) => {
+            if (!mergedRecord[modulePath][key]) {
+              // 新Key，直接添加
+              mergedRecord[modulePath][key] = translations;
+            } else {
+              // 现有Key，合并翻译（新翻译优先）
+              mergedRecord[modulePath][key] = {
+                ...mergedRecord[modulePath][key],
+                ...translations,
+              };
+            }
+          });
+        }
+      });
+
+      // 4. 保存合并后的记录
+      await this.saveCompleteRecordDirect(mergedRecord);
+
+      console.log("✅ [DEBUG] TranslationManager.mergeWithExistingRecord 完成");
+    } catch (error) {
+      console.error(
+        "❌ [DEBUG] TranslationManager.mergeWithExistingRecord 失败:",
+        error
+      );
+      // 如果合并失败，回退到直接保存新记录
+      await this.saveCompleteRecord(allReferences);
+    }
+  }
+
+  /**
+   * 构建新格式的完整记录 - 智能合并版本
+   * 1. 先加载现有完整记录（包含远程翻译数据）
+   * 2. 分类所有翻译key到对应路径
+   * 3. 构建完整的翻译记录，优先保留现有翻译，新key使用原文案
+   */
+  private async buildCompleteRecord(
+    allReferences: Map<string, any[]>
+  ): Promise<CompleteTranslationRecord> {
+    console.log("🏗️ [DEBUG] 开始构建完整记录（智能合并模式）...");
+
+    // 第一步：加载现有的完整记录（包含远程翻译数据）
+    const existingRecord = await this.loadCompleteRecord();
+    console.log(
+      `📖 [DEBUG] 加载现有记录，包含 ${
+        Object.keys(existingRecord).length
+      } 个模块`
+    );
+
+    // 第二步：按路径分类所有翻译key
+    const pathClassification = this.classifyKeysByPath(allReferences);
+    console.log(
+      `🔍 [DEBUG] 按路径分类完成，共 ${
+        Object.keys(pathClassification).length
+      } 个模块路径`
+    );
+
+    // 第三步：构建新的完整记录，智能合并翻译数据
+    const record: CompleteTranslationRecord = {};
+
+    Object.entries(pathClassification).forEach(([modulePath, keys]) => {
+      console.log(
+        `📁 [DEBUG] 处理模块路径: "${modulePath}" (${keys.length} 个keys)`
+      );
+
+      // 初始化模块
+      record[modulePath] = {};
+
+      keys.forEach((key) => {
+        console.log(`🔑 [DEBUG] 处理key: "${key}"`);
+        record[modulePath][key] = {};
+
+        // 检查现有记录中是否有这个key的翻译数据
+        let existingTranslations: Record<string, string> | null = null;
+
+        // 在现有记录的所有模块中查找这个key
+        for (const [existingModulePath, existingModuleKeys] of Object.entries(
+          existingRecord
+        )) {
+          if (existingModuleKeys[key]) {
+            existingTranslations = existingModuleKeys[key];
+            console.log(
+              `✅ [DEBUG] 在模块 "${existingModulePath}" 中找到key "${key}" 的现有翻译`
+            );
+            break;
+          }
+        }
+
+        // 为每种语言设置翻译值
+        this.config.languages.forEach((lang) => {
+          if (existingTranslations && existingTranslations[lang]) {
+            // 优先使用现有翻译数据
+            record[modulePath][key][lang] = existingTranslations[lang];
+            console.log(
+              `🔄 [DEBUG] key "${key}" 语言 "${lang}" 使用现有翻译: "${existingTranslations[lang]}"`
+            );
+          } else {
+            // 没有现有翻译时，使用原文案作为默认值
+            record[modulePath][key][lang] = key;
+            console.log(
+              `🆕 [DEBUG] key "${key}" 语言 "${lang}" 使用默认值: "${key}"`
             );
           }
-        } catch (error) {
-          if (error instanceof I18nError) {
-            throw error;
-          }
-          // 文件不存在时创建空的翻译对象
-          this.translations[lang] = {};
+        });
+      });
+    });
+
+    console.log(
+      `🏗️ [DEBUG] buildCompleteRecord 完成，生成的模块: ${Object.keys(record)
+        .map((k) => `"${k}"`)
+        .join(", ")}`
+    );
+
+    // 第四步：输出详细的分类结果用于调试
+    this.logPathClassificationDetails(pathClassification);
+
+    return record;
+  }
+
+  /**
+   * 按路径分类所有翻译key - 每个文件夹管理自己的翻译
+   * 允许翻译在多个文件夹中重复存在
+   */
+  private classifyKeysByPath(
+    allReferences: Map<string, any[]>
+  ): Record<string, string[]> {
+    console.log(
+      "🔍 [DEBUG] 开始按文件夹级别分类翻译key（每个文件夹管理自己的翻译）..."
+    );
+
+    const classification: Record<string, string[]> = {};
+
+    allReferences.forEach((references, key) => {
+      console.log(`🔑 [DEBUG] 分类key: ${key}`);
+
+      if (references.length === 0) {
+        console.log(`  ⚠️ [DEBUG] key "${key}" 没有引用，归类到 common`);
+        if (!classification["common"]) classification["common"] = [];
+        classification["common"].push(key);
+        return;
+      }
+
+      // 按文件夹级别分类：每个引用的文件夹都会包含这个翻译
+      const folderPaths = new Set<string>();
+
+      references.forEach((ref, index) => {
+        const modulePath = PathUtils.convertFilePathToModulePath(
+          ref.filePath,
+          this.config
+        );
+        folderPaths.add(modulePath);
+        console.log(
+          `  📂 [DEBUG] 引用 ${index + 1}: ${
+            ref.filePath
+          } -> 模块路径: "${modulePath}"`
+        );
+      });
+
+      // 将翻译key添加到所有相关的文件夹模块中
+      folderPaths.forEach((modulePath) => {
+        if (!classification[modulePath]) {
+          classification[modulePath] = [];
+          console.log(`  ✨ [DEBUG] 创建新模块分类: "${modulePath}"`);
         }
-      })
+
+        // 避免重复添加
+        if (!classification[modulePath].includes(key)) {
+          classification[modulePath].push(key);
+          console.log(`  ✅ [DEBUG] key "${key}" 添加到模块 "${modulePath}"`);
+        }
+      });
+
+      console.log(
+        `  📊 [DEBUG] key "${key}" 最终分布在 ${
+          folderPaths.size
+        } 个文件夹: [${Array.from(folderPaths)
+          .map((p) => `"${p}"`)
+          .join(", ")}]`
+      );
+    });
+
+    return classification;
+  }
+
+  /**
+   * 输出路径分类的详细信息
+   */
+  private logPathClassificationDetails(
+    classification: Record<string, string[]>
+  ): void {
+    console.log("\n📊 [DEBUG] 路径分类详细结果:");
+    Object.entries(classification).forEach(([path, keys]) => {
+      console.log(`  📁 模块路径: "${path}"`);
+      console.log(`    - 包含 ${keys.length} 个翻译key`);
+      console.log(
+        `    - keys: [${keys.slice(0, 3).join(", ")}${
+          keys.length > 3 ? "..." : ""
+        }]`
+      );
+    });
+    console.log("");
+  }
+
+  /**
+   * 基于完整记录生成模块化翻译文件
+   */
+  async generateModularFilesFromCompleteRecord(): Promise<void> {
+    // 读取完整记录
+    const completeRecord = await this.loadCompleteRecord();
+
+    // 生成模块文件
+    await this.generateModuleFilesFromRecord(completeRecord);
+  }
+
+  /**
+   * 加载完整记录文件
+   */
+  public async loadCompleteRecord(): Promise<CompleteTranslationRecord> {
+    const filePath = path.join(
+      this.config.outputDir,
+      "i18n-complete-record.json"
+    );
+
+    try {
+      const content = await readFile(filePath, "utf-8");
+      return JSON.parse(content);
+    } catch (error) {
+      console.warn("完整记录文件不存在或读取失败，返回空记录");
+      return {};
+    }
+  }
+
+  /**
+   * 从完整记录生成模块文件 - 优化版本
+   * 递归生成各个翻译文件夹
+   */
+  private async generateModuleFilesFromRecord(
+    completeRecord: CompleteTranslationRecord
+  ): Promise<void> {
+    console.log("🏗️ [DEBUG] 开始递归生成翻译文件夹...");
+    console.log(
+      `📊 [DEBUG] 需要生成 ${Object.keys(completeRecord).length} 个模块`
+    );
+
+    // 按模块路径排序，确保根目录优先处理
+    const sortedModules = Object.entries(completeRecord).sort(([a], [b]) => {
+      if (a === "") return -1; // 根目录优先
+      if (b === "") return 1;
+      return a.localeCompare(b);
+    });
+
+    for (const [modulePath, moduleKeys] of sortedModules) {
+      console.log(`\n📁 [DEBUG] 处理模块: "${modulePath}"`);
+      console.log(`  - 包含 ${Object.keys(moduleKeys).length} 个翻译key`);
+
+      // 确定目标目录和文件路径
+      const { targetDir, filePath } = this.resolveModulePaths(modulePath);
+      console.log(`  - 目标目录: ${targetDir}`);
+      console.log(`  - 文件路径: ${filePath}`);
+
+      // 创建目录（递归）
+      await this.ensureDirectoryExists(targetDir);
+
+      // 生成模块名（用于导出变量名）
+      const moduleName = this.getModuleName(modulePath);
+      console.log(`  - 模块名: ${moduleName}`);
+
+      // 构建模块翻译数据
+      const moduleTranslations = this.buildModuleTranslations(moduleKeys);
+
+      // 生成翻译文件内容
+      const content = this.generateModuleFileContent(
+        moduleName,
+        moduleTranslations
+      );
+
+      // 写入文件
+      await writeFile(filePath, content, "utf-8");
+      console.log(`  ✅ [DEBUG] 文件生成完成: ${filePath}`);
+    }
+
+    console.log("\n🎉 [DEBUG] 所有翻译文件夹生成完成！");
+  }
+
+  /**
+   * 解析模块路径，返回目标目录和文件路径
+   * 与组件文件结构一一对应
+   */
+  private resolveModulePaths(modulePath: string): {
+    targetDir: string;
+    filePath: string;
+  } {
+    // modulePath 现在是完整的文件路径，如 "TestModular.ts" 或 "components/Header2.ts"
+    const fullFilePath = path.join(this.config.outputDir, modulePath);
+    const targetDir = path.dirname(fullFilePath);
+    const filePath = fullFilePath;
+
+    console.log(`🔧 [DEBUG] resolveModulePaths - 输入: ${modulePath}`);
+    console.log(`🔧 [DEBUG] resolveModulePaths - 完整路径: ${fullFilePath}`);
+    console.log(`🔧 [DEBUG] resolveModulePaths - 目标目录: ${targetDir}`);
+    console.log(`🔧 [DEBUG] resolveModulePaths - 文件路径: ${filePath}`);
+
+    return { targetDir, filePath };
+  }
+
+  /**
+   * 确保目录存在（递归创建）
+   */
+  private async ensureDirectoryExists(dirPath: string): Promise<void> {
+    try {
+      await mkdir(dirPath, { recursive: true });
+      console.log(`  📂 [DEBUG] 目录创建成功: ${dirPath}`);
+    } catch (error) {
+      console.error(`  ❌ [DEBUG] 目录创建失败: ${dirPath}`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * 构建模块翻译数据
+   */
+  private buildModuleTranslations(
+    moduleKeys: Record<string, Record<string, string>>
+  ): ModuleTranslations {
+    const result: ModuleTranslations = {};
+
+    // 初始化所有语言
+    this.config.languages.forEach((lang) => {
+      result[lang] = {};
+    });
+
+    // 填充翻译数据
+    Object.entries(moduleKeys).forEach(([key, translations]) => {
+      Object.entries(translations).forEach(([lang, translation]) => {
+        if (result[lang]) {
+          result[lang][key] = translation;
+        }
+      });
+    });
+
+    return result;
+  }
+
+  /**
+   * 生成模块名
+   */
+  private getModuleName(modulePath: string): string {
+    // modulePath 现在是完整的文件路径，如 "TestModular.ts" 或 "components/Header2.ts"
+    // 提取文件名（不含扩展名）作为模块名
+    const fileName = path.basename(modulePath, ".ts");
+
+    // 将文件名转换为 camelCase + Translations
+    // TestModular -> testModularTranslations
+    // Header2 -> header2Translations
+    const camelCaseName = fileName.charAt(0).toLowerCase() + fileName.slice(1);
+    const moduleName = `${camelCaseName}Translations`;
+
+    console.log(`🔧 [DEBUG] getModuleName - 输入: ${modulePath}`);
+    console.log(`🔧 [DEBUG] getModuleName - 文件名: ${fileName}`);
+    console.log(`🔧 [DEBUG] getModuleName - 模块名: ${moduleName}`);
+
+    return moduleName;
+  }
+
+  /**
+   * 生成模块文件内容
+   */
+  private generateModuleFileContent(
+    moduleName: string,
+    moduleTranslations: ModuleTranslations
+  ): string {
+    const jsonContent = JSON.stringify(moduleTranslations, null, 2);
+    return `const ${moduleName} = ${jsonContent};\n\nexport default ${moduleName};\n`;
+  }
+
+  /**
+   * 直接保存完整记录（用于删除操作后）
+   */
+  async saveCompleteRecordDirect(
+    completeRecord: CompleteTranslationRecord
+  ): Promise<void> {
+    const outputPath = path.join(
+      this.config.outputDir,
+      "i18n-complete-record.json"
+    );
+    await writeFile(
+      outputPath,
+      JSON.stringify(completeRecord, null, 2),
+      "utf-8"
     );
   }
 
   /**
-   * 删除指定的翻译Key
+   * 从完整记录中删除指定的keys
    */
-  public deleteTranslations(keysToDelete: string[]): {
-    deletedCount: number;
-    affectedLanguages: string[];
-  } {
-    const affectedLanguages: string[] = [];
-    let deletedCount = 0;
+  async deleteKeysFromCompleteRecord(
+    keysToDelete: string[],
+    allReferences: Map<string, any[]>
+  ): Promise<{ deletedCount: number; affectedLanguages: string[] }> {
+    // 1. 读取完整记录
+    const completeRecord = await this.loadCompleteRecord();
 
-    keysToDelete.forEach((key) => {
-      Object.keys(this.translations).forEach((lang) => {
-        if (this.translations[lang][key]) {
-          delete this.translations[lang][key];
-          if (!affectedLanguages.includes(lang)) {
-            affectedLanguages.push(lang);
-          }
+    let deletedCount = 0;
+    const affectedLanguages = new Set<string>();
+
+    // 2. 从完整记录中删除指定的keys
+    Object.keys(completeRecord).forEach((modulePath) => {
+      keysToDelete.forEach((keyToDelete) => {
+        if (completeRecord[modulePath][keyToDelete]) {
+          // 记录受影响的语言
+          Object.keys(completeRecord[modulePath][keyToDelete]).forEach(
+            (lang) => {
+              affectedLanguages.add(lang);
+            }
+          );
+
+          delete completeRecord[modulePath][keyToDelete];
           deletedCount++;
         }
       });
     });
 
-    return { deletedCount, affectedLanguages };
-  }
+    // 3. 保存更新后的完整记录
+    await this.saveCompleteRecordDirect(completeRecord);
 
-  /**
-   * 原子性删除翻译Key并保存
-   */
-  public async deleteTranslationsAtomically(keysToDelete: string[]): Promise<{
-    deletedCount: number;
-    affectedLanguages: string[];
-  }> {
-    // 创建备份
-    const backup = this.createBackup();
+    // 4. 从引用Map中移除
+    keysToDelete.forEach((key) => {
+      allReferences.delete(key);
+    });
 
-    try {
-      // 执行删除
-      const result = this.deleteTranslations(keysToDelete);
-
-      // 保存到文件
-      await this.saveTranslations();
-
-      return result;
-    } catch (error) {
-      // 恢复备份
-      this.restoreFromBackup(backup);
-
-      if (error instanceof I18nError) {
-        throw error;
-      }
-      throw new I18nError(
-        I18nErrorType.DATA_CORRUPTION,
-        "删除翻译时发生错误，已恢复到删除前状态",
-        { originalError: error, keysToDelete },
-        ["检查文件系统权限", "确认磁盘空间充足", "稍后重试操作"]
-      );
-    }
-  }
-
-  /**
-   * 创建翻译数据备份
-   */
-  public createBackup(): TranslationBackup {
-    const data = JSON.parse(JSON.stringify(this.translations));
-    const checksum = this.calculateChecksum(data);
     return {
-      timestamp: new Date().toISOString(),
-      data,
-      checksum,
+      deletedCount,
+      affectedLanguages: Array.from(affectedLanguages).sort(),
     };
-  }
-
-  /**
-   * 从备份恢复翻译数据
-   */
-  public restoreFromBackup(backup: TranslationBackup): void {
-    // 验证备份完整性
-    const currentChecksum = this.calculateChecksum(backup.data);
-    if (currentChecksum !== backup.checksum) {
-      throw new I18nError(
-        I18nErrorType.DATA_CORRUPTION,
-        "备份数据校验失败",
-        { backup },
-        ["重新创建备份", "检查数据完整性"]
-      );
-    }
-
-    this.translations = JSON.parse(JSON.stringify(backup.data));
-  }
-
-  /**
-   * 验证翻译数据格式
-   */
-  private validateTranslationData(data: any, language: string): void {
-    if (!data || typeof data !== "object") {
-      throw new I18nError(
-        I18nErrorType.INVALID_FORMAT,
-        `翻译文件格式错误: ${language}`,
-        { data, language },
-        ["检查JSON格式是否正确", "确认文件编码为UTF-8", "重新生成翻译文件"]
-      );
-    }
-
-    // 检查键值对格式
-    for (const [key, value] of Object.entries(data)) {
-      if (typeof key !== "string" || typeof value !== "string") {
-        throw new I18nError(
-          I18nErrorType.INVALID_FORMAT,
-          `翻译数据格式错误: ${language}中的键值对格式不正确`,
-          { key, value, language },
-          ["确保所有键和值都是字符串", "检查特殊字符是否正确转义"]
-        );
-      }
-    }
-  }
-
-  /**
-   * 计算数据校验和
-   */
-  private calculateChecksum(data: TranslationData): string {
-    const crypto = require("crypto");
-    const content = JSON.stringify(data, Object.keys(data).sort());
-    return crypto.createHash("md5").update(content).digest("hex");
   }
 }
