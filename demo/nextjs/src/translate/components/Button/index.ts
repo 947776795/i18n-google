@@ -6,7 +6,8 @@ const indexTranslations = {
     "I18n3": "I18n3",
     "I18n5": "I18n5",
     "I18n4": "I18n4",
-    "I18n6": "I18n6"
+    "I18n6": "I18n6",
+    "I18n22": "I18n22"
   },
   "en": {
     "nihaoma": "nihaoma",
@@ -15,7 +16,8 @@ const indexTranslations = {
     "I18n3": "I18n3",
     "I18n5": "I18n5",
     "I18n4": "I18n4",
-    "I18n6": "I18n6"
+    "I18n6": "I18n6",
+    "I18n22": "I18n22"
   },
   "es": {
     "nihaoma": "nihaoma",
@@ -24,7 +26,8 @@ const indexTranslations = {
     "I18n3": "I18n3",
     "I18n5": "I18n5",
     "I18n4": "I18n4",
-    "I18n6": "I18n6"
+    "I18n6": "I18n6",
+    "I18n22": "I18n22"
   },
   "ko": {
     "nihaoma": "nihaoma",
@@ -33,7 +36,8 @@ const indexTranslations = {
     "I18n3": "I18n3",
     "I18n5": "I18n5",
     "I18n4": "I18n4",
-    "I18n6": "I18n6"
+    "I18n6": "I18n6",
+    "I18n22": "I18n22"
   },
   "tr": {
     "nihaoma": "nihaoma",
@@ -42,7 +46,8 @@ const indexTranslations = {
     "I18n3": "I18n3",
     "I18n5": "I18n5",
     "I18n4": "I18n4",
-    "I18n6": "I18n6"
+    "I18n6": "I18n6",
+    "I18n22": "I18n22"
   },
   "vi": {
     "nihaoma": "nihaoma",
@@ -51,7 +56,8 @@ const indexTranslations = {
     "I18n3": "I18n3",
     "I18n5": "I18n5",
     "I18n4": "I18n4",
-    "I18n6": "I18n6"
+    "I18n6": "I18n6",
+    "I18n22": "I18n22"
   },
   "zh-CN": {
     "nihaoma": "nihaoma",
@@ -60,7 +66,8 @@ const indexTranslations = {
     "I18n3": "I18n3",
     "I18n5": "I18n5",
     "I18n4": "I18n4",
-    "I18n6": "I18n6"
+    "I18n6": "I18n6",
+    "I18n22": "I18n22"
   },
   "zh-TC": {
     "nihaoma": "nihaoma",
@@ -69,7 +76,8 @@ const indexTranslations = {
     "I18n3": "I18n3",
     "I18n5": "I18n5",
     "I18n4": "I18n4",
-    "I18n6": "I18n6"
+    "I18n6": "I18n6",
+    "I18n22": "I18n22"
   }
 };
 

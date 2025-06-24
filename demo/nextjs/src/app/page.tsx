@@ -1,13 +1,17 @@
-"use client";
 import { I18nUtil } from "@utils";
 import pageTranslations from "@translate/app/page";
 import Image from "next/image";
 import { TEST, TEST2 } from "@/const/const";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
-const I18n = I18nUtil.createScoped(pageTranslations);
+interface PageProps {
+  searchParams: { [key: string]: string | string[] | undefined };
+}
 
-export default function Home() {
+export default function Home({ searchParams }: PageProps) {
+  // 服务端组件：传入 searchParams
+  const I18n = I18nUtil.createScoped(pageTranslations, searchParams);
+
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       {/* 语言切换器 */}

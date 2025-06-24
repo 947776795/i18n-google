@@ -42,87 +42,127 @@ interface ModuleTranslations {
 }
 
 /**
- * I18n 工具类 - 支持模块化翻译（简化版）
+ * 插值变量类型定义
+ */
+type InterpolationVariables = Record<string, string | number | boolean>;
+
+/**
+ * I18n 工具类 - 真正统一的方案
  */
 class I18nUtil {
   /**
-   * 获取当前语言设置
-   * 优先从 URL 参数读取，其次从 localStorage，最后默认为 'en'
-   */
-  static getCurrentLocale(): string {
-    if (typeof window === "undefined") return "en"; // SSR 支持
-
-    // 从 URL 参数获取语言设置
-    const params = new URLSearchParams(window.location.search);
-    const urlLang = params.get("lang");
-
-    if (urlLang) {
-      // 将语言设置保存到 localStorage
-      localStorage.setItem("i18n-locale", urlLang);
-      return urlLang;
-    }
-
-    // 从 localStorage 获取
-    const storedLang = localStorage.getItem("i18n-locale");
-    if (storedLang) {
-      return storedLang;
-    }
-
-    return "en"; // 默认语言
-  }
-
-  /**
-   * 创建作用域翻译实例
+   * 创建翻译实例 - 统一方法
    * @param translations 模块翻译数据
+   * @param searchParams 可选的 searchParams（服务端组件必须传入）
    * @returns 翻译实例，包含 t 方法
    */
-  static createScoped(translations: ModuleTranslations) {
-    const locale = this.getCurrentLocale();
+  static createScoped(
+    translations: ModuleTranslations,
+    searchParams?: { [key: string]: string | string[] | undefined }
+  ) {
+    const locale = this.getCurrentLocale(searchParams);
 
     return {
-      /**
-       * 翻译方法
-       * @param key 翻译键（原文案）
-       * @param options 插值选项
-       * @returns 翻译后的文本
-       */
-      t: (key: string, options?: Record<string, any>): string => {
-        // 获取当前语言的翻译
-        const currentTranslations = translations[locale];
-        let translation = currentTranslations?.[key];
-
-        // 如果当前语言没有翻译，回退到英文
-        if (!translation && locale !== "en") {
-          translation = translations["en"]?.[key];
-        }
-
-        // 如果还是没有翻译，使用原文案
-        if (!translation) {
-          translation = key;
-        }
-
-        // 处理变量插值
-        if (options && typeof translation === "string") {
-          return this.interpolateVariables(translation, options);
-        }
-
-        return translation;
+      t: (key: string, options?: InterpolationVariables): string => {
+        return this.translate(translations, locale, key, options);
       },
     };
   }
 
   /**
-   * 切换语言（通过页面跳转）
+   * 获取当前语言 - 统一方法
+   * @param searchParams 可选的 searchParams
+   * @returns 语言代码，默认 'en'
+   */
+  static getCurrentLocale(searchParams?: {
+    [key: string]: string | string[] | undefined;
+  }): string {
+    // 1. 优先从 searchParams 获取（服务端和客户端都支持）
+    if (searchParams?.lang) {
+      const lang = Array.isArray(searchParams.lang)
+        ? searchParams.lang[0]
+        : searchParams.lang;
+
+      if (this.isValidLocale(lang)) {
+        return lang;
+      }
+    }
+
+    // 2. 客户端从 window.location.search 获取
+    if (typeof window !== "undefined") {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const urlLang = params.get("lang");
+
+        if (urlLang && this.isValidLocale(urlLang)) {
+          return urlLang;
+        }
+      } catch (error) {
+        console.warn("Error getting locale from URL:", error);
+      }
+    }
+
+    // 3. 默认语言
+    return "en";
+  }
+
+  /**
+   * 统一的翻译方法
+   * @param translations 翻译数据
+   * @param locale 语言代码
+   * @param key 翻译键
+   * @param options 插值选项
+   * @returns 翻译后的文本
+   */
+  private static translate(
+    translations: ModuleTranslations,
+    locale: string,
+    key: string,
+    options?: InterpolationVariables
+  ): string {
+    // 获取当前语言的翻译
+    const currentTranslations = translations[locale];
+    let translation = currentTranslations?.[key];
+
+    // 如果当前语言没有翻译，回退到英文
+    if (!translation && locale !== "en") {
+      translation = translations["en"]?.[key];
+    }
+
+    // 如果还是没有翻译，使用原文案
+    if (!translation) {
+      translation = key;
+    }
+
+    // 处理变量插值
+    if (options && typeof translation === "string") {
+      return this.interpolateVariables(translation, options);
+    }
+
+    return translation;
+  }
+
+  /**
+   * 切换语言（通过 URL 跳转）
    * @param newLocale 新的语言代码
    */
   static switchLocale(newLocale: string): void {
     if (typeof window === "undefined") return;
 
-    const url = new URL(window.location.href);
-    url.searchParams.set("lang", newLocale);
+    if (!this.isValidLocale(newLocale)) {
+      console.warn(`Invalid locale: ${newLocale}`);
+      return;
+    }
 
-    // 更新 URL 并刷新页面
-    window.location.href = url.toString();
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set("lang", newLocale);
+
+      // 跳转到新 URL
+      window.location.href = url.toString();
+    } catch (error) {
+      console.error("Failed to switch locale:", error);
+    }
   }
 
   /**
@@ -133,7 +173,7 @@ class I18nUtil {
    */
   static interpolateVariables(
     template: string,
-    variables: Record<string, any>
+    variables: InterpolationVariables
   ): string {
     return template.replace(/%\{(\w+)\}/g, (match, key) => {
       const value = variables[key];
@@ -144,17 +184,17 @@ class I18nUtil {
   /**
    * 获取支持的语言列表
    */
-  static getSupportedLocales(): string[] {
-    return ["en", "zh-CN", "zh-TC", "ko", "es", "tr", "de", "vi"];
+  static getSupportedLocales(): Locale[] {
+    return Object.values(LOCALES);
   }
 
   /**
    * 检查是否为有效的语言代码
    */
-  static isValidLocale(locale: string): boolean {
-    return this.getSupportedLocales().includes(locale);
+  static isValidLocale(locale: string): locale is Locale {
+    return this.getSupportedLocales().includes(locale as Locale);
   }
 }
 
 export { I18nUtil };
-export type { ModuleTranslations };
+export type { ModuleTranslations, InterpolationVariables };
