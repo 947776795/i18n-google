@@ -1,7 +1,8 @@
 "use client";
 
 import { I18nUtil, languageOptions } from "@utils";
-import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
+import { useState } from "react";
 
 interface LanguageSwitcherProps {
   className?: string;
@@ -10,13 +11,8 @@ interface LanguageSwitcherProps {
 export default function LanguageSwitcher({
   className = "",
 }: LanguageSwitcherProps) {
-  const [currentLocale, setCurrentLocale] = useState<string>("en");
+  const { locale } = useParams();
   const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    // 获取当前语言设置
-    setCurrentLocale(I18nUtil.getCurrentLocale());
-  }, []);
 
   const handleLanguageChange = (newLocale: string) => {
     setIsOpen(false);
@@ -26,7 +22,7 @@ export default function LanguageSwitcher({
 
   const getCurrentLanguageLabel = () => {
     const currentOption = languageOptions.find(
-      (option) => option.value === currentLocale
+      (option) => option.value === locale
     );
     return currentOption?.label || "English";
   };
@@ -80,7 +76,7 @@ export default function LanguageSwitcher({
               <button
                 key={option.value}
                 className={`${
-                  currentLocale === option.value
+                  locale === option.value
                     ? "bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-white"
                     : "text-gray-700 dark:text-gray-200"
                 } group flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150`}
@@ -91,7 +87,7 @@ export default function LanguageSwitcher({
                   {getFlagForLocale(option.value)}
                 </span>
                 {option.label}
-                {currentLocale === option.value && (
+                {locale === option.value && (
                   <span className="ml-auto text-indigo-600 dark:text-indigo-400">
                     ✓
                   </span>

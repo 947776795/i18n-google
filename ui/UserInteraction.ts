@@ -187,6 +187,32 @@ export class UserInteraction {
   }
 
   /**
+   * 确认是否上传到远端
+   */
+  static async confirmRemoteSync(): Promise<boolean> {
+    console.log("\n" + "=".repeat(60));
+    console.log("☁️  准备同步到远端 (Google Sheets)");
+    console.log("=".repeat(60));
+
+    const { confirmSync } = await inquirer.prompt([
+      {
+        type: "confirm",
+        name: "confirmSync",
+        message: `🚀 确认将扫描后的翻译数据同步到远端 Google Sheets 吗？`,
+        default: true,
+      },
+    ]);
+
+    if (confirmSync) {
+      console.log("✅ 用户确认，开始同步到远端...");
+    } else {
+      console.log("❌ 用户取消同步，跳过远端上传");
+    }
+
+    return confirmSync;
+  }
+
+  /**
    * 显示删除进度和结果
    */
   static displayDeletionResult(result: {

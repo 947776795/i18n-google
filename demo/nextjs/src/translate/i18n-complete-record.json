@@ -1,64 +1,308 @@
 {
-  "app/[local]/page.ts": {
+  "app/[locale]/page.ts": {
+    "Invalid locale: %{var0}": {
+      "en": "Invalid locale: %{var0}",
+      "zh-Hans": "Invalid locale: %{var0}",
+      "zh-Hant": "Invalid locale: %{var0}",
+      "ko": "Invalid locale: %{var0}",
+      "vi": "Invalid locale: %{var0}",
+      "es": "Invalid locale: %{var0}",
+      "tr": "Invalid locale: %{var0}",
+      "de": "Invalid locale: %{var0}"
+    }
+  },
+  "app/[locale]/server-test/page.ts": {
+    "Server Component I18n Test": {
+      "en": "Server Component I18n Test",
+      "zh-Hans": "Server Component I18n Test",
+      "zh-Hant": "Server Component I18n Test",
+      "ko": "Server Component I18n Test",
+      "vi": "Server Component I18n Test",
+      "es": "Server Component I18n Test",
+      "tr": "Server Component I18n Test",
+      "de": "Server Component I18n Test"
+    },
+    "Auto-detected Locale": {
+      "en": "Auto-detected Locale",
+      "zh-Hans": "Auto-detected Locale",
+      "zh-Hant": "Auto-detected Locale",
+      "ko": "Auto-detected Locale",
+      "vi": "Auto-detected Locale",
+      "es": "Auto-detected Locale",
+      "tr": "Auto-detected Locale",
+      "de": "Auto-detected Locale"
+    },
+    "Detected locale:": {
+      "en": "Detected locale:",
+      "zh-Hans": "Detected locale:",
+      "zh-Hant": "Detected locale:",
+      "ko": "Detected locale:",
+      "vi": "Detected locale:",
+      "es": "Detected locale:",
+      "tr": "Detected locale:",
+      "de": "Detected locale:"
+    },
+    "Welcome message:": {
+      "en": "Welcome message:",
+      "zh-Hans": "Welcome message:",
+      "zh-Hant": "Welcome message:",
+      "ko": "Welcome message:",
+      "vi": "Welcome message:",
+      "es": "Welcome message:",
+      "tr": "Welcome message:",
+      "de": "Welcome message:"
+    },
     "get_started_by_editing": {
       "en": "get_started_by_editing",
       "zh-Hans": "get_started_by_editing",
       "zh-Hant": "get_started_by_editing",
-      "ko": "get_started_by_editing"
+      "ko": "get_started_by_editing",
+      "vi": "get_started_by_editing",
+      "es": "get_started_by_editing",
+      "tr": "get_started_by_editing",
+      "de": "get_started_by_editing"
     },
-    "src/app/page.tsx": {
-      "en": "src/app/page.tsx",
-      "zh-Hans": "src/app/page.tsx",
-      "zh-Hant": "src/app/page.tsx",
-      "ko": "src/app/page.tsx"
-    },
-    "save_and_see_changes_instantly": {
-      "en": "save_and_see_changes_instantly",
-      "zh-Hans": "save_and_see_changes_instantly",
-      "zh-Hant": "save_and_see_changes_instantly",
-      "ko": "save_and_see_changes_instantly"
+    "Deploy button:": {
+      "en": "Deploy button:",
+      "zh-Hans": "Deploy button:",
+      "zh-Hant": "Deploy button:",
+      "ko": "Deploy button:",
+      "vi": "Deploy button:",
+      "es": "Deploy button:",
+      "tr": "Deploy button:",
+      "de": "Deploy button:"
     },
     "deploy_now": {
       "en": "deploy_now",
       "zh-Hans": "deploy_now",
       "zh-Hant": "deploy_now",
-      "ko": "deploy_now"
+      "ko": "deploy_now",
+      "vi": "deploy_now",
+      "es": "deploy_now",
+      "tr": "deploy_now",
+      "de": "deploy_now"
+    },
+    "Docs link:": {
+      "en": "Docs link:",
+      "zh-Hans": "Docs link:",
+      "zh-Hant": "Docs link:",
+      "ko": "Docs link:",
+      "vi": "Docs link:",
+      "es": "Docs link:",
+      "tr": "Docs link:",
+      "de": "Docs link:"
     },
     "read_our_docs": {
       "en": "read_our_docs",
       "zh-Hans": "read_our_docs",
       "zh-Hant": "read_our_docs",
-      "ko": "read_our_docs"
+      "ko": "read_our_docs",
+      "vi": "read_our_docs",
+      "es": "read_our_docs",
+      "tr": "read_our_docs",
+      "de": "read_our_docs"
+    },
+    "Manual Locale (from route)": {
+      "en": "Manual Locale (from route)",
+      "zh-Hans": "Manual Locale (from route)",
+      "zh-Hant": "Manual Locale (from route)",
+      "ko": "Manual Locale (from route)",
+      "vi": "Manual Locale (from route)",
+      "es": "Manual Locale (from route)",
+      "tr": "Manual Locale (from route)",
+      "de": "Manual Locale (from route)"
+    },
+    "Route locale:": {
+      "en": "Route locale:",
+      "zh-Hans": "Route locale:",
+      "zh-Hant": "Route locale:",
+      "ko": "Route locale:",
+      "vi": "Route locale:",
+      "es": "Route locale:",
+      "tr": "Route locale:",
+      "de": "Route locale:"
+    },
+    "Manual locale:": {
+      "en": "Manual locale:",
+      "zh-Hans": "Manual locale:",
+      "zh-Hant": "Manual locale:",
+      "ko": "Manual locale:",
+      "vi": "Manual locale:",
+      "es": "Manual locale:",
+      "tr": "Manual locale:",
+      "de": "Manual locale:"
+    },
+    "Comparison": {
+      "en": "Comparison",
+      "zh-Hans": "Comparison",
+      "zh-Hant": "Comparison",
+      "ko": "Comparison",
+      "vi": "Comparison",
+      "es": "Comparison",
+      "tr": "Comparison",
+      "de": "Comparison"
+    },
+    "Auto vs Manual locale match:": {
+      "en": "Auto vs Manual locale match:",
+      "zh-Hans": "Auto vs Manual locale match:",
+      "zh-Hant": "Auto vs Manual locale match:",
+      "ko": "Auto vs Manual locale match:",
+      "vi": "Auto vs Manual locale match:",
+      "es": "Auto vs Manual locale match:",
+      "tr": "Auto vs Manual locale match:",
+      "de": "Auto vs Manual locale match:"
+    },
+    "/%{var0} /server-test": {
+      "en": "/%{var0} /server-test",
+      "zh-Hans": "/%{var0} /server-test",
+      "zh-Hant": "/%{var0} /server-test",
+      "ko": "/%{var0} /server-test",
+      "vi": "/%{var0} /server-test",
+      "es": "/%{var0} /server-test",
+      "tr": "/%{var0} /server-test",
+      "de": "/%{var0} /server-test"
+    },
+    "Back to Home": {
+      "en": "Back to Home",
+      "zh-Hans": "Back to Home",
+      "zh-Hant": "Back to Home",
+      "ko": "Back to Home",
+      "vi": "Back to Home",
+      "es": "Back to Home",
+      "tr": "Back to Home",
+      "de": "Back to Home"
+    }
+  },
+  "components/ClientHome.ts": {
+    "get_started_by_editing": {
+      "en": "get_started_by_editing",
+      "zh-Hans": "get_started_by_editing",
+      "zh-Hant": "get_started_by_editing",
+      "ko": "get_started_by_editing",
+      "vi": "get_started_by_editing",
+      "es": "get_started_by_editing",
+      "tr": "get_started_by_editing",
+      "de": "get_started_by_editing"
+    },
+    "deploy_now": {
+      "en": "deploy_now",
+      "zh-Hans": "deploy_now",
+      "zh-Hant": "deploy_now",
+      "ko": "deploy_now",
+      "vi": "deploy_now",
+      "es": "deploy_now",
+      "tr": "deploy_now",
+      "de": "deploy_now"
+    },
+    "read_our_docs": {
+      "en": "read_our_docs",
+      "zh-Hans": "read_our_docs",
+      "zh-Hant": "read_our_docs",
+      "ko": "read_our_docs",
+      "vi": "read_our_docs",
+      "es": "read_our_docs",
+      "tr": "read_our_docs",
+      "de": "read_our_docs"
+    },
+    "src/app/page.tsx": {
+      "en": "src/app/page.tsx",
+      "zh-Hans": "src/app/page.tsx",
+      "zh-Hant": "src/app/page.tsx",
+      "ko": "src/app/page.tsx",
+      "vi": "src/app/page.tsx",
+      "es": "src/app/page.tsx",
+      "tr": "src/app/page.tsx",
+      "de": "src/app/page.tsx"
+    },
+    "save_and_see_changes_instantly": {
+      "en": "save_and_see_changes_instantly",
+      "zh-Hans": "save_and_see_changes_instantly",
+      "zh-Hant": "save_and_see_changes_instantly",
+      "ko": "save_and_see_changes_instantly",
+      "vi": "save_and_see_changes_instantly",
+      "es": "save_and_see_changes_instantly",
+      "tr": "save_and_see_changes_instantly",
+      "de": "save_and_see_changes_instantly"
     },
     "const_test": {
       "en": "const_test",
       "zh-Hans": "const_test",
       "zh-Hant": "const_test",
-      "ko": "const_test"
+      "ko": "const_test",
+      "vi": "const_test",
+      "es": "const_test",
+      "tr": "const_test",
+      "de": "const_test"
     },
     "const_test2": {
       "en": "const_test2",
       "zh-Hans": "const_test2",
       "zh-Hant": "const_test2",
-      "ko": "const_test2"
+      "ko": "const_test2",
+      "vi": "const_test2",
+      "es": "const_test2",
+      "tr": "const_test2",
+      "de": "const_test2"
+    },
+    "Current locale: %{var0}": {
+      "en": "Current locale: %{var0}",
+      "zh-Hans": "Current locale: %{var0}",
+      "zh-Hant": "Current locale: %{var0}",
+      "ko": "Current locale: %{var0}",
+      "vi": "Current locale: %{var0}",
+      "es": "Current locale: %{var0}",
+      "tr": "Current locale: %{var0}",
+      "de": "Current locale: %{var0}"
+    },
+    "Test Server Component I18n": {
+      "en": "Test Server Component I18n",
+      "zh-Hans": "Test Server Component I18n",
+      "zh-Hant": "Test Server Component I18n",
+      "ko": "Test Server Component I18n",
+      "vi": "Test Server Component I18n",
+      "es": "Test Server Component I18n",
+      "tr": "Test Server Component I18n",
+      "de": "Test Server Component I18n"
     },
     "learn": {
       "en": "learn",
       "zh-Hans": "learn",
       "zh-Hant": "learn",
-      "ko": "learn"
+      "ko": "learn",
+      "vi": "learn",
+      "es": "learn",
+      "tr": "learn",
+      "de": "learn"
     },
     "examples": {
       "en": "examples",
       "zh-Hans": "examples",
       "zh-Hant": "examples",
-      "ko": "examples"
+      "ko": "examples",
+      "vi": "examples",
+      "es": "examples",
+      "tr": "examples",
+      "de": "examples"
     },
     "go_to_nextjs": {
       "en": "go_to_nextjs",
       "zh-Hans": "go_to_nextjs",
       "zh-Hant": "go_to_nextjs",
-      "ko": "go_to_nextjs"
+      "ko": "go_to_nextjs",
+      "vi": "go_to_nextjs",
+      "es": "go_to_nextjs",
+      "tr": "go_to_nextjs",
+      "de": "go_to_nextjs"
+    },
+    "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.": {
+      "en": "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.",
+      "zh-Hans": "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.",
+      "zh-Hant": "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.",
+      "ko": "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.",
+      "vi": "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.",
+      "es": "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.",
+      "tr": "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.",
+      "de": "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else."
     }
   },
   "components/Button/index.ts": {
@@ -66,51 +310,53 @@
       "en": "I18n22",
       "zh-Hans": "I18n22",
       "zh-Hant": "I18n22",
-      "ko": "I18n22"
+      "ko": "I18n22",
+      "vi": "I18n22",
+      "es": "I18n22",
+      "tr": "I18n22",
+      "de": "I18n22"
     },
     "I18n5": {
       "en": "I18n5",
       "zh-Hans": "I18n5",
       "zh-Hant": "I18n5",
-      "ko": "I18n5"
+      "ko": "I18n5",
+      "vi": "I18n5",
+      "es": "I18n5",
+      "tr": "I18n5",
+      "de": "I18n5"
     },
     "I18n4": {
       "en": "I18n4",
       "zh-Hans": "I18n4",
       "zh-Hant": "I18n4",
-      "ko": "I18n4"
+      "ko": "I18n4",
+      "vi": "I18n4",
+      "es": "I18n4",
+      "tr": "I18n4",
+      "de": "I18n4"
     }
   },
   "const/const.ts": {
-    "sadasdad_en": {
-      "en": "sadasdad_en",
-      "zh-Hans": "sadasdad",
-      "zh-Hant": "sadasdad",
-      "ko": "sadasdad"
-    },
-    "fffff_en": {
-      "en": "fffff_en",
-      "zh-Hans": "fffff_hans",
-      "zh-Hant": "fffff",
-      "ko": "fffff"
-    },
-    "bbb_en": {
-      "en": "bbb_en",
-      "zh-Hans": "bbb",
-      "zh-Hant": "bbb",
-      "ko": "bbb"
-    },
     "sadasdad": {
       "en": "sadasdad",
-      "zh-Hans": "sadasdad_hans",
+      "zh-Hans": "sadasdad",
       "zh-Hant": "sadasdad",
-      "ko": "sadasdad"
+      "ko": "sadasdad",
+      "vi": "sadasdad",
+      "es": "sadasdad",
+      "tr": "sadasdad",
+      "de": "sadasdad"
     },
     "bbb": {
       "en": "bbb",
-      "zh-Hans": "bbb_hans",
-      "zh-Hant": "bbb_hant",
-      "ko": "bbb"
+      "zh-Hans": "bbb",
+      "zh-Hant": "bbb",
+      "ko": "bbb",
+      "vi": "bbb",
+      "es": "bbb",
+      "tr": "bbb",
+      "de": "bbb"
     }
   }
 }

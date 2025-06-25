@@ -265,7 +265,11 @@ export class AstTransformer {
         AstUtils.isStringLiteral(path.node) &&
         StringUtils.isTranslatableString(path.node.value, this.config)
       ) {
-        const text = StringUtils.formatString(path.node.value, this.config);
+        const formattedText = StringUtils.formatString(
+          path.node.value,
+          this.config
+        );
+        const text = StringUtils.cleanExtractedText(formattedText);
         const key = StringUtils.generateTranslationKey(filePath, text);
         results.push({ key, text });
 
@@ -383,27 +387,27 @@ export class AstTransformer {
     const node = path.node;
     const textValue = node.value;
 
-    // 去除前后空白字符，但保留内部空格
-    const trimmedText = textValue.trim();
+    // 清理文本：去除前后空白字符（包括换行符），规范化内部空白
+    const cleanedText = StringUtils.cleanExtractedText(textValue);
 
     // 如果是空字符串或只有空白字符，跳过
-    if (!trimmedText) {
+    if (!cleanedText) {
       return null;
     }
 
     // 检查是否包含英文字符，如果不包含则跳过
-    if (!StringUtils.containsEnglishCharacters(trimmedText)) {
+    if (!StringUtils.containsEnglishCharacters(cleanedText)) {
       return null;
     }
 
     // JSX文本节点直接处理，不需要检查标记符号
-    const key = StringUtils.generateTranslationKey(filePath, trimmedText);
+    const key = StringUtils.generateTranslationKey(filePath, cleanedText);
 
     // 创建 I18n.t 调用
     const callExpr = AstUtils.createI18nCall(key);
 
     return {
-      translationResult: { key, text: trimmedText },
+      translationResult: { key, text: cleanedText },
       callExpr,
     };
   }
@@ -461,8 +465,8 @@ export class AstTransformer {
       return null;
     }
 
-    // 清理翻译文本（去除多余空白）
-    translationText = translationText.replace(/\s+/g, " ").trim();
+    // 清理翻译文本：去除前后空白字符（包括换行符），规范化内部空白
+    translationText = StringUtils.cleanExtractedText(translationText);
 
     if (!translationText) {
       return null;
@@ -558,7 +562,8 @@ export class AstTransformer {
       }
     }
 
-    return translationText;
+    // 对整体翻译文本进行清理
+    return StringUtils.cleanExtractedText(translationText);
   }
 
   /**

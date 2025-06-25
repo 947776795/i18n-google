@@ -94,9 +94,18 @@ export class I18nScanner {
       this.scanProgress.update("🔧 生成模块化翻译文件...");
       await this.translationManager.generateModularFilesFromCompleteRecord();
 
-      // 8. 同步到远端 (Google Sheets) - 基于处理后的 CompleteRecord
-      this.scanProgress.update("☁️ 同步到 Google Sheets...");
-      await this.googleSheetsSync.syncCompleteRecordToSheet(processedRecord);
+      // 8. 用户确认是否同步到远端
+      this.scanProgress.update("🤔 等待用户确认远端同步...");
+      const shouldSyncToRemote = await UserInteraction.confirmRemoteSync();
+
+      if (shouldSyncToRemote) {
+        // 9. 同步到远端 (Google Sheets) - 基于处理后的 CompleteRecord
+        this.scanProgress.update("☁️ 同步到 Google Sheets...");
+        await this.googleSheetsSync.syncCompleteRecordToSheet(processedRecord);
+      } else {
+        this.scanProgress.update("⏭️ 跳过远端同步");
+        Logger.info("⏭️ 用户选择跳过远端同步");
+      }
 
       // 完成主要扫描流程
       const duration = Date.now() - startTime;

@@ -35,6 +35,18 @@ export class StringUtils {
   }
 
   /**
+   * 清理提取的文本：去除前后空格、换行符，并规范化内部空白字符
+   * @param text - 待清理的文本
+   * @returns 清理后的文本
+   */
+  static cleanExtractedText(text: string): string {
+    return text
+      .replace(/^\s+/, "") // 去除开头的所有空白字符（包括空格、换行符、制表符等）
+      .replace(/\s+$/, "") // 去除结尾的所有空白字符
+      .replace(/\s+/g, " "); // 将内部的多个连续空白字符替换为单个空格
+  }
+
+  /**
    * 检查字符串是否包含英文字符
    */
   static containsEnglishCharacters(text: string): boolean {
