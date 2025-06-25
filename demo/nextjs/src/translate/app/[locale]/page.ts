@@ -3,10 +3,10 @@ const pageTranslations = {
     "Invalid locale: %{var0}": "Invalid locale: %{var0}"
   },
   "ko": {
-    "Invalid locale: %{var0}": "Invalid locale: %{var0}_zhhans"
+    "Invalid locale: %{var0}": "Invalid locale: %{var0}_zhans"
   },
   "zh-Hans": {
-    "Invalid locale: %{var0}": "Invalid locale: %{var0}_zhans"
+    "Invalid locale: %{var0}": "Invalid locale: %{var0}"
   },
   "zh-Hant": {
     "Invalid locale: %{var0}": "Invalid locale: %{var0}"

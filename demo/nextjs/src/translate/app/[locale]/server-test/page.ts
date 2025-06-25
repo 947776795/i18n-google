@@ -18,7 +18,7 @@ const pageTranslations = {
     "Back to Home": "Back to Home"
   },
   "ko": {
-    "Server Component I18n Test": "Server Component I18n Test",
+    "Server Component I18n Test": "Server Component I18n Test_hans",
     "Auto-detected Locale": "Auto-detected Locale",
     "Detected locale:": "Detected locale:",
     "Welcome message:": "Welcome message:",
@@ -36,7 +36,7 @@ const pageTranslations = {
     "Back to Home": "Back to Home"
   },
   "zh-Hans": {
-    "Server Component I18n Test": "Server Component I18n Test_hans",
+    "Server Component I18n Test": "Server Component I18n Test",
     "Auto-detected Locale": "Auto-detected Locale",
     "Detected locale:": "Detected locale:",
     "Welcome message:": "Welcome message:",
