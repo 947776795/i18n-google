@@ -7,7 +7,7 @@ interface PageProps {
 export default async function ServerTestPage({ params }: PageProps) {
   // 获取路由参数
   const { locale: routeLocale } = await params;
-  const I18n = I18nUtil.createScopedSync(Translations, routeLocale);
+  const I18n = I18nUtil.createScoped(Translations, routeLocale);
 
   return (
     <div className="container mx-auto p-8">
