@@ -3,15 +3,15 @@ const constTranslations = {
     "sadasdad": "sadasdad",
     "bbb": "bbb"
   },
+  "ko": {
+    "sadasdad": "sadasdad",
+    "bbb": "bbb"
+  },
   "zh-Hans": {
     "sadasdad": "sadasdad",
     "bbb": "bbb"
   },
   "zh-Hant": {
-    "sadasdad": "sadasdad",
-    "bbb": "bbb"
-  },
-  "ko": {
     "sadasdad": "sadasdad",
     "bbb": "bbb"
   },

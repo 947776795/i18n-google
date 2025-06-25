@@ -2,13 +2,13 @@ const pageTranslations = {
   "en": {
     "Invalid locale: %{var0}": "Invalid locale: %{var0}"
   },
+  "ko": {
+    "Invalid locale: %{var0}": "Invalid locale: %{var0}_zhhans"
+  },
   "zh-Hans": {
-    "Invalid locale: %{var0}": "Invalid locale: %{var0}"
+    "Invalid locale: %{var0}": "Invalid locale: %{var0}_zhans"
   },
   "zh-Hant": {
-    "Invalid locale: %{var0}": "Invalid locale: %{var0}"
-  },
-  "ko": {
     "Invalid locale: %{var0}": "Invalid locale: %{var0}"
   },
   "vi": {

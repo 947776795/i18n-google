@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "scan": "node ../../dist/scan.js"
+    "scan": "node ../../dist/scan.js",
+    "sync": "node ../../dist/sync.js"
   },
   "dependencies": {
     "js-cookie": "^3.0.5",

@@ -14,6 +14,21 @@ const clientHomeTranslations = {
     "go_to_nextjs": "go_to_nextjs",
     "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.": "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else."
   },
+  "ko": {
+    "get_started_by_editing": "get_started_by_editing",
+    "deploy_now": "deploy_now",
+    "read_our_docs": "read_our_docs",
+    "src/app/page.tsx": "src/app/page.tsx",
+    "save_and_see_changes_instantly": "save_and_see_changes_instantly",
+    "const_test": "const_test",
+    "const_test2": "const_test2",
+    "Current locale: %{var0}": "Current locale: %{var0}",
+    "Test Server Component I18n": "Test Server Component I18n",
+    "learn": "learn",
+    "examples": "examples",
+    "go_to_nextjs": "go_to_nextjs",
+    "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.": "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else."
+  },
   "zh-Hans": {
     "get_started_by_editing": "get_started_by_editing",
     "deploy_now": "deploy_now",
@@ -30,21 +45,6 @@ const clientHomeTranslations = {
     "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.": "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else."
   },
   "zh-Hant": {
-    "get_started_by_editing": "get_started_by_editing",
-    "deploy_now": "deploy_now",
-    "read_our_docs": "read_our_docs",
-    "src/app/page.tsx": "src/app/page.tsx",
-    "save_and_see_changes_instantly": "save_and_see_changes_instantly",
-    "const_test": "const_test",
-    "const_test2": "const_test2",
-    "Current locale: %{var0}": "Current locale: %{var0}",
-    "Test Server Component I18n": "Test Server Component I18n",
-    "learn": "learn",
-    "examples": "examples",
-    "go_to_nextjs": "go_to_nextjs",
-    "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.": "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else."
-  },
-  "ko": {
     "get_started_by_editing": "get_started_by_editing",
     "deploy_now": "deploy_now",
     "read_our_docs": "read_our_docs",

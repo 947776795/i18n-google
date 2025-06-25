@@ -3,9 +3,9 @@
   "version": "0.2.1",
   "description": "I18n scanning system with Google Sheets integration",
   "main": "dist/scan.js",
-  "types": "dist/scan.d.ts",
   "bin": {
-    "i18n-google": "dist/scan.js"
+    "i18n-google": "dist/scan.js",
+    "i18n-google-sync": "dist/sync.js"
   },
   "files": [
     "dist/",

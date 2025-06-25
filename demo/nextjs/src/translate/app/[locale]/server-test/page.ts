@@ -17,8 +17,26 @@ const pageTranslations = {
     "/%{var0} /server-test": "/%{var0} /server-test",
     "Back to Home": "Back to Home"
   },
-  "zh-Hans": {
+  "ko": {
     "Server Component I18n Test": "Server Component I18n Test",
+    "Auto-detected Locale": "Auto-detected Locale",
+    "Detected locale:": "Detected locale:",
+    "Welcome message:": "Welcome message:",
+    "get_started_by_editing": "get_started_by_editing",
+    "Deploy button:": "Deploy button:",
+    "deploy_now": "deploy_now",
+    "Docs link:": "Docs link:",
+    "read_our_docs": "read_our_docs",
+    "Manual Locale (from route)": "Manual Locale (from route)",
+    "Route locale:": "Route locale:",
+    "Manual locale:": "Manual locale:",
+    "Comparison": "Comparison",
+    "Auto vs Manual locale match:": "Auto vs Manual locale match:",
+    "/%{var0} /server-test": "/%{var0} /server-test",
+    "Back to Home": "Back to Home"
+  },
+  "zh-Hans": {
+    "Server Component I18n Test": "Server Component I18n Test_hans",
     "Auto-detected Locale": "Auto-detected Locale",
     "Detected locale:": "Detected locale:",
     "Welcome message:": "Welcome message:",
@@ -36,24 +54,6 @@ const pageTranslations = {
     "Back to Home": "Back to Home"
   },
   "zh-Hant": {
-    "Server Component I18n Test": "Server Component I18n Test",
-    "Auto-detected Locale": "Auto-detected Locale",
-    "Detected locale:": "Detected locale:",
-    "Welcome message:": "Welcome message:",
-    "get_started_by_editing": "get_started_by_editing",
-    "Deploy button:": "Deploy button:",
-    "deploy_now": "deploy_now",
-    "Docs link:": "Docs link:",
-    "read_our_docs": "read_our_docs",
-    "Manual Locale (from route)": "Manual Locale (from route)",
-    "Route locale:": "Route locale:",
-    "Manual locale:": "Manual locale:",
-    "Comparison": "Comparison",
-    "Auto vs Manual locale match:": "Auto vs Manual locale match:",
-    "/%{var0} /server-test": "/%{var0} /server-test",
-    "Back to Home": "Back to Home"
-  },
-  "ko": {
     "Server Component I18n Test": "Server Component I18n Test",
     "Auto-detected Locale": "Auto-detected Locale",
     "Detected locale:": "Detected locale:",

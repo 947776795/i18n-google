@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "scan": "i18n-google scan"
+    "scan": "node ../../dist/scan.js"
   },
   "keywords": [
     "i18n",
