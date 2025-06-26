@@ -216,15 +216,26 @@ export class AstTransformer {
     const existingReferences = this.collectExistingI18nCalls(source, filePath);
 
     // 2. 进行转换
-    const { results: newTranslations, transformedCode } = this.transformSource(
-      source,
-      filePath
-    );
+    const {
+      results: newTranslations,
+      transformedCode: initialTransformedCode,
+    } = this.transformSource(source, filePath);
+
+    // 3. 如果有现有引用但没有新翻译，仍需要检查和更新导入路径
+    let finalTransformedCode = initialTransformedCode;
+    if (existingReferences.length > 0 && newTranslations.length === 0) {
+      const j = jscodeshift.withParser("tsx");
+      const root = j(source);
+
+      // 只更新导入，不进行其他转换
+      this.addModularImports(j, root, filePath);
+      finalTransformedCode = root.toSource();
+    }
 
     return {
       existingReferences,
       newTranslations,
-      transformedCode,
+      transformedCode: finalTransformedCode,
     };
   }
 
@@ -641,6 +652,7 @@ export class AstTransformer {
 
   /**
    * 添加翻译文件导入（使用默认导入）
+   * 处理文件路径变更时的导入更新
    */
   private addTranslationImport(
     j: JSCodeshiftAPI,
@@ -648,20 +660,47 @@ export class AstTransformer {
     varName: string,
     importPath: string
   ): void {
-    const hasTranslationImport = root
+    // 检查是否已经有正确的导入路径
+    const hasCorrectImport = root
       .find(j.ImportDeclaration)
       .some((path: ASTPath<n.ImportDeclaration>) => {
         return path.node.source?.value === importPath;
       });
 
-    if (!hasTranslationImport) {
-      // 使用统一的 "Translations" 变量名进行默认导入
-      const importDecl = j.importDeclaration(
-        [j.importDefaultSpecifier(j.identifier("Translations"))],
-        j.literal(importPath)
-      );
-      root.get().node.program.body.unshift(importDecl);
+    if (hasCorrectImport) {
+      return; // 已经有正确的导入，无需操作
     }
+
+    // 查找并移除所有使用 "Translations" 变量名的旧导入
+    // 这样可以处理文件路径变更的情况
+    root
+      .find(j.ImportDeclaration)
+      .filter((path: ASTPath<n.ImportDeclaration>) => {
+        const specifiers = path.node.specifiers;
+        if (!specifiers || specifiers.length === 0) return false;
+
+        // 检查是否是 @translate 开头的导入且使用了 Translations 变量名
+        const sourceValue = path.node.source?.value as string;
+        const isTranslateImport = sourceValue?.startsWith("@translate/");
+
+        // 检查是否有默认导入且变量名是 "Translations"
+        const hasTranslationsImport = specifiers.some(
+          (spec) =>
+            n.ImportDefaultSpecifier.check(spec) &&
+            n.Identifier.check(spec.local) &&
+            spec.local.name === "Translations"
+        );
+
+        return isTranslateImport && hasTranslationsImport;
+      })
+      .remove();
+
+    // 添加新的正确导入
+    const importDecl = j.importDeclaration(
+      [j.importDefaultSpecifier(j.identifier("Translations"))],
+      j.literal(importPath)
+    );
+    root.get().node.program.body.unshift(importDecl);
   }
 
   /**
@@ -770,72 +809,6 @@ export class AstTransformer {
         )
       ),
     ]);
-  }
-
-  /**
-   * 查找组件定义
-   */
-  private findComponentDefinitions(
-    j: JSCodeshiftAPI,
-    root: JSCodeshiftCollection
-  ): ASTPath<any>[] {
-    const components: ASTPath<any>[] = [];
-
-    // 查找函数组件 (function declarations)
-    root.find(j.FunctionDeclaration).forEach((path) => {
-      if (this.isReactComponent(path.node)) {
-        components.push(path);
-      }
-    });
-
-    // 查找箭头函数组件 (const Component = () => {})
-    root.find(j.VariableDeclarator).forEach((path) => {
-      if (n.ArrowFunctionExpression.check(path.node.init)) {
-        const func = path.node.init;
-        if (this.isReactComponent(func)) {
-          components.push(path);
-        }
-      }
-    });
-
-    return components;
-  }
-
-  /**
-   * 检查是否是 React 组件
-   */
-  private isReactComponent(
-    node: n.Function | n.ArrowFunctionExpression
-  ): boolean {
-    // 简单检查：如果函数返回JSX，认为是React组件
-    // 这里可以根据实际需要完善逻辑
-    return true; // 简化实现
-  }
-
-  /**
-   * 在函数/组件开头插入语句
-   */
-  private insertStatementAtBeginning(
-    componentPath: ASTPath<any>,
-    statement: n.VariableDeclaration
-  ): void {
-    const node = componentPath.node;
-
-    if (n.FunctionDeclaration.check(node)) {
-      // 函数声明
-      if (node.body && node.body.body) {
-        node.body.body.unshift(statement as any);
-      }
-    } else if (
-      n.VariableDeclarator.check(node) &&
-      n.ArrowFunctionExpression.check(node.init)
-    ) {
-      // 箭头函数
-      const arrowFunc = node.init;
-      if (n.BlockStatement.check(arrowFunc.body)) {
-        arrowFunc.body.body.unshift(statement as any);
-      }
-    }
   }
 
   /**
