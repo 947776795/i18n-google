@@ -357,23 +357,41 @@ export class AstTransformer {
     j: JSCodeshiftAPI
   ): void {
     const isInJSX = AstUtils.isInJSXContext(path);
+    const isInJSXExpression = this.isInJSXExpression(path);
 
-    if (isInJSX) {
-      // 检查当前节点的父节点类型
-      const parentType = path.parent?.node?.type;
-
-      if (parentType === "JSXExpressionContainer") {
-        // 如果已经在JSX表达式容器中，直接替换表达式内容
-        path.replace(callExpr);
-      } else {
-        // 在JSX属性或文本位置，需要包装为表达式容器
-        const jsxExpr = AstUtils.createJSXExpressionContainer(callExpr);
-        path.replace(jsxExpr);
-      }
+    if (isInJSX && !isInJSXExpression) {
+      // 在JSX上下文中，但不在JavaScript表达式中（如JSX文本节点或属性值）
+      // 需要包装为表达式容器
+      const jsxExpr = AstUtils.createJSXExpressionContainer(callExpr);
+      path.replace(jsxExpr);
     } else {
-      // 在普通JavaScript中，直接替换
+      // 在普通JavaScript中，或者在JSX表达式容器内的JavaScript表达式中
+      // 直接替换为函数调用
       path.replace(callExpr);
     }
+  }
+
+  /**
+   * 检查节点是否在JSX表达式容器内的JavaScript表达式中
+   * 例如：{isLoading ? "Loading" : "Done"} 中的字符串字面量
+   */
+  private isInJSXExpression(path: ASTPath<n.Node>): boolean {
+    let parent = path.parent;
+    while (parent) {
+      // 如果找到JSXExpressionContainer，说明在JS表达式中
+      if (parent.node?.type === "JSXExpressionContainer") {
+        return true;
+      }
+      // 如果遇到JSX元素或片段，但没有找到表达式容器，说明是在JSX文本或属性中
+      if (
+        parent.node?.type === "JSXElement" ||
+        parent.node?.type === "JSXFragment"
+      ) {
+        return false;
+      }
+      parent = parent.parent;
+    }
+    return false;
   }
 
   /**
