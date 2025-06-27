@@ -11,4 +11,5 @@ export interface I18nConfig {
   outputDir: string;
   forceKeepKeys?: string[]; // 强制保留的Key列表
   logLevel?: "silent" | "normal" | "verbose"; // 日志级别配置
+  sheetsReadRange?: string; // Google Sheets 读取范围，默认 "A1:Z10000"
 }

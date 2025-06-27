@@ -25,6 +25,8 @@ export interface CompleteTranslationRecord {
   [translationPath: string]: {
     [translationKey: string]: {
       [languageKey: string]: string;
+    } & {
+      mark?: number; // 添加mark字段，可选，默认为0
     };
   };
 }
@@ -243,10 +245,9 @@ export class TranslationManager {
 
       keys.forEach((key) => {
         console.log(`🔑 [DEBUG] 处理key: "${key}"`);
-        record[modulePath][key] = {};
 
         // 检查现有记录中是否有这个key的翻译数据
-        let existingTranslations: Record<string, string> | null = null;
+        let existingTranslations: any = null;
 
         // 在现有记录的所有模块中查找这个key
         for (const [existingModulePath, existingModuleKeys] of Object.entries(
@@ -261,22 +262,28 @@ export class TranslationManager {
           }
         }
 
-        // 为每种语言设置翻译值
-        this.config.languages.forEach((lang) => {
-          if (existingTranslations && existingTranslations[lang]) {
-            // 优先使用现有翻译数据
-            record[modulePath][key][lang] = existingTranslations[lang];
-            console.log(
-              `🔄 [DEBUG] key "${key}" 语言 "${lang}" 使用现有翻译: "${existingTranslations[lang]}"`
-            );
-          } else {
-            // 没有现有翻译时，使用原文案作为默认值
+        if (existingTranslations) {
+          // 现有key：直接复制所有数据（包括mark字段）
+          record[modulePath][key] = { ...existingTranslations };
+          console.log(
+            `🔄 [DEBUG] key "${key}" 复用现有翻译数据（包括mark字段）`
+          );
+        } else {
+          // 新key：初始化翻译数据并添加mark字段
+          record[modulePath][key] = {};
+
+          // 为每种语言设置默认翻译值
+          this.config.languages.forEach((lang) => {
             record[modulePath][key][lang] = key;
             console.log(
               `🆕 [DEBUG] key "${key}" 语言 "${lang}" 使用默认值: "${key}"`
             );
-          }
-        });
+          });
+
+          // 新key设置默认mark值为0
+          record[modulePath][key].mark = 0;
+          console.log(`🆕 [DEBUG] 新key "${key}" 设置默认mark值: 0`);
+        }
       });
     });
 

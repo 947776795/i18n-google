@@ -12,7 +12,8 @@ const clientHomeTranslations = {
     "learn": "learn",
     "examples": "examples",
     "go_to_nextjs": "go_to_nextjs",
-    "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.": "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else."
+    "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.": "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.",
+    "test_new_mark_field": "test_new_mark_field"
   },
   "ko": {
     "get_started_by_editing": "get_started_by_editing",
@@ -27,7 +28,8 @@ const clientHomeTranslations = {
     "learn": "learn",
     "examples": "examples",
     "go_to_nextjs": "go_to_nextjs",
-    "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.": "Edgen 비공개 베타에 오신 것을 환영합니다, 익명 사용자님! 아래에 초대 코드를 입력하여 모두보다 먼저 Alpha를 잠금 해제하세요."
+    "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.": "Edgen 비공개 베타에 오신 것을 환영합니다, 익명 사용자님! 아래에 초대 코드를 입력하여 모두보다 먼저 Alpha를 잠금 해제하세요.",
+    "test_new_mark_field": "test_new_mark_field"
   },
   "zh-Hans": {
     "get_started_by_editing": "get_started_by_editing",
@@ -42,7 +44,8 @@ const clientHomeTranslations = {
     "learn": "learn",
     "examples": "examples",
     "go_to_nextjs": "go_to_nextjs",
-    "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.": "欢迎体验 Edgen测试版！在下方输入您的邀请码，以抢先解锁 Alpha！"
+    "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.": "欢迎体验 Edgen测试版！在下方输入您的邀请码，以抢先解锁 Alpha！",
+    "test_new_mark_field": "test_new_mark_field"
   },
   "zh-Hant": {
     "get_started_by_editing": "get_started_by_editing",
@@ -57,7 +60,8 @@ const clientHomeTranslations = {
     "learn": "learn",
     "examples": "examples",
     "go_to_nextjs": "go_to_nextjs",
-    "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.": "歡迎體驗 Edgen 私人測試版，匿名使用者！在下方輸入您的邀請碼，以搶先解鎖 Alpha！"
+    "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.": "歡迎體驗 Edgen 私人測試版，匿名使用者！在下方輸入您的邀請碼，以搶先解鎖 Alpha！",
+    "test_new_mark_field": "test_new_mark_field"
   },
   "vi": {
     "get_started_by_editing": "get_started_by_editing",
@@ -72,7 +76,8 @@ const clientHomeTranslations = {
     "learn": "learn",
     "examples": "examples",
     "go_to_nextjs": "go_to_nextjs",
-    "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.": "Chào mừng bạn đến với Edgen Private Beta, người dùng ẩn danh! Nhập mã mời của bạn dưới đây để mở khóa Alpha trước mọi người."
+    "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.": "Chào mừng bạn đến với Edgen Private Beta, người dùng ẩn danh! Nhập mã mời của bạn dưới đây để mở khóa Alpha trước mọi người.",
+    "test_new_mark_field": "test_new_mark_field"
   },
   "es": {
     "get_started_by_editing": "get_started_by_editing",
@@ -87,7 +92,8 @@ const clientHomeTranslations = {
     "learn": "learn",
     "examples": "examples",
     "go_to_nextjs": "go_to_nextjs",
-    "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.": "¡Bienvenido a la Beta Privada de Edgen, anónimo! Ingresa tu código de invitación abajo para desbloquear Alpha antes que todos."
+    "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.": "¡Bienvenido a la Beta Privada de Edgen, anónimo! Ingresa tu código de invitación abajo para desbloquear Alpha antes que todos.",
+    "test_new_mark_field": "test_new_mark_field"
   },
   "tr": {
     "get_started_by_editing": "get_started_by_editing",
@@ -102,7 +108,8 @@ const clientHomeTranslations = {
     "learn": "learn",
     "examples": "examples",
     "go_to_nextjs": "go_to_nextjs",
-    "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.": "Edgen Özel Beta'ya hoş geldiniz, anonim! Herkesten önce Alpha'yı açmak için aşağıya davet kodunuzu girin."
+    "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.": "Edgen Özel Beta'ya hoş geldiniz, anonim! Herkesten önce Alpha'yı açmak için aşağıya davet kodunuzu girin.",
+    "test_new_mark_field": "test_new_mark_field"
   },
   "de": {
     "get_started_by_editing": "get_started_by_editing",
@@ -117,7 +124,8 @@ const clientHomeTranslations = {
     "learn": "learn",
     "examples": "examples",
     "go_to_nextjs": "go_to_nextjs",
-    "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.": "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else."
+    "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.": "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.",
+    "test_new_mark_field": "test_new_mark_field"
   }
 };
 

@@ -139,9 +139,14 @@ export default function ClientHome({ locale }: ClientHomeProps) {
           />
           {I18n.t("go_to_nextjs")}
         </a>
-        <span className="body_m_regular text-content_secondary mt-2">{I18n.t(
-          "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else."
-        )}</span>
+        <span className="body_m_regular text-content_secondary mt-2">
+          {I18n.t(
+            "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else."
+          )}
+        </span>
+        <div className="mt-2">
+          <p>{I18n.t("test_new_mark_field")}</p>
+        </div>
       </footer>
     </div>
   );

@@ -93,41 +93,6 @@ export class GoogleSheetsSync {
   }
 
   /**
-   * 获取 Sheet 的实际范围
-   * @returns 包含数据的实际范围
-   */
-  private async getSheetDimensions(): Promise<{ rows: number; cols: number }> {
-    await this.ensureInitialized();
-
-    try {
-      // 首先获取sheet的基本信息来确定有数据的范围
-      const metadataResponse = await this.googleSheets.spreadsheets.get({
-        spreadsheetId: this.config.spreadsheetId,
-        ranges: [this.config.sheetName],
-        includeGridData: false,
-      });
-
-      const sheet = metadataResponse.data.sheets?.find(
-        (s: any) => s.properties.title === this.config.sheetName
-      );
-
-      if (sheet) {
-        const gridProperties = sheet.properties.gridProperties;
-        return {
-          rows: gridProperties.rowCount || 1000, // 默认1000行
-          cols: gridProperties.columnCount || 26, // 默认26列(A-Z)
-        };
-      }
-
-      // 如果无法获取元数据，使用默认值
-      return { rows: 1000, cols: 26 };
-    } catch (error) {
-      Logger.warn("获取Sheet维度失败，使用默认范围:", error);
-      return { rows: 1000, cols: 26 }; // 默认范围
-    }
-  }
-
-  /**
    * 从 Google Sheets 同步 CompleteTranslationRecord
    */
   public async syncCompleteRecordFromSheet(): Promise<CompleteTranslationRecord> {
@@ -139,16 +104,16 @@ export class GoogleSheetsSync {
     }
 
     try {
-      // 获取动态范围
-      const dimensions = await this.getSheetDimensions();
-      const dynamicRange = this.calculateRange(
-        dimensions.cols,
-        dimensions.rows
+      // 使用配置的固定范围避免过滤器干扰
+      const readRange = this.config.sheetsReadRange || "A1:Z10000";
+
+      Logger.info(
+        `🔍 使用配置的固定范围 ${readRange} 读取数据以避免过滤器干扰`
       );
 
       const response = await this.googleSheets.spreadsheets.values.get({
         spreadsheetId: this.config.spreadsheetId,
-        range: `${this.config.sheetName}!${dynamicRange}`,
+        range: `${this.config.sheetName}!${readRange}`,
       });
 
       const rows = response.data.values || [];
@@ -167,6 +132,14 @@ export class GoogleSheetsSync {
           langIndices.set(header, index);
         }
       });
+
+      // 检查是否存在mark列
+      const markColumnIndex = headers.indexOf("mark");
+      const hasMarkColumn = markColumnIndex !== -1;
+
+      if (hasMarkColumn) {
+        Logger.info(`🏷️ 检测到远端已存在mark列，位置: ${markColumnIndex}`);
+      }
 
       // 处理每一行数据
       for (let i = 1; i < rows.length; i++) {
@@ -214,6 +187,19 @@ export class GoogleSheetsSync {
             completeRecord[modulePath][translationKey][lang] = row[index];
           }
         });
+
+        // 处理mark字段
+        if (
+          hasMarkColumn &&
+          row[markColumnIndex] !== undefined &&
+          row[markColumnIndex] !== ""
+        ) {
+          const markValue = parseInt(row[markColumnIndex]) || 0;
+          completeRecord[modulePath][translationKey].mark = markValue;
+        } else {
+          // 如果远端没有mark列或值为空，设置默认值0
+          completeRecord[modulePath][translationKey].mark = 0;
+        }
       }
 
       Logger.info(
@@ -242,7 +228,8 @@ export class GoogleSheetsSync {
     }
 
     try {
-      const headers = ["key", ...this.config.languages];
+      // 构建表头 - 包含mark列
+      const headers = ["key", ...this.config.languages, "mark"];
       const values = [headers];
 
       // 构建数据行 - 新格式
@@ -261,6 +248,9 @@ export class GoogleSheetsSync {
               row.push(translations[lang] || "");
             });
 
+            // 添加mark值
+            row.push((translations.mark ?? 0).toString());
+
             values.push(row);
           }
         );
@@ -278,7 +268,7 @@ export class GoogleSheetsSync {
       });
 
       Logger.info(
-        `✅ 成功同步 ${values.length - 1} 条翻译到 Google Sheets (新格式)`
+        `✅ 成功同步 ${values.length - 1} 条翻译到 Google Sheets (包含mark字段)`
       );
     } catch (error) {
       this.handleSyncError(error, "向Google Sheets同步CompleteRecord");

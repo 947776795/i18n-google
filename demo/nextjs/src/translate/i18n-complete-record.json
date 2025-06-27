@@ -8,7 +8,8 @@
       "vi": "Invalid locale: %{var0}",
       "es": "Invalid locale: %{var0}",
       "tr": "Invalid locale: %{var0}",
-      "de": "Invalid locale: %{var0}"
+      "de": "Invalid locale: %{var0}",
+      "mark": 0
     }
   },
   "app/[locale]/server-test/page.ts": {
@@ -20,7 +21,8 @@
       "vi": "Server Component I18n Test",
       "es": "Server Component I18n Test",
       "tr": "Server Component I18n Test",
-      "de": "Server Component I18n Test"
+      "de": "Server Component I18n Test",
+      "mark": 1
     },
     "Auto-detected Locale": {
       "en": "Auto-detected Locale",
@@ -30,7 +32,8 @@
       "vi": "Auto-detected Locale",
       "es": "Auto-detected Locale",
       "tr": "Auto-detected Locale",
-      "de": "Auto-detected Locale"
+      "de": "Auto-detected Locale",
+      "mark": 0
     },
     "Detected locale:": {
       "en": "Detected locale:",
@@ -40,7 +43,8 @@
       "vi": "Detected locale:",
       "es": "Detected locale:",
       "tr": "Detected locale:",
-      "de": "Detected locale:"
+      "de": "Detected locale:",
+      "mark": 0
     },
     "Welcome message:": {
       "en": "Welcome message:",
@@ -50,7 +54,8 @@
       "vi": "Welcome message:",
       "es": "Welcome message:",
       "tr": "Welcome message:",
-      "de": "Welcome message:"
+      "de": "Welcome message:",
+      "mark": 0
     },
     "get_started_by_editing": {
       "en": "get_started_by_editing",
@@ -60,7 +65,8 @@
       "vi": "get_started_by_editing",
       "es": "get_started_by_editing",
       "tr": "get_started_by_editing",
-      "de": "get_started_by_editing"
+      "de": "get_started_by_editing",
+      "mark": 0
     },
     "Deploy button:": {
       "en": "Deploy button:",
@@ -70,7 +76,8 @@
       "vi": "Deploy button:",
       "es": "Deploy button:",
       "tr": "Deploy button:",
-      "de": "Deploy button:"
+      "de": "Deploy button:",
+      "mark": 0
     },
     "deploy_now": {
       "en": "deploy_now",
@@ -80,7 +87,8 @@
       "vi": "deploy_now",
       "es": "deploy_now",
       "tr": "deploy_now",
-      "de": "deploy_now"
+      "de": "deploy_now",
+      "mark": 0
     },
     "Docs link:": {
       "en": "Docs link:",
@@ -90,7 +98,8 @@
       "vi": "Docs link:",
       "es": "Docs link:",
       "tr": "Docs link:",
-      "de": "Docs link:"
+      "de": "Docs link:",
+      "mark": 0
     },
     "read_our_docs": {
       "en": "read_our_docs",
@@ -100,7 +109,8 @@
       "vi": "read_our_docs",
       "es": "read_our_docs",
       "tr": "read_our_docs",
-      "de": "read_our_docs"
+      "de": "read_our_docs",
+      "mark": 0
     },
     "Manual Locale (from route)": {
       "en": "Manual Locale (from route)",
@@ -110,7 +120,8 @@
       "vi": "Manual Locale (from route)",
       "es": "Manual Locale (from route)",
       "tr": "Manual Locale (from route)",
-      "de": "Manual Locale (from route)"
+      "de": "Manual Locale (from route)",
+      "mark": 0
     },
     "Route locale:": {
       "en": "Route locale:",
@@ -120,7 +131,8 @@
       "vi": "Route locale:",
       "es": "Route locale:",
       "tr": "Route locale:",
-      "de": "Route locale:"
+      "de": "Route locale:",
+      "mark": 0
     },
     "Manual locale:": {
       "en": "Manual locale:",
@@ -130,7 +142,8 @@
       "vi": "Manual locale:",
       "es": "Manual locale:",
       "tr": "Manual locale:",
-      "de": "Manual locale:"
+      "de": "Manual locale:",
+      "mark": 0
     },
     "Comparison": {
       "en": "Comparison",
@@ -140,7 +153,8 @@
       "vi": "Comparison",
       "es": "Comparison",
       "tr": "Comparison",
-      "de": "Comparison"
+      "de": "Comparison",
+      "mark": 0
     },
     "Auto vs Manual locale match:": {
       "en": "Auto vs Manual locale match:",
@@ -150,7 +164,8 @@
       "vi": "Auto vs Manual locale match:",
       "es": "Auto vs Manual locale match:",
       "tr": "Auto vs Manual locale match:",
-      "de": "Auto vs Manual locale match:"
+      "de": "Auto vs Manual locale match:",
+      "mark": 0
     },
     "/%{var0} /server-test": {
       "en": "/%{var0} /server-test",
@@ -160,7 +175,8 @@
       "vi": "/%{var0} /server-test",
       "es": "/%{var0} /server-test",
       "tr": "/%{var0} /server-test",
-      "de": "/%{var0} /server-test"
+      "de": "/%{var0} /server-test",
+      "mark": 0
     },
     "Back to Home": {
       "en": "Back to Home",
@@ -170,7 +186,8 @@
       "vi": "Back to Home",
       "es": "Back to Home",
       "tr": "Back to Home",
-      "de": "Back to Home"
+      "de": "Back to Home",
+      "mark": 0
     }
   },
   "components/ClientHome.ts": {
@@ -182,7 +199,8 @@
       "vi": "get_started_by_editing",
       "es": "get_started_by_editing",
       "tr": "get_started_by_editing",
-      "de": "get_started_by_editing"
+      "de": "get_started_by_editing",
+      "mark": 0
     },
     "deploy_now": {
       "en": "deploy_now",
@@ -192,7 +210,8 @@
       "vi": "deploy_now",
       "es": "deploy_now",
       "tr": "deploy_now",
-      "de": "deploy_now"
+      "de": "deploy_now",
+      "mark": 0
     },
     "read_our_docs": {
       "en": "read_our_docs",
@@ -202,7 +221,8 @@
       "vi": "read_our_docs",
       "es": "read_our_docs",
       "tr": "read_our_docs",
-      "de": "read_our_docs"
+      "de": "read_our_docs",
+      "mark": 0
     },
     "src/app/page.tsx": {
       "en": "src/app/page.tsx",
@@ -212,7 +232,8 @@
       "vi": "src/app/page.tsx",
       "es": "src/app/page.tsx",
       "tr": "src/app/page.tsx",
-      "de": "src/app/page.tsx"
+      "de": "src/app/page.tsx",
+      "mark": 0
     },
     "save_and_see_changes_instantly": {
       "en": "save_and_see_changes_instantly",
@@ -222,7 +243,8 @@
       "vi": "save_and_see_changes_instantly",
       "es": "save_and_see_changes_instantly",
       "tr": "save_and_see_changes_instantly",
-      "de": "save_and_see_changes_instantly"
+      "de": "save_and_see_changes_instantly",
+      "mark": 0
     },
     "const_test": {
       "en": "const_test",
@@ -232,7 +254,8 @@
       "vi": "const_test",
       "es": "const_test",
       "tr": "const_test",
-      "de": "const_test"
+      "de": "const_test",
+      "mark": 0
     },
     "const_test2": {
       "en": "const_test2",
@@ -242,7 +265,8 @@
       "vi": "const_test2",
       "es": "const_test2",
       "tr": "const_test2",
-      "de": "const_test2"
+      "de": "const_test2",
+      "mark": 0
     },
     "Current locale: %{var0}": {
       "en": "Current locale: %{var0}",
@@ -252,7 +276,8 @@
       "vi": "Current locale: %{var0}",
       "es": "Current locale: %{var0}",
       "tr": "Current locale: %{var0}",
-      "de": "Current locale: %{var0}"
+      "de": "Current locale: %{var0}",
+      "mark": 0
     },
     "Test Server Component I18n": {
       "en": "Test Server Component I18n",
@@ -262,7 +287,8 @@
       "vi": "Test Server Component I18n",
       "es": "Test Server Component I18n",
       "tr": "Test Server Component I18n",
-      "de": "Test Server Component I18n"
+      "de": "Test Server Component I18n",
+      "mark": 0
     },
     "learn": {
       "en": "learn",
@@ -272,7 +298,8 @@
       "vi": "learn",
       "es": "learn",
       "tr": "learn",
-      "de": "learn"
+      "de": "learn",
+      "mark": 0
     },
     "examples": {
       "en": "examples",
@@ -282,7 +309,8 @@
       "vi": "examples",
       "es": "examples",
       "tr": "examples",
-      "de": "examples"
+      "de": "examples",
+      "mark": 0
     },
     "go_to_nextjs": {
       "en": "go_to_nextjs",
@@ -292,7 +320,8 @@
       "vi": "go_to_nextjs",
       "es": "go_to_nextjs",
       "tr": "go_to_nextjs",
-      "de": "go_to_nextjs"
+      "de": "go_to_nextjs",
+      "mark": 0
     },
     "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.": {
       "en": "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.",
@@ -302,7 +331,19 @@
       "vi": "Chào mừng bạn đến với Edgen Private Beta, người dùng ẩn danh! Nhập mã mời của bạn dưới đây để mở khóa Alpha trước mọi người.",
       "es": "¡Bienvenido a la Beta Privada de Edgen, anónimo! Ingresa tu código de invitación abajo para desbloquear Alpha antes que todos.",
       "tr": "Edgen Özel Beta'ya hoş geldiniz, anonim! Herkesten önce Alpha'yı açmak için aşağıya davet kodunuzu girin.",
-      "de": "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else."
+      "de": "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.",
+      "mark": 0
+    },
+    "test_new_mark_field": {
+      "en": "test_new_mark_field",
+      "ko": "test_new_mark_field",
+      "zh-Hans": "test_new_mark_field",
+      "zh-Hant": "test_new_mark_field",
+      "vi": "test_new_mark_field",
+      "es": "test_new_mark_field",
+      "tr": "test_new_mark_field",
+      "de": "test_new_mark_field",
+      "mark": 0
     }
   },
   "components/Button/index.ts": {
@@ -314,7 +355,8 @@
       "vi": "I18n22",
       "es": "I18n22",
       "tr": "I18n22",
-      "de": "I18n22"
+      "de": "I18n22",
+      "mark": 0
     },
     "I18n5": {
       "en": "I18n5",
@@ -324,7 +366,8 @@
       "vi": "I18n5",
       "es": "I18n5",
       "tr": "I18n5",
-      "de": "I18n5"
+      "de": "I18n5",
+      "mark": 0
     },
     "I18n4": {
       "en": "I18n4",
@@ -334,7 +377,8 @@
       "vi": "I18n4",
       "es": "I18n4",
       "tr": "I18n4",
-      "de": "I18n4"
+      "de": "I18n4",
+      "mark": 0
     }
   },
   "const/const.ts": {
@@ -346,7 +390,8 @@
       "vi": "sadasdad",
       "es": "sadasdad",
       "tr": "sadasdad",
-      "de": "sadasdad"
+      "de": "sadasdad",
+      "mark": 0
     },
     "bbb": {
       "en": "bbb",
@@ -356,7 +401,8 @@
       "vi": "bbb",
       "es": "bbb",
       "tr": "bbb",
-      "de": "bbb"
+      "de": "bbb",
+      "mark": 0
     }
   }
 }
