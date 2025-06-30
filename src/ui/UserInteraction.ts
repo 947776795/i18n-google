@@ -1,4 +1,5 @@
 import inquirer from "inquirer";
+import { Logger } from "../utils/StringUtils";
 
 export interface DeletionSummary {
   keysToDelete: string[];
@@ -28,26 +29,27 @@ export class UserInteraction {
 
     // 显示强制保留信息
     if (forceKeptKeys.length > 0) {
-      console.log(
-        `🔒 已配置强制保留 ${forceKeptKeys.length} 个Key，将跳过删除:`
+      Logger.info(
+        `🔒 已配置强制保留 ${forceKeptKeys.length} 个Key，将跳过删除:`,
+        forceKeptKeys
       );
-      forceKeptKeys.forEach((key) => console.log(`   - ${key}`));
-      console.log("");
+      forceKeptKeys.forEach((key) => Logger.info(`   - ${key}`));
+      Logger.info("");
     }
 
-    console.log(`\n⚠️  发现 ${summary.totalKeys} 个可删除的无用翻译Key\n`);
+    Logger.info(`\n⚠️  发现 ${summary.totalKeys} 个可删除的无用翻译Key\n`);
 
     // 如果Key数量较少，直接显示
     if (summary.totalKeys <= 10) {
-      console.log("📝 无用Key列表:");
+      Logger.info("📝 无用Key列表:");
       unusedKeys.forEach((key, index) => {
-        console.log(`   ${index + 1}. ${key}`);
+        Logger.info(`   ${index + 1}. ${key}`);
       });
-      console.log("");
+      Logger.info("");
     } else {
       // 显示预览文件信息
-      console.log(`\n📄 详细预览已生成: ${previewFilePath}`);
-      console.log("   请查看文件内容，然后返回继续操作\n");
+      Logger.info(`\n📄 详细预览已生成: ${previewFilePath}`);
+      Logger.info("   请查看文件内容，然后返回继续操作\n");
 
       // 等待用户查看文件
       await inquirer.prompt([
@@ -99,24 +101,24 @@ export class UserInteraction {
     );
     const moduleCount = Object.keys(moduleLevelUnusedKeys).length;
 
-    console.log(
+    Logger.info(
       `\n🧹 发现 ${totalKeys} 个模块级无用Key，分布在 ${moduleCount} 个模块中\n`
     );
 
     // 显示详细信息
-    console.log("📁 模块级无用Key详情:");
+    Logger.info("📁 模块级无用Key详情:");
     Object.entries(moduleLevelUnusedKeys).forEach(
       ([modulePath, keys], index) => {
-        console.log(`   ${index + 1}. ${modulePath} (${keys.length} 个key)`);
+        Logger.info(`   ${index + 1}. ${modulePath} (${keys.length} 个key)`);
         if (keys.length <= 5) {
-          keys.forEach((key) => console.log(`      - ${key}`));
+          keys.forEach((key) => Logger.info(`      - ${key}`));
         } else {
-          keys.slice(0, 3).forEach((key) => console.log(`      - ${key}`));
-          console.log(`      ... 还有 ${keys.length - 3} 个`);
+          keys.slice(0, 3).forEach((key) => Logger.info(`      - ${key}`));
+          Logger.info(`      ... 还有 ${keys.length - 3} 个`);
         }
       }
     );
-    console.log("");
+    Logger.info("");
 
     // 确认删除
     const { confirmDeletion } = await inquirer.prompt([
@@ -135,22 +137,22 @@ export class UserInteraction {
    * 显示简要摘要
    */
   private static displayBriefSummary(unusedKeys: string[]): void {
-    console.log("\n📊 删除摘要:");
-    console.log(`   - 无用Key数量: ${unusedKeys.length}`);
+    Logger.info("\n📊 删除摘要:");
+    Logger.info(`   - 无用Key数量: ${unusedKeys.length}`);
 
     if (unusedKeys.length <= 5) {
-      console.log("   - Key列表:");
+      Logger.info("   - Key列表:");
       unusedKeys.forEach((key, index) => {
-        console.log(`     ${index + 1}. ${key}`);
+        Logger.info(`     ${index + 1}. ${key}`);
       });
     } else {
-      console.log("   - 前5个Key:");
+      Logger.info("   - 前5个Key:");
       unusedKeys.slice(0, 5).forEach((key, index) => {
-        console.log(`     ${index + 1}. ${key}`);
+        Logger.info(`     ${index + 1}. ${key}`);
       });
-      console.log(`     ... 还有 ${unusedKeys.length - 5} 个`);
+      Logger.info(`     ... 还有 ${unusedKeys.length - 5} 个`);
     }
-    console.log("");
+    Logger.info("");
   }
 
   /**
@@ -190,9 +192,9 @@ export class UserInteraction {
    * 确认是否上传到远端
    */
   static async confirmRemoteSync(): Promise<boolean> {
-    console.log("\n" + "=".repeat(60));
-    console.log("☁️  准备同步到远端 (Google Sheets)");
-    console.log("=".repeat(60));
+    Logger.info("\n" + "=".repeat(60));
+    Logger.info("☁️  准备同步到远端 (Google Sheets)");
+    Logger.info("=".repeat(60));
 
     const { confirmSync } = await inquirer.prompt([
       {
@@ -204,9 +206,9 @@ export class UserInteraction {
     ]);
 
     if (confirmSync) {
-      console.log("✅ 用户确认，开始同步到远端...");
+      Logger.info("✅ 用户确认，开始同步到远端...");
     } else {
-      console.log("❌ 用户取消同步，跳过远端上传");
+      Logger.info("❌ 用户取消同步，跳过远端上传");
     }
 
     return confirmSync;
@@ -222,37 +224,37 @@ export class UserInteraction {
     success: boolean;
     error?: string;
   }): void {
-    console.log("\n" + "=".repeat(60));
+    Logger.info("\n" + "=".repeat(60));
 
     if (result.success) {
-      console.log("🎉 删除操作完成！");
-      console.log(`\n📊 删除统计:`);
-      console.log(`   ✅ 成功删除: ${result.deletedKeys.length} 个Key`);
-      console.log(`   🌐 影响语言: ${result.affectedLanguages.join(", ")}`);
-      console.log(`   ⏱️  执行时间: ${this.formatDuration(result.duration)}`);
+      Logger.info("🎉 删除操作完成！");
+      Logger.info(`\n📊 删除统计:`);
+      Logger.info(`   ✅ 成功删除: ${result.deletedKeys.length} 个Key`);
+      Logger.info(`   🌐 影响语言: ${result.affectedLanguages.join(", ")}`);
+      Logger.info(`   ⏱️  执行时间: ${this.formatDuration(result.duration)}`);
 
       if (result.deletedKeys.length <= 10) {
-        console.log(`\n📝 已删除的Key:`);
+        Logger.info(`\n📝 已删除的Key:`);
         result.deletedKeys.forEach((key, index) => {
-          console.log(`   ${index + 1}. ${key}`);
+          Logger.info(`   ${index + 1}. ${key}`);
         });
       } else {
-        console.log(`\n📝 已删除的Key (前10个):`);
+        Logger.info(`\n📝 已删除的Key (前10个):`);
         result.deletedKeys.slice(0, 10).forEach((key, index) => {
-          console.log(`   ${index + 1}. ${key}`);
+          Logger.info(`   ${index + 1}. ${key}`);
         });
-        console.log(`   ... 还有 ${result.deletedKeys.length - 10} 个`);
+        Logger.info(`   ... 还有 ${result.deletedKeys.length - 10} 个`);
       }
     } else {
-      console.log("❌ 删除操作失败！");
-      console.log(`\n💥 错误信息: ${result.error}`);
-      console.log(`\n🔄 建议:`);
-      console.log("   1. 检查文件权限");
-      console.log("   2. 确认磁盘空间充足");
-      console.log("   3. 稍后重试操作");
+      Logger.error("❌ 删除操作失败！");
+      Logger.error(`\n💥 错误信息: ${result.error}`);
+      Logger.info(`\n🔄 建议:`);
+      Logger.info("   1. 检查文件权限");
+      Logger.info("   2. 确认磁盘空间充足");
+      Logger.info("   3. 稍后重试操作");
     }
 
-    console.log("=".repeat(60) + "\n");
+    Logger.info("=".repeat(60) + "\n");
   }
 
   /**
@@ -265,22 +267,22 @@ export class UserInteraction {
     unusedKeys: number;
     duration: number;
   }): void {
-    console.log("\n" + "=".repeat(50));
-    console.log("📊 扫描结果摘要");
-    console.log("=".repeat(50));
-    console.log(`📁 处理文件数: ${summary.totalFiles}`);
-    console.log(`🔑 总翻译Key数: ${summary.totalKeys}`);
-    console.log(`✨ 新增Key数: ${summary.newKeys}`);
-    console.log(`🗑️  无用Key数: ${summary.unusedKeys}`);
-    console.log(`⏱️  执行时间: ${this.formatDuration(summary.duration)}`);
-    console.log("=".repeat(50));
+    Logger.info("\n" + "=".repeat(50));
+    Logger.info("📊 扫描结果摘要");
+    Logger.info("=".repeat(50));
+    Logger.info(`📁 处理文件数: ${summary.totalFiles}`);
+    Logger.info(`🔑 总翻译Key数: ${summary.totalKeys}`);
+    Logger.info(`✨ 新增Key数: ${summary.newKeys}`);
+    Logger.info(`🗑️  无用Key数: ${summary.unusedKeys}`);
+    Logger.info(`⏱️  执行时间: ${this.formatDuration(summary.duration)}`);
+    Logger.info("=".repeat(50));
 
     if (summary.unusedKeys > 0) {
-      console.log(
+      Logger.warn(
         `\n⚠️  发现 ${summary.unusedKeys} 个无用的翻译Key，建议进行清理`
       );
     } else {
-      console.log("\n✅ 所有翻译Key都在使用中，无需清理");
+      Logger.info("\n✅ 所有翻译Key都在使用中，无需清理");
     }
   }
 
@@ -306,7 +308,7 @@ export class UserInteraction {
     filePath: string,
     description: string
   ): Promise<boolean> {
-    console.log(`\n📄 ${description}: ${filePath}`);
+    Logger.info(`\n📄 ${description}: ${filePath}`);
 
     const { shouldOpen } = await inquirer.prompt([
       {
@@ -327,9 +329,9 @@ export class UserInteraction {
             ? "start"
             : "xdg-open";
         exec(`${command} "${filePath}"`);
-        console.log("✅ 文件已打开");
+        Logger.info("✅ 文件已打开");
       } catch (error) {
-        console.warn("⚠️  无法打开文件，请手动查看");
+        Logger.warn("⚠️  无法打开文件，请手动查看");
       }
     }
 

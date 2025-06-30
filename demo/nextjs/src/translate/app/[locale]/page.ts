@@ -20,7 +20,7 @@ const pageTranslations = {
   "tr": {
     "Invalid locale: %{var0}": "Invalid locale: %{var0}"
   },
-  "de": {
+  "fr": {
     "Invalid locale: %{var0}": "Invalid locale: %{var0}"
   }
 };
