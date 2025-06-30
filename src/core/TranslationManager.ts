@@ -2,7 +2,6 @@ import path from "path";
 import fs from "fs";
 import { readFile, writeFile, mkdir } from "fs/promises";
 import type { I18nConfig } from "../types";
-import type { TransformResult } from "./AstTransformer";
 import { GoogleSheetsSync } from "./GoogleSheetsSync";
 import { I18nError, I18nErrorType } from "../errors/I18nError";
 import { PathUtils } from "../utils/PathUtils";

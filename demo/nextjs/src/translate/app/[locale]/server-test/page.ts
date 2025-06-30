@@ -125,7 +125,7 @@ const pageTranslations = {
     "/%{var0} /server-test": "/%{var0} /server-test",
     "Back to Home": "Back to Home"
   },
-  "de": {
+  "fr": {
     "Server Component I18n Test": "Server Component I18n Test",
     "Auto-detected Locale": "Auto-detected Locale",
     "Detected locale:": "Detected locale:",

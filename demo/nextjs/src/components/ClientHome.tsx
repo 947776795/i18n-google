@@ -1,4 +1,4 @@
-"use client";;
+"use client";
 import Translations from "@translate/components/ClientHome";
 import { I18nUtil } from "@utils";
 import Image from "next/image";
@@ -6,7 +6,7 @@ import Image from "next/image";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { getConstants } from "@/const/const";
 
-const I18n = I18nUtil.createScoped(Translations);
+// const I18n = I18nUtil.createScoped(Translations);
 
 interface ClientHomeProps {
   locale: string;

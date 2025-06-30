@@ -99,9 +99,13 @@ export class I18nScanner {
       const shouldSyncToRemote = await UserInteraction.confirmRemoteSync();
 
       if (shouldSyncToRemote) {
-        // 9. 同步到远端 (Google Sheets) - 基于处理后的 CompleteRecord
-        this.scanProgress.update("☁️ 同步到 Google Sheets...");
-        await this.googleSheetsSync.syncCompleteRecordToSheet(processedRecord);
+        // 9. 增量同步到远端 (Google Sheets) - 基于处理后的 CompleteRecord
+        this.scanProgress.update("☁️ 增量同步到 Google Sheets...");
+        await this.googleSheetsSync.syncCompleteRecordToSheet(processedRecord, {
+          enableStyleProtection: true,
+          maxRetries: 3,
+          retryDelay: 1000,
+        });
       } else {
         this.scanProgress.update("⏭️ 跳过远端同步");
         Logger.info("⏭️ 用户选择跳过远端同步");

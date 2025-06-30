@@ -38,7 +38,7 @@ const clientHomeTranslations = {
     "src/app/page.tsx": "src/app/page.tsx",
     "save_and_see_changes_instantly": "save_and_see_changes_instantly",
     "const_test": "const_test",
-    "const_test2": "const_test2",
+    "const_test2": "const_test",
     "Current locale: %{var0}": "Current locale: %{var0}",
     "Test Server Component I18n": "Test Server Component I18n",
     "learn": "learn",
@@ -111,7 +111,7 @@ const clientHomeTranslations = {
     "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.": "Edgen Özel Beta'ya hoş geldiniz, anonim! Herkesten önce Alpha'yı açmak için aşağıya davet kodunuzu girin.",
     "test_new_mark_field": "test_new_mark_field"
   },
-  "de": {
+  "fr": {
     "get_started_by_editing": "get_started_by_editing",
     "deploy_now": "deploy_now",
     "read_our_docs": "read_our_docs",

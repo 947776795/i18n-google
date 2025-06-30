@@ -4,8 +4,7 @@
   "description": "I18n scanning system with Google Sheets integration",
   "main": "dist/scan.js",
   "bin": {
-    "i18n-google": "dist/scan.js",
-    "i18n-google-sync": "dist/sync.js"
+    "i18n-google": "dist/scan.js"
   },
   "files": [
     "dist/",
@@ -32,7 +31,7 @@
   "scripts": {
     "build": "tsc",
     "scan": "node dist/scan.js",
-    "dev": "ts-node scan.ts",
+    "dev": "ts-node src/scan.ts",
     "test": "jest",
     "prepublishOnly": "npm run build"
   },
