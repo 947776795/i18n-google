@@ -34,7 +34,7 @@ const indexTranslations = {
     "I18n5": "I18n5",
     "I18n4": "I18n4"
   },
-  "de": {
+  "fr": {
     "I18n22": "I18n22",
     "I18n5": "I18n5",
     "I18n4": "I18n4"

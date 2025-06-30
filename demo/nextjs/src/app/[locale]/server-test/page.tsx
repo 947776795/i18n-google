@@ -96,6 +96,22 @@ export default async function ServerTestPage({ params }: PageProps) {
           {I18n.t("Back to Home")}
         </a>
       </div>
+      <div>{I18n.t("test translate")}</div>
+      <div>{I18n.t("test translate 1 one")}</div>
+      <div>{I18n.t("test translate 1 two")}</div>
+      <div>{I18n.t("test translate 1 three")}</div>
+      <div>{I18n.t("test translate 1 four")}</div>
+      <div>{I18n.t("test translate 1 five")}</div>
+      <div>{I18n.t("test translate 1 six")}</div>
+      <div>{I18n.t("test translate 1 seven")}</div>
+      <div>{I18n.t("test translate 1 eight")}</div>
+      <div>{I18n.t("test translate 1 nine")}</div>
+      <div>{I18n.t("test translate 1 ten")}</div>
+      <div>{I18n.t("test translate 1 eleven")}</div>
+      <div>{I18n.t("test translate 1 twelve")}</div>
+      <div>{I18n.t("test translate 1 thirteen")}</div>
+      <div>{I18n.t("test translate 1 fourteen")}</div>
+      <div>{I18n.t("test translate 1 fifteen")}</div>
     </div>
   );
 }

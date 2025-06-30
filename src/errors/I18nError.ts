@@ -1,3 +1,5 @@
+import { Logger } from "../utils/StringUtils";
+
 /**
  * 国际化系统错误类型枚举
  */
@@ -154,16 +156,16 @@ export class ErrorHandler {
    * 处理致命错误
    */
   private static handleFatalError(error: I18nError, userMessage: string): void {
-    console.error(`\n❌ 致命错误: ${userMessage}`);
+    Logger.error(`\n❌ 致命错误: ${userMessage}`);
 
     if (error.suggestions.length > 0) {
-      console.error("\n💡 建议解决方案:");
+      Logger.error("\n💡 建议解决方案:");
       error.suggestions.forEach((suggestion, index) => {
-        console.error(`   ${index + 1}. ${suggestion}`);
+        Logger.error(`   ${index + 1}. ${suggestion}`);
       });
     }
 
-    console.error("\n系统将退出...\n");
+    Logger.error("\n系统将退出...\n");
     process.exit(1);
   }
 
@@ -171,17 +173,17 @@ export class ErrorHandler {
    * 处理一般错误
    */
   private static handleError(error: I18nError, userMessage: string): void {
-    console.error(`\n⚠️  错误: ${userMessage}`);
+    Logger.error(`\n⚠️  错误: ${userMessage}`);
 
     if (error.suggestions.length > 0) {
-      console.error("\n💡 建议解决方案:");
+      Logger.error("\n💡 建议解决方案:");
       error.suggestions.forEach((suggestion, index) => {
-        console.error(`   ${index + 1}. ${suggestion}`);
+        Logger.error(`   ${index + 1}. ${suggestion}`);
       });
     }
 
     if (error.isRecoverable) {
-      console.error("\n🔄 系统将尝试恢复...\n");
+      Logger.error("\n🔄 系统将尝试恢复...\n");
     } else {
       throw error; // 重新抛出不可恢复的错误
     }
@@ -191,15 +193,15 @@ export class ErrorHandler {
    * 处理警告
    */
   private static handleWarning(error: I18nError, userMessage: string): void {
-    console.warn(`\n⚠️  警告: ${userMessage}`);
+    Logger.warn(`\n⚠️  警告: ${userMessage}`);
 
     if (error.suggestions.length > 0) {
-      console.warn("\n💡 建议:");
+      Logger.warn("\n💡 建议:");
       error.suggestions.forEach((suggestion, index) => {
-        console.warn(`   ${index + 1}. ${suggestion}`);
+        Logger.warn(`   ${index + 1}. ${suggestion}`);
       });
     }
-    console.warn(""); // 空行
+    Logger.warn(""); // 空行
   }
 
   /**
@@ -221,7 +223,7 @@ export class ErrorHandler {
       const logLine = JSON.stringify(logEntry) + "\n";
       fs.appendFileSync(this.ERROR_LOG_FILE, logLine);
     } catch (logError: any) {
-      console.error("无法写入错误日志:", logError.message);
+      Logger.error("无法写入错误日志:", logError.message);
     }
   }
 
