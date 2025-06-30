@@ -34,7 +34,8 @@
     "scan": "node dist/scan.js",
     "dev": "ts-node scan.ts",
     "test": "jest",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "publish:release": "./publish.sh"
   },
   "author": "jwgkkk",
   "license": "MIT",
