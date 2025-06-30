@@ -105,29 +105,6 @@ export class TranslationManager {
   }
 
   /**
-   * 根据Key和引用信息确定模块路径
-   */
-  private getModulePathForKey(
-    key: string,
-    allReferences: Map<string, any[]>
-  ): string {
-    console.log(`🔧 [DEBUG] getModulePathForKey 被调用，key: ${key}`);
-    const refs = allReferences.get(key);
-    if (!refs || refs.length === 0) {
-      console.log(`🔧 [DEBUG] 没有找到引用，使用默认路径: common`);
-      return "common"; // 默认路径
-    }
-
-    // 使用第一个引用的文件路径来确定模块路径
-    const filePath = refs[0].filePath;
-    console.log(`🔧 [DEBUG] 第一个引用的文件路径: ${filePath}`);
-    // 转换文件路径为模块路径：src/components/Header.tsx -> src/components/Header
-    const result = PathUtils.convertFilePathToModulePath(filePath, this.config);
-    console.log(`🔧 [DEBUG] 转换后的模块路径: ${result}`);
-    return result;
-  }
-
-  /**
    * 保存新格式的完整记录
    */
   async saveCompleteRecord(allReferences: Map<string, any[]>): Promise<void> {

@@ -10,7 +10,6 @@ import { ErrorHandler } from "../errors/I18nError";
 import { ScanProgressIndicator } from "../ui/ProgressIndicator";
 import { UserInteraction } from "../ui/UserInteraction";
 import { Logger } from "../utils/StringUtils";
-import { PathUtils } from "../utils/PathUtils";
 
 export class I18nScanner {
   private fileScanner: FileScanner;
