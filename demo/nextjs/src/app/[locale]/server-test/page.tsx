@@ -1,4 +1,4 @@
-import { I18nUtil } from "@utils";
+import { I18nUtil } from "@utils/i18n";
 import Translations from "@translate/app/[locale]/server-test/page";
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -112,6 +112,7 @@ export default async function ServerTestPage({ params }: PageProps) {
       <div>{I18n.t("test translate 1 thirteen")}</div>
       <div>{I18n.t("test translate 1 fourteen")}</div>
       <div>{I18n.t("test translate 1 fifteen")}</div>
+      <div>{I18n.t("fei fei")}</div>
     </div>
   );
 }

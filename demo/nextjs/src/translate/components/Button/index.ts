@@ -1,4 +1,4 @@
-const indexTranslations = {
+const translations = {
   "en": {
     "I18n22": "I18n22",
     "I18n5": "I18n5",
@@ -41,4 +41,4 @@ const indexTranslations = {
   }
 };
 
-export default indexTranslations;
+export default translations;

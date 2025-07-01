@@ -1,4 +1,4 @@
-const constTranslations = {
+const translations = {
   "en": {
     "sadasdad": "sadasdad",
     "bbb": "bbb"
@@ -33,4 +33,4 @@ const constTranslations = {
   }
 };
 
-export default constTranslations;
+export default translations;

@@ -375,17 +375,11 @@ export class TranslationManager {
       // 创建目录（递归）
       await this.ensureDirectoryExists(targetDir);
 
-      // 生成模块名（用于导出变量名）
-      const moduleName = this.getModuleName(modulePath);
-
       // 构建模块翻译数据
       const moduleTranslations = this.buildModuleTranslations(moduleKeys);
 
-      // 生成翻译文件内容
-      const content = this.generateModuleFileContent(
-        moduleName,
-        moduleTranslations
-      );
+      // 生成翻译文件内容（统一交给translate处理）
+      const content = this.generateModuleFileContent(moduleTranslations);
 
       // 写入文件
       await writeFile(filePath, content, "utf-8");
@@ -449,31 +443,13 @@ export class TranslationManager {
   }
 
   /**
-   * 生成模块名
-   */
-  private getModuleName(modulePath: string): string {
-    // modulePath 现在是完整的文件路径，如 "TestModular.ts" 或 "components/Header2.ts"
-    // 提取文件名（不含扩展名）作为模块名
-    const fileName = path.basename(modulePath, ".ts");
-
-    // 将文件名转换为 camelCase + Translations
-    // TestModular -> testModularTranslations
-    // Header2 -> header2Translations
-    const camelCaseName = fileName.charAt(0).toLowerCase() + fileName.slice(1);
-    const moduleName = `${camelCaseName}Translations`;
-
-    return moduleName;
-  }
-
-  /**
-   * 生成模块文件内容
+   * 生成模块文件内容（简化版本，统一交给translate处理）
    */
   private generateModuleFileContent(
-    moduleName: string,
     moduleTranslations: ModuleTranslations
   ): string {
     const jsonContent = JSON.stringify(moduleTranslations, null, 2);
-    return `const ${moduleName} = ${jsonContent};\n\nexport default ${moduleName};\n`;
+    return `const translations = ${jsonContent};\n\nexport default translations;\n`;
   }
 
   /**

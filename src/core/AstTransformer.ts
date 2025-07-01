@@ -705,19 +705,21 @@ export class AstTransformer {
 
   /**
    * 添加 I18nUtil 导入
+   * 处理旧导入路径的更新：@utils -> @utils/i18n
    */
   private addI18nUtilImport(
     j: JSCodeshiftAPI,
     root: JSCodeshiftCollection
   ): void {
-    const hasI18nUtilImport = root
+    // 检查是否已经有正确的新导入路径
+    const hasCorrectI18nUtilImport = root
       .find(j.ImportDeclaration)
       .some((path: ASTPath<n.ImportDeclaration>) => {
         const nodeSource = path.node.source;
         const nodeSpecs = path.node.specifiers;
 
         return !!(
-          nodeSource?.value === "@utils" &&
+          nodeSource?.value === "@utils/i18n" &&
           nodeSpecs?.some(
             (spec) =>
               n.ImportSpecifier.check(spec) && spec.imported.name === "I18nUtil"
@@ -725,21 +727,45 @@ export class AstTransformer {
         );
       });
 
-    if (!hasI18nUtilImport) {
-      root
-        .get()
-        .node.program.body.unshift(
-          j.importDeclaration(
-            [
-              j.importSpecifier(
-                j.identifier("I18nUtil"),
-                j.identifier("I18nUtil")
-              ),
-            ],
-            j.literal("@utils")
+    if (hasCorrectI18nUtilImport) {
+      return; // 已经有正确的导入，无需操作
+    }
+
+    // 查找并移除所有旧的 I18nUtil 导入（包括 @utils 路径）
+    root
+      .find(j.ImportDeclaration)
+      .filter((path: ASTPath<n.ImportDeclaration>) => {
+        const nodeSource = path.node.source;
+        const nodeSpecs = path.node.specifiers;
+
+        // 检查是否是从 @utils 或 @utils/i18n 导入 I18nUtil
+        const isI18nUtilImport = !!(
+          (nodeSource?.value === "@utils" ||
+            nodeSource?.value === "@utils/i18n") &&
+          nodeSpecs?.some(
+            (spec) =>
+              n.ImportSpecifier.check(spec) && spec.imported.name === "I18nUtil"
           )
         );
-    }
+
+        return isI18nUtilImport;
+      })
+      .remove();
+
+    // 添加新的正确导入
+    root
+      .get()
+      .node.program.body.unshift(
+        j.importDeclaration(
+          [
+            j.importSpecifier(
+              j.identifier("I18nUtil"),
+              j.identifier("I18nUtil")
+            ),
+          ],
+          j.literal("@utils/i18n")
+        )
+      );
   }
 
   /**

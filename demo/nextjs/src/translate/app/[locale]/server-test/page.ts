@@ -1,4 +1,4 @@
-const pageTranslations = {
+const translations = {
   "en": {
     "Server Component I18n Test": "Server Component I18n Test",
     "Auto-detected Locale": "Auto-detected Locale",
@@ -31,7 +31,22 @@ const pageTranslations = {
     "test translate twelve": "test translate twelve",
     "test translate thirteen": "test translate thirteen",
     "test translate fourteen": "test translate fourteen",
-    "test translate fifteen": "test translate fifteen"
+    "test translate fifteen": "test translate fifteen",
+    "test translate 1 one": "test translate 1 one",
+    "test translate 1 two": "test translate 1 two",
+    "test translate 1 three": "test translate 1 three",
+    "test translate 1 four": "test translate 1 four",
+    "test translate 1 five": "test translate 1 five",
+    "test translate 1 six": "test translate 1 six",
+    "test translate 1 seven": "test translate 1 seven",
+    "test translate 1 eight": "test translate 1 eight",
+    "test translate 1 nine": "test translate 1 nine",
+    "test translate 1 ten": "test translate 1 ten",
+    "test translate 1 eleven": "test translate 1 eleven",
+    "test translate 1 twelve": "test translate 1 twelve",
+    "test translate 1 thirteen": "test translate 1 thirteen",
+    "test translate 1 fourteen": "test translate 1 fourteen",
+    "test translate 1 fifteen": "test translate 1 fifteen"
   },
   "ko": {
     "Server Component I18n Test": "Server Component I18n Test_hans",
@@ -65,7 +80,22 @@ const pageTranslations = {
     "test translate twelve": "테스트 번역 열두 개",
     "test translate thirteen": "테스트 번역 열세 개",
     "test translate fourteen": "테스트 번역 십사",
-    "test translate fifteen": "테스트 번역 열다섯"
+    "test translate fifteen": "테스트 번역 열다섯",
+    "test translate 1 one": "테스트 번역 1 하나",
+    "test translate 1 two": "번역 테스트 1 두 개",
+    "test translate 1 three": "테스트 번역 1 삼",
+    "test translate 1 four": "테스트 번역 1 넷",
+    "test translate 1 five": "테스트 번역 1 다섯",
+    "test translate 1 six": "테스트 번역 1 육",
+    "test translate 1 seven": "테스트 번역 1 일곱",
+    "test translate 1 eight": "테스트 번역 1 팔",
+    "test translate 1 nine": "테스트 번역 1 구",
+    "test translate 1 ten": "테스트 번역 1 십",
+    "test translate 1 eleven": "테스트 번역 1 eleven",
+    "test translate 1 twelve": "테스트 번역 1 twelve",
+    "test translate 1 thirteen": "테스트 번역 1 열세",
+    "test translate 1 fourteen": "테스트 번역 1 십사",
+    "test translate 1 fifteen": "테스트 번역 1 fifteen"
   },
   "zh-Hans": {
     "Server Component I18n Test": "Server Component I18n Test",
@@ -99,7 +129,22 @@ const pageTranslations = {
     "test translate twelve": "测试翻译 十二",
     "test translate thirteen": "测试翻译 十三",
     "test translate fourteen": "测试翻译 十四",
-    "test translate fifteen": "测试翻译十五"
+    "test translate fifteen": "测试翻译十五",
+    "test translate 1 one": "测试翻译 1 一",
+    "test translate 1 two": "测试翻译 1 二",
+    "test translate 1 three": "测试翻译 1 三",
+    "test translate 1 four": "测试翻译 1 四",
+    "test translate 1 five": "测试翻译 1 五",
+    "test translate 1 six": "测试翻译 1 六",
+    "test translate 1 seven": "测试翻译 1 七",
+    "test translate 1 eight": "测试翻译 1 八",
+    "test translate 1 nine": "测试翻译 1 九",
+    "test translate 1 ten": "测试翻译 1 十",
+    "test translate 1 eleven": "测试翻译 1 十一",
+    "test translate 1 twelve": "测试翻译 1 十二",
+    "test translate 1 thirteen": "测试翻译1十三",
+    "test translate 1 fourteen": "测试翻译 1 十四",
+    "test translate 1 fifteen": "测试翻译1十五"
   },
   "zh-Hant": {
     "Server Component I18n Test": "Server Component I18n Test",
@@ -133,7 +178,22 @@ const pageTranslations = {
     "test translate twelve": "測試翻譯 十二",
     "test translate thirteen": "測試翻譯十三",
     "test translate fourteen": "測試翻譯十四",
-    "test translate fifteen": "測試翻譯十五"
+    "test translate fifteen": "測試翻譯十五",
+    "test translate 1 one": "測試翻譯 1 一",
+    "test translate 1 two": "測試翻譯 1 兩個",
+    "test translate 1 three": "測試翻譯 1 三",
+    "test translate 1 four": "測試翻譯 1 四",
+    "test translate 1 five": "測試翻譯 1 五",
+    "test translate 1 six": "測試翻譯 1 六",
+    "test translate 1 seven": "測試翻譯 1 seven",
+    "test translate 1 eight": "測試翻譯 1 八",
+    "test translate 1 nine": "測試翻譯 1 nine",
+    "test translate 1 ten": "測試翻譯 1 十",
+    "test translate 1 eleven": "測試翻譯 1 十一",
+    "test translate 1 twelve": "測試翻譯 1 十二",
+    "test translate 1 thirteen": "測試翻譯 1 十三",
+    "test translate 1 fourteen": "測試翻譯 1 十四",
+    "test translate 1 fifteen": "測試翻譯 1 十五"
   },
   "vi": {
     "Server Component I18n Test": "Server Component I18n Test",
@@ -167,7 +227,22 @@ const pageTranslations = {
     "test translate twelve": "kiểm tra dịch twelve",
     "test translate thirteen": "kiểm tra dịch mười ba",
     "test translate fourteen": "kiểm tra bản dịch thứ mười bốn",
-    "test translate fifteen": "kiểm tra dịch mười lăm"
+    "test translate fifteen": "kiểm tra dịch mười lăm",
+    "test translate 1 one": "bài kiểm tra dịch 1 một",
+    "test translate 1 two": "bài kiểm tra dịch 1 hai",
+    "test translate 1 three": "kiểm tra dịch 1 ba",
+    "test translate 1 four": "bốn một dịch thử",
+    "test translate 1 five": "bài kiểm tra dịch 1 năm",
+    "test translate 1 six": "kiểm tra dịch 1 six",
+    "test translate 1 seven": "bảy thử dịch 1",
+    "test translate 1 eight": "kiểm tra dịch 1 tám",
+    "test translate 1 nine": "kiểm tra dịch 1 chín",
+    "test translate 1 ten": "kiểm tra dịch 1 mười",
+    "test translate 1 eleven": "kiểm tra dịch 1 mười một",
+    "test translate 1 twelve": "bài kiểm tra dịch 1 mười hai",
+    "test translate 1 thirteen": "kiểm tra dịch 1 mười ba",
+    "test translate 1 fourteen": "kiểm tra dịch 1 mười bốn",
+    "test translate 1 fifteen": "kiểm tra dịch 1 fifteen"
   },
   "es": {
     "Server Component I18n Test": "Server Component I18n Test",
@@ -201,7 +276,22 @@ const pageTranslations = {
     "test translate twelve": "prueba de traducción doce",
     "test translate thirteen": "prueba de traducción trece",
     "test translate fourteen": "prueba de traducción catorce",
-    "test translate fifteen": "prueba de traducción quince"
+    "test translate fifteen": "prueba de traducción quince",
+    "test translate 1 one": "prueba de traducción 1 uno",
+    "test translate 1 two": "prueba de traducción 1 dos",
+    "test translate 1 three": "prueba de traducción 1 tres",
+    "test translate 1 four": "prueba de traducción 1 cuatro",
+    "test translate 1 five": "prueba de traducción 1 cinco",
+    "test translate 1 six": "prueba de traducción 1 seis",
+    "test translate 1 seven": "prueba de traducción 1 siete",
+    "test translate 1 eight": "prueba de traducción 1 ocho",
+    "test translate 1 nine": "prueba de traducción 1 nueve",
+    "test translate 1 ten": "prueba de traducción 1 diez",
+    "test translate 1 eleven": "prueba de traducción 1 once",
+    "test translate 1 twelve": "prueba de traducción 1 doce",
+    "test translate 1 thirteen": "prueba de traducción 1 trece",
+    "test translate 1 fourteen": "prueba de traducción 1 catorce",
+    "test translate 1 fifteen": "prueba de traducción 1 quince"
   },
   "tr": {
     "Server Component I18n Test": "Server Component I18n Test",
@@ -235,7 +325,22 @@ const pageTranslations = {
     "test translate twelve": "test tercüme oniki",
     "test translate thirteen": "test çeviri on üç",
     "test translate fourteen": "test çevirisi on dört",
-    "test translate fifteen": "test çeviri onbeş"
+    "test translate fifteen": "test çeviri onbeş",
+    "test translate 1 one": "test tercüme 1 bir",
+    "test translate 1 two": "test translate 1 two",
+    "test translate 1 three": "test tercüme 1 üç",
+    "test translate 1 four": "test tercüme 1 dört",
+    "test translate 1 five": "test translate 1 five",
+    "test translate 1 six": "test tercüme 1 altı",
+    "test translate 1 seven": "test çevir 1 yedi",
+    "test translate 1 eight": "test translate 1 eight",
+    "test translate 1 nine": "test çevir 1 dokuz",
+    "test translate 1 ten": "test çevir 1 on",
+    "test translate 1 eleven": "test translate 1 on bir",
+    "test translate 1 twelve": "test tercüme 1 oniki",
+    "test translate 1 thirteen": "test translate 1 thirteen",
+    "test translate 1 fourteen": "test tercüme 1 on dört",
+    "test translate 1 fifteen": "test tercüme 1 onbeş"
   },
   "fr": {
     "Server Component I18n Test": "Server Component I18n Test",
@@ -269,8 +374,23 @@ const pageTranslations = {
     "test translate twelve": "test traduire douze",
     "test translate thirteen": "test de traduction treize",
     "test translate fourteen": "test de traduction quatorze",
-    "test translate fifteen": "test de traduction quinze"
+    "test translate fifteen": "test de traduction quinze",
+    "test translate 1 one": "test traduire 1 un",
+    "test translate 1 two": "test traduire 1 deux",
+    "test translate 1 three": "test traduire 1 trois",
+    "test translate 1 four": "test traduire 1 quatre",
+    "test translate 1 five": "test traduire 1 cinq",
+    "test translate 1 six": "test traduire 1 six",
+    "test translate 1 seven": "test de traduction 1 sept",
+    "test translate 1 eight": "test de traduction 1 huit",
+    "test translate 1 nine": "test traduire 1 neuf",
+    "test translate 1 ten": "test traduire 1 dix",
+    "test translate 1 eleven": "test de traduction 1 onze",
+    "test translate 1 twelve": "test traduire 1 douze",
+    "test translate 1 thirteen": "test de traduction 1 treize",
+    "test translate 1 fourteen": "test de traduction 1 quatorze",
+    "test translate 1 fifteen": "test de traduction 1 quinze"
   }
 };
 
-export default pageTranslations;
+export default translations;

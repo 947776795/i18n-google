@@ -1,4 +1,4 @@
-const pageTranslations = {
+const translations = {
   "en": {
     "Invalid locale: %{var0}": "Invalid locale: %{var0}"
   },
@@ -25,4 +25,4 @@ const pageTranslations = {
   }
 };
 
-export default pageTranslations;
+export default translations;

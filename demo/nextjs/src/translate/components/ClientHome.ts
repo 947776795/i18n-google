@@ -1,4 +1,4 @@
-const clientHomeTranslations = {
+const translations = {
   "en": {
     "get_started_by_editing": "get_started_by_editing",
     "deploy_now": "deploy_now",
@@ -129,4 +129,4 @@ const clientHomeTranslations = {
   }
 };
 
-export default clientHomeTranslations;
+export default translations;

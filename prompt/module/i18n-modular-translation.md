@@ -438,12 +438,6 @@ private getTranslationImportPath(modulePath: string): string {
   return `../translate/${modulePath}`;
 }
 
-private getTranslationVarName(modulePath: string): string {
-  // src/components/Header -> headerTranslations
-  const pathParts = modulePath.split('/');
-  const lastPart = pathParts[pathParts.length - 1];
-  return `${lastPart.toLowerCase()}Translations`;
-}
 ```
 
 3. **修改主转换逻辑**：

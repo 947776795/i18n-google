@@ -364,6 +364,171 @@
       "tr": "test çeviri onbeş",
       "fr": "test de traduction quinze",
       "mark": 0
+    },
+    "test translate 1 one": {
+      "en": "test translate 1 one",
+      "ko": "테스트 번역 1 하나",
+      "zh-Hans": "测试翻译 1 一",
+      "zh-Hant": "測試翻譯 1 一",
+      "vi": "bài kiểm tra dịch 1 một",
+      "es": "prueba de traducción 1 uno",
+      "tr": "test tercüme 1 bir",
+      "fr": "test traduire 1 un",
+      "mark": 0
+    },
+    "test translate 1 two": {
+      "en": "test translate 1 two",
+      "ko": "번역 테스트 1 두 개",
+      "zh-Hans": "测试翻译 1 二",
+      "zh-Hant": "測試翻譯 1 兩個",
+      "vi": "bài kiểm tra dịch 1 hai",
+      "es": "prueba de traducción 1 dos",
+      "tr": "test translate 1 two",
+      "fr": "test traduire 1 deux",
+      "mark": 0
+    },
+    "test translate 1 three": {
+      "en": "test translate 1 three",
+      "ko": "테스트 번역 1 삼",
+      "zh-Hans": "测试翻译 1 三",
+      "zh-Hant": "測試翻譯 1 三",
+      "vi": "kiểm tra dịch 1 ba",
+      "es": "prueba de traducción 1 tres",
+      "tr": "test tercüme 1 üç",
+      "fr": "test traduire 1 trois",
+      "mark": 0
+    },
+    "test translate 1 four": {
+      "en": "test translate 1 four",
+      "ko": "테스트 번역 1 넷",
+      "zh-Hans": "测试翻译 1 四",
+      "zh-Hant": "測試翻譯 1 四",
+      "vi": "bốn một dịch thử",
+      "es": "prueba de traducción 1 cuatro",
+      "tr": "test tercüme 1 dört",
+      "fr": "test traduire 1 quatre",
+      "mark": 0
+    },
+    "test translate 1 five": {
+      "en": "test translate 1 five",
+      "ko": "테스트 번역 1 다섯",
+      "zh-Hans": "测试翻译 1 五",
+      "zh-Hant": "測試翻譯 1 五",
+      "vi": "bài kiểm tra dịch 1 năm",
+      "es": "prueba de traducción 1 cinco",
+      "tr": "test translate 1 five",
+      "fr": "test traduire 1 cinq",
+      "mark": 0
+    },
+    "test translate 1 six": {
+      "en": "test translate 1 six",
+      "ko": "테스트 번역 1 육",
+      "zh-Hans": "测试翻译 1 六",
+      "zh-Hant": "測試翻譯 1 六",
+      "vi": "kiểm tra dịch 1 six",
+      "es": "prueba de traducción 1 seis",
+      "tr": "test tercüme 1 altı",
+      "fr": "test traduire 1 six",
+      "mark": 0
+    },
+    "test translate 1 seven": {
+      "en": "test translate 1 seven",
+      "ko": "테스트 번역 1 일곱",
+      "zh-Hans": "测试翻译 1 七",
+      "zh-Hant": "測試翻譯 1 seven",
+      "vi": "bảy thử dịch 1",
+      "es": "prueba de traducción 1 siete",
+      "tr": "test çevir 1 yedi",
+      "fr": "test de traduction 1 sept",
+      "mark": 0
+    },
+    "test translate 1 eight": {
+      "en": "test translate 1 eight",
+      "ko": "테스트 번역 1 팔",
+      "zh-Hans": "测试翻译 1 八",
+      "zh-Hant": "測試翻譯 1 八",
+      "vi": "kiểm tra dịch 1 tám",
+      "es": "prueba de traducción 1 ocho",
+      "tr": "test translate 1 eight",
+      "fr": "test de traduction 1 huit",
+      "mark": 0
+    },
+    "test translate 1 nine": {
+      "en": "test translate 1 nine",
+      "ko": "테스트 번역 1 구",
+      "zh-Hans": "测试翻译 1 九",
+      "zh-Hant": "測試翻譯 1 nine",
+      "vi": "kiểm tra dịch 1 chín",
+      "es": "prueba de traducción 1 nueve",
+      "tr": "test çevir 1 dokuz",
+      "fr": "test traduire 1 neuf",
+      "mark": 0
+    },
+    "test translate 1 ten": {
+      "en": "test translate 1 ten",
+      "ko": "테스트 번역 1 십",
+      "zh-Hans": "测试翻译 1 十",
+      "zh-Hant": "測試翻譯 1 十",
+      "vi": "kiểm tra dịch 1 mười",
+      "es": "prueba de traducción 1 diez",
+      "tr": "test çevir 1 on",
+      "fr": "test traduire 1 dix",
+      "mark": 0
+    },
+    "test translate 1 eleven": {
+      "en": "test translate 1 eleven",
+      "ko": "테스트 번역 1 eleven",
+      "zh-Hans": "测试翻译 1 十一",
+      "zh-Hant": "測試翻譯 1 十一",
+      "vi": "kiểm tra dịch 1 mười một",
+      "es": "prueba de traducción 1 once",
+      "tr": "test translate 1 on bir",
+      "fr": "test de traduction 1 onze",
+      "mark": 0
+    },
+    "test translate 1 twelve": {
+      "en": "test translate 1 twelve",
+      "ko": "테스트 번역 1 twelve",
+      "zh-Hans": "测试翻译 1 十二",
+      "zh-Hant": "測試翻譯 1 十二",
+      "vi": "bài kiểm tra dịch 1 mười hai",
+      "es": "prueba de traducción 1 doce",
+      "tr": "test tercüme 1 oniki",
+      "fr": "test traduire 1 douze",
+      "mark": 0
+    },
+    "test translate 1 thirteen": {
+      "en": "test translate 1 thirteen",
+      "ko": "테스트 번역 1 열세",
+      "zh-Hans": "测试翻译1十三",
+      "zh-Hant": "測試翻譯 1 十三",
+      "vi": "kiểm tra dịch 1 mười ba",
+      "es": "prueba de traducción 1 trece",
+      "tr": "test translate 1 thirteen",
+      "fr": "test de traduction 1 treize",
+      "mark": 0
+    },
+    "test translate 1 fourteen": {
+      "en": "test translate 1 fourteen",
+      "ko": "테스트 번역 1 십사",
+      "zh-Hans": "测试翻译 1 十四",
+      "zh-Hant": "測試翻譯 1 十四",
+      "vi": "kiểm tra dịch 1 mười bốn",
+      "es": "prueba de traducción 1 catorce",
+      "tr": "test tercüme 1 on dört",
+      "fr": "test de traduction 1 quatorze",
+      "mark": 0
+    },
+    "test translate 1 fifteen": {
+      "en": "test translate 1 fifteen",
+      "ko": "테스트 번역 1 fifteen",
+      "zh-Hans": "测试翻译1十五",
+      "zh-Hant": "測試翻譯 1 十五",
+      "vi": "kiểm tra dịch 1 fifteen",
+      "es": "prueba de traducción 1 quince",
+      "tr": "test tercüme 1 onbeş",
+      "fr": "test de traduction 1 quinze",
+      "mark": 0
     }
   },
   "components/ClientHome.ts": {
