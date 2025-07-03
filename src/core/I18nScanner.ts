@@ -57,8 +57,8 @@ export class I18nScanner {
         Object.keys(remoteCompleteRecord).length > 0
       ) {
         // 增量合并远端数据到本地
-        await this.translationManager.mergeWithExistingRecord(
-          remoteCompleteRecord as any
+        await this.translationManager.mergeRemoteCompleteRecord(
+          remoteCompleteRecord
         );
         Logger.info("✅ 已从远端增量合并数据到本地完整记录");
       } else {

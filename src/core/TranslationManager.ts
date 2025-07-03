@@ -185,6 +185,63 @@ export class TranslationManager {
       );
       // 如果合并失败，回退到直接保存新记录
       await this.saveCompleteRecord(allReferences);
+      throw error;
+    }
+  }
+
+  /**
+   * 合并远端完整记录到本地（专门用于远端数据合并） todo 后续优化
+   */
+  async mergeRemoteCompleteRecord(
+    remoteRecord: CompleteTranslationRecord
+  ): Promise<void> {
+    Logger.debug(
+      "🔧 [DEBUG] TranslationManager.mergeRemoteCompleteRecord 被调用"
+    );
+
+    try {
+      // 1. 加载现有的完整记录
+      const existingRecord = await this.loadCompleteRecord();
+
+      // 2. 合并记录：现有记录优先（保留本地数据），远端记录补充
+      const mergedRecord: CompleteTranslationRecord = { ...existingRecord };
+
+      // 遍历远端记录，添加或更新翻译
+      Object.entries(remoteRecord).forEach(([modulePath, moduleKeys]) => {
+        if (!mergedRecord[modulePath]) {
+          // 新模块，直接添加
+          mergedRecord[modulePath] = moduleKeys;
+        } else {
+          // 现有模块，合并Key
+          Object.entries(moduleKeys).forEach(([key, translations]) => {
+            if (!mergedRecord[modulePath][key]) {
+              // 新Key，直接添加
+              mergedRecord[modulePath][key] = translations;
+            } else {
+              // 现有Key，合并翻译（本地优先，远端补充）
+              mergedRecord[modulePath][key] = {
+                ...translations, // 远端翻译作为基础
+                ...mergedRecord[modulePath][key], // 本地翻译覆盖（优先级更高）
+              };
+            }
+          });
+        }
+      });
+
+      // 3. 保存合并后的记录
+      await this.saveCompleteRecordDirect(mergedRecord);
+
+      Logger.debug(
+        "✅ [DEBUG] TranslationManager.mergeRemoteCompleteRecord 完成"
+      );
+    } catch (error) {
+      Logger.error(
+        "❌ [DEBUG] TranslationManager.mergeRemoteCompleteRecord 失败:",
+        error
+      );
+      // 如果合并失败，回退到直接保存远端记录
+      await this.saveCompleteRecordDirect(remoteRecord);
+      throw error;
     }
   }
 

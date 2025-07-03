@@ -34,7 +34,8 @@ const translations = {
     "test translate 1 fifteen": "test translate 1 fifteen",
     "fei fei": "fei fei",
     "by by": "by by",
-    "head": "head"
+    "head": "head",
+    "table": "table"
   },
   "ko": {
     "Server Component I18n Test": "Server Component I18n Test_hans",
@@ -71,7 +72,8 @@ const translations = {
     "test translate 1 fifteen": "테스트 번역 1 fifteen",
     "fei fei": "비비",
     "by by": "안녕히 가세요",
-    "head": "머리"
+    "head": "머리",
+    "table": "테이블"
   },
   "zh-Hans": {
     "Server Component I18n Test": "Server Component I18n Test",
@@ -108,7 +110,8 @@ const translations = {
     "test translate 1 fifteen": "测试翻译1十五",
     "fei fei": "飞飞",
     "by by": "再见",
-    "head": "头"
+    "head": "头",
+    "table": "表格"
   },
   "zh-Hant": {
     "Server Component I18n Test": "Server Component I18n Test",
@@ -145,7 +148,8 @@ const translations = {
     "test translate 1 fifteen": "測試翻譯 1 十五",
     "fei fei": "飛飛",
     "by by": "再見",
-    "head": "頭部"
+    "head": "頭部",
+    "table": "桌子"
   },
   "vi": {
     "Server Component I18n Test": "Server Component I18n Test",
@@ -182,7 +186,8 @@ const translations = {
     "test translate 1 fifteen": "kiểm tra dịch 1 fifteen",
     "fei fei": "phi phi",
     "by by": "tạm biệt",
-    "head": "đầu"
+    "head": "đầu",
+    "table": "bàn"
   },
   "es": {
     "Server Component I18n Test": "Server Component I18n Test",
@@ -219,7 +224,8 @@ const translations = {
     "test translate 1 fifteen": "prueba de traducción 1 quince",
     "fei fei": "fei fei",
     "by by": "adiós",
-    "head": "cabeza"
+    "head": "cabeza",
+    "table": "mesa"
   },
   "tr": {
     "Server Component I18n Test": "Server Component I18n Test",
@@ -256,7 +262,8 @@ const translations = {
     "test translate 1 fifteen": "test tercüme 1 onbeş",
     "fei fei": "fei fei",
     "by by": "gül güle",
-    "head": "baş"
+    "head": "baş",
+    "table": "tablo"
   },
   "fr": {
     "Server Component I18n Test": "Server Component I18n Test",
@@ -293,7 +300,8 @@ const translations = {
     "test translate 1 fifteen": "test de traduction 1 quinze",
     "fei fei": "fei fei",
     "by by": "au revoir",
-    "head": "tête"
+    "head": "tête",
+    "table": "table"
   }
 };
 

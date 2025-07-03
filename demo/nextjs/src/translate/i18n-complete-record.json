@@ -397,6 +397,17 @@
       "tr": "baş",
       "fr": "tête",
       "mark": 0
+    },
+    "table": {
+      "en": "table",
+      "ko": "테이블",
+      "zh-Hans": "表格",
+      "zh-Hant": "桌子",
+      "vi": "bàn",
+      "es": "mesa",
+      "tr": "tablo",
+      "fr": "table",
+      "mark": 0
     }
   },
   "components/ClientHome.ts": {
