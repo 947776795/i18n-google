@@ -1,17 +1,5 @@
 import Cookies from "js-cookie";
-
-export const LOCALES = {
-  EN: "en", // 英语（默认语言）
-  ZHCN: "zh-Hans", // 中文简体（使用简体汉字）
-  ZHTW: "zh-Hant", // 中文繁体（使用繁体汉字）
-  KO: "ko", // 韩语
-  VI: "vi", // 越南语
-  ES: "es", // 西班牙语
-  TR: "tr", // 土耳其语
-  DE: "de", // 德语
-} as const;
-
-export type Locale = (typeof LOCALES)[keyof typeof LOCALES];
+import { LOCALES, type Locale } from "@utils/i18n.locale";
 
 export interface LanguageOption {
   readonly label: string;
@@ -76,23 +64,6 @@ class I18nUtil {
   }
 
   /**
-   * 创建翻译实例 - 客户端组件使用（同步）
-   * @param translations 模块翻译数据
-   * @param locale 可选的直接传入语言代码（优先级高于自动检测）
-   * @returns 翻译实例，包含 t 方法
-   */
-  static createScopedSync(translations: ModuleTranslations, locale?: string) {
-    const currentLocale = locale || this.getClientLocale();
-
-    return {
-      t: (key: string, options?: InterpolationVariables): string => {
-        return this.translate(translations, currentLocale, key, options);
-      },
-      locale: currentLocale,
-    };
-  }
-
-  /**
    * 获取当前语言 - 客户端专用
    * @returns 语言代码，默认 'en'
    */
@@ -124,12 +95,15 @@ class I18nUtil {
    */
   private static getClientLocale(): string {
     try {
+      if (typeof window === "undefined") {
+        return "en";
+      }
       // 从 URL 路径中获取语言代码
       // Next.js i18n 路由格式：
       // /zh-Hans/about -> zh-Hans
       // /ko/contact -> ko
       // /about -> en (默认语言，路径中不显示)
-      const pathname = window.location.pathname;
+      const pathname = window?.location?.pathname;
       const segments = pathname.split("/").filter(Boolean);
 
       if (segments.length > 0) {
@@ -143,8 +117,7 @@ class I18nUtil {
 
       // 如果路径中没有语言代码，说明是默认语言
       return "en";
-    } catch (error) {
-      console.warn("Error getting locale from URL path:", error);
+    } catch {
       return "en";
     }
   }
@@ -195,7 +168,6 @@ class I18nUtil {
     }
 
     if (!this.isValidLocale(newLocale)) {
-      console.warn(`Invalid locale: ${newLocale}`);
       return;
     }
 
@@ -231,8 +203,8 @@ class I18nUtil {
 
       // 跳转到新 URL，middleware 会读取 Cookie 并处理重定向
       window.location.href = newPath + search + hash;
-    } catch (error) {
-      console.error("Failed to switch locale:", error);
+    } catch {
+      console.error("Failed to switch locale");
     }
   }
 

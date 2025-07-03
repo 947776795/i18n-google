@@ -200,171 +200,6 @@
       "fr": "test de traduction",
       "mark": 0
     },
-    "test translate one": {
-      "en": "test translate one",
-      "ko": "테스트 번역 하나",
-      "zh-Hans": "测试翻译一",
-      "zh-Hant": "測試翻譯一",
-      "vi": "kiểm tra dịch một",
-      "es": "prueba de traducción uno",
-      "tr": "test translate bir",
-      "fr": "test traduire un",
-      "mark": 0
-    },
-    "test translate two": {
-      "en": "test translate two",
-      "ko": "테스트 번역 두 개",
-      "zh-Hans": "测试翻译二",
-      "zh-Hant": "測試翻譯二",
-      "vi": "bài kiểm tra dịch hai",
-      "es": "prueba de traducción dos",
-      "tr": "iki test çevirisi",
-      "fr": "test de traduction deux",
-      "mark": 0
-    },
-    "test translate three": {
-      "en": "test translate three",
-      "ko": "테스트 번역 쓰리",
-      "zh-Hans": "测试翻译三",
-      "zh-Hant": "測試翻譯三",
-      "vi": "kiểm tra dịch ba",
-      "es": "prueba de traducción tres",
-      "tr": "üçlü test çevirisi",
-      "fr": "test de traduction trois",
-      "mark": 0
-    },
-    "test translate four": {
-      "en": "test translate four",
-      "ko": "테스트 번역 넷",
-      "zh-Hans": "测试翻译四",
-      "zh-Hant": "測試翻譯四",
-      "vi": "bài kiểm tra dịch thuật số bốn",
-      "es": "prueba de traducción cuatro",
-      "tr": "test translate four",
-      "fr": "test de traduction quatre",
-      "mark": 0
-    },
-    "test translate five": {
-      "en": "test translate five",
-      "ko": "테스트 번역 다섯",
-      "zh-Hans": "测试翻译五",
-      "zh-Hant": "測試翻譯五",
-      "vi": "bài kiểm tra dịch năm",
-      "es": "prueba de traducción cinco",
-      "tr": "beş перевод теста",
-      "fr": "test de traduction cinq",
-      "mark": 0
-    },
-    "test translate six": {
-      "en": "test translate six",
-      "ko": "테스트 번역 식스",
-      "zh-Hans": "测试翻译六",
-      "zh-Hant": "測試翻譯六",
-      "vi": "bài kiểm tra dịch thuật số sáu",
-      "es": "prueba de traducción seis",
-      "tr": "test translate six",
-      "fr": "test de traduction six",
-      "mark": 0
-    },
-    "test translate seven": {
-      "en": "test translate seven",
-      "ko": "테스트 번역 일곱",
-      "zh-Hans": "测试翻译七",
-      "zh-Hant": "測試翻譯七",
-      "vi": "bài kiểm tra dịch thuật bảy",
-      "es": "prueba de traducción siete",
-      "tr": "test çevirisi yedi",
-      "fr": "test de traduction sept",
-      "mark": 0
-    },
-    "test translate eight": {
-      "en": "test translate eight",
-      "ko": "테스트 번역 여덟",
-      "zh-Hans": "测试翻译八",
-      "zh-Hant": "測試翻譯八",
-      "vi": "kiểm tra dịch tám",
-      "es": "prueba de traducción ocho",
-      "tr": "test çevirisi sekiz",
-      "fr": "test de traduction huit",
-      "mark": 0
-    },
-    "test translate nine": {
-      "en": "test translate nine",
-      "ko": "테스트 번역 아홉",
-      "zh-Hans": "测试翻译九",
-      "zh-Hant": "測試翻譯九",
-      "vi": "kiểm tra dịch chín",
-      "es": "prueba de traducción nueve",
-      "tr": "test çevir dokuz",
-      "fr": "test de traduction neuf",
-      "mark": 0
-    },
-    "test translate ten": {
-      "en": "test translate ten",
-      "ko": "테스트 번역 열",
-      "zh-Hans": "测试翻译十",
-      "zh-Hant": "測試翻譯十",
-      "vi": "kiểm tra dịch thuật mười",
-      "es": "prueba de traducción diez",
-      "tr": "test ten için çevir",
-      "fr": "test traduire dix",
-      "mark": 0
-    },
-    "test translate eleven": {
-      "en": "test translate eleven",
-      "ko": "테스트 번역 열하나",
-      "zh-Hans": "测试翻译 十一",
-      "zh-Hant": "測試翻譯十一",
-      "vi": "kiểm tra dịch eleven",
-      "es": "prueba de traducción once",
-      "tr": "test çeviri onbir",
-      "fr": "test de traduction onze",
-      "mark": 0
-    },
-    "test translate twelve": {
-      "en": "test translate twelve",
-      "ko": "테스트 번역 열두 개",
-      "zh-Hans": "测试翻译 十二",
-      "zh-Hant": "測試翻譯 十二",
-      "vi": "kiểm tra dịch twelve",
-      "es": "prueba de traducción doce",
-      "tr": "test tercüme oniki",
-      "fr": "test traduire douze",
-      "mark": 0
-    },
-    "test translate thirteen": {
-      "en": "test translate thirteen",
-      "ko": "테스트 번역 열세 개",
-      "zh-Hans": "测试翻译 十三",
-      "zh-Hant": "測試翻譯十三",
-      "vi": "kiểm tra dịch mười ba",
-      "es": "prueba de traducción trece",
-      "tr": "test çeviri on üç",
-      "fr": "test de traduction treize",
-      "mark": 0
-    },
-    "test translate fourteen": {
-      "en": "test translate fourteen",
-      "ko": "테스트 번역 십사",
-      "zh-Hans": "测试翻译 十四",
-      "zh-Hant": "測試翻譯十四",
-      "vi": "kiểm tra bản dịch thứ mười bốn",
-      "es": "prueba de traducción catorce",
-      "tr": "test çevirisi on dört",
-      "fr": "test de traduction quatorze",
-      "mark": 0
-    },
-    "test translate fifteen": {
-      "en": "test translate fifteen",
-      "ko": "테스트 번역 열다섯",
-      "zh-Hans": "测试翻译十五",
-      "zh-Hant": "測試翻譯十五",
-      "vi": "kiểm tra dịch mười lăm",
-      "es": "prueba de traducción quince",
-      "tr": "test çeviri onbeş",
-      "fr": "test de traduction quinze",
-      "mark": 0
-    },
     "test translate 1 one": {
       "en": "test translate 1 one",
       "ko": "테스트 번역 1 하나",
@@ -528,6 +363,39 @@
       "es": "prueba de traducción 1 quince",
       "tr": "test tercüme 1 onbeş",
       "fr": "test de traduction 1 quinze",
+      "mark": 0
+    },
+    "fei fei": {
+      "en": "fei fei",
+      "ko": "비비",
+      "zh-Hans": "飞飞",
+      "zh-Hant": "飛飛",
+      "vi": "phi phi",
+      "es": "fei fei",
+      "tr": "fei fei",
+      "fr": "fei fei",
+      "mark": 0
+    },
+    "by by": {
+      "en": "by by",
+      "ko": "안녕히 가세요",
+      "zh-Hans": "再见",
+      "zh-Hant": "再見",
+      "vi": "tạm biệt",
+      "es": "adiós",
+      "tr": "gül güle",
+      "fr": "au revoir",
+      "mark": 0
+    },
+    "head": {
+      "en": "head",
+      "ko": "머리",
+      "zh-Hans": "头",
+      "zh-Hant": "頭部",
+      "vi": "đầu",
+      "es": "cabeza",
+      "tr": "baş",
+      "fr": "tête",
       "mark": 0
     }
   },

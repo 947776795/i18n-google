@@ -48,7 +48,7 @@ export class I18nScanner {
     try {
       await this.scanProgress.startScan();
 
-      // 1. 从远端拉取数据并生成本地完整记录（如果有数据的话）
+      // 1. 从远端拉取数据并增量合并到本地完整记录（如果有数据的话）
       this.scanProgress.update("☁️ 从远端拉取翻译数据...");
       const remoteCompleteRecord =
         await this.googleSheetsSync.syncCompleteRecordFromSheet();
@@ -56,11 +56,11 @@ export class I18nScanner {
         remoteCompleteRecord &&
         Object.keys(remoteCompleteRecord).length > 0
       ) {
-        // 直接保存远端的CompleteRecord数据
-        await this.translationManager.saveCompleteRecordDirect(
-          remoteCompleteRecord
+        // 增量合并远端数据到本地
+        await this.translationManager.mergeWithExistingRecord(
+          remoteCompleteRecord as any
         );
-        Logger.info("✅ 已从远端同步数据到本地完整记录");
+        Logger.info("✅ 已从远端增量合并数据到本地完整记录");
       } else {
         Logger.info("ℹ️ 远端暂无数据，跳过同步");
       }
