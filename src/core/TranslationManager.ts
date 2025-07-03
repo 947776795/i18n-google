@@ -203,7 +203,7 @@ export class TranslationManager {
       // 1. 加载现有的完整记录
       const existingRecord = await this.loadCompleteRecord();
 
-      // 2. 合并记录：现有记录优先（保留本地数据），远端记录补充
+      // 2. 合并记录：远端记录优先，本地记录补充缺失数据
       const mergedRecord: CompleteTranslationRecord = { ...existingRecord };
 
       // 遍历远端记录，添加或更新翻译
@@ -218,10 +218,10 @@ export class TranslationManager {
               // 新Key，直接添加
               mergedRecord[modulePath][key] = translations;
             } else {
-              // 现有Key，合并翻译（本地优先，远端补充）
+              // 现有Key，合并翻译（远端优先，本地补充）
               mergedRecord[modulePath][key] = {
-                ...translations, // 远端翻译作为基础
-                ...mergedRecord[modulePath][key], // 本地翻译覆盖（优先级更高）
+                ...mergedRecord[modulePath][key], // 本地翻译作为基础
+                ...translations, // 远端翻译覆盖（优先级更高）
               };
             }
           });
