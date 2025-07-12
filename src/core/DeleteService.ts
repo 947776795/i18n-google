@@ -6,6 +6,7 @@ import { UnusedKeyAnalyzer } from "./UnusedKeyAnalyzer";
 import { PreviewFileService } from "./PreviewFileService";
 import { UserInteraction } from "../ui/UserInteraction";
 import { Logger } from "../utils/StringUtils";
+import * as fs from "fs";
 
 /**
  * 删除服务
@@ -92,7 +93,8 @@ export class DeleteService {
         const processedRecord = await this.executeKeyDeletion(
           existingCompleteRecord,
           unusedKeysAnalysis.filteredUnusedKeys,
-          allReferences
+          allReferences,
+          previewPath
         );
         return {
           totalUnusedKeys: 0,
@@ -227,31 +229,48 @@ export class DeleteService {
   }
 
   /**
-   * 执行Key删除操作
+   * 执行Key删除操作 - 基于预览文件精确删除
    * @param existingCompleteRecord 现有完整记录
-   * @param filteredUnusedKeys 要删除的Key列表
+   * @param filteredUnusedKeys 要删除的Key列表（已废弃）
    * @param allReferences 当前引用
+   * @param previewFilePath 预览文件路径
    * @returns 处理后的记录
    */
   private async executeKeyDeletion(
     existingCompleteRecord: CompleteTranslationRecord,
     filteredUnusedKeys: string[],
-    allReferences: Map<string, ExistingReference[]>
+    allReferences: Map<string, ExistingReference[]>,
+    previewFilePath: string
   ): Promise<CompleteTranslationRecord> {
     Logger.info("✅ 用户确认删除无用Key");
+
+    // 读取预览文件内容
+    const previewContent = await fs.promises.readFile(previewFilePath, "utf-8");
+    const previewRecord: CompleteTranslationRecord = JSON.parse(previewContent);
+
+    Logger.info(`📄 从预览文件读取删除指令: ${previewFilePath}`);
 
     // 创建副本进行删除操作
     const recordCopy = JSON.parse(JSON.stringify(existingCompleteRecord));
 
-    // 删除无用keys
+    // 基于预览文件精确删除keys
     let deletedCount = 0;
-    Object.keys(recordCopy).forEach((modulePath) => {
-      filteredUnusedKeys.forEach((keyToDelete) => {
-        if (recordCopy[modulePath][keyToDelete]) {
-          delete recordCopy[modulePath][keyToDelete];
-          deletedCount++;
+    Object.entries(previewRecord).forEach(([modulePath, keysToDelete]) => {
+      if (recordCopy[modulePath]) {
+        Object.keys(keysToDelete).forEach((keyToDelete) => {
+          if (recordCopy[modulePath][keyToDelete]) {
+            delete recordCopy[modulePath][keyToDelete];
+            deletedCount++;
+            Logger.debug(`🗑️ 删除 [${modulePath}][${keyToDelete}]`);
+          }
+        });
+
+        // 如果模块中没有剩余的key，删除整个模块
+        if (Object.keys(recordCopy[modulePath]).length === 0) {
+          delete recordCopy[modulePath];
+          Logger.debug(`📂 删除空模块: ${modulePath}`);
         }
-      });
+      }
     });
 
     Logger.info(`🗑️ 已删除 ${deletedCount} 个无用Key`);
