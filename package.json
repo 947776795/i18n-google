@@ -29,7 +29,7 @@
   },
   "homepage": "https://github.com/947776795/i18n-google#readme",
   "scripts": {
-    "build": "tsc",
+    "build": "rm -rf dist && tsc",
     "scan": "node dist/scan.js",
     "dev": "ts-node scan.ts",
     "test": "jest",
