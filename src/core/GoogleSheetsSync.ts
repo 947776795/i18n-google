@@ -228,12 +228,15 @@ export class GoogleSheetsSync {
     }
 
     try {
+      // 清理完整记录中的本地字段，准备远端同步
+      const cleanedRecord = this.cleanRecordForRemoteSync(completeRecord);
+      
       // 构建表头 - 包含mark列
       const headers = ["key", ...this.config.languages, "mark"];
       const values = [headers];
 
       // 构建数据行 - 新格式
-      Object.entries(completeRecord).forEach(([modulePath, moduleKeys]) => {
+      Object.entries(cleanedRecord).forEach(([modulePath, moduleKeys]) => {
         Object.entries(moduleKeys as Record<string, any>).forEach(
           ([translationKey, translations]) => {
             // 第一列格式：[文件路径][en文案]
@@ -290,6 +293,26 @@ export class GoogleSheetsSync {
     } catch (error) {
       this.handleSyncError(error, "向Google Sheets同步CompleteRecord");
     }
+  }
+
+  /**
+   * 清理完整记录中的本地字段，准备远端同步
+   */
+  private cleanRecordForRemoteSync(
+    completeRecord: CompleteTranslationRecord
+  ): CompleteTranslationRecord {
+    const cleanedRecord: CompleteTranslationRecord = {};
+    
+    Object.entries(completeRecord).forEach(([modulePath, moduleKeys]) => {
+      cleanedRecord[modulePath] = {};
+      Object.entries(moduleKeys).forEach(([key, keyData]) => {
+        // 复制翻译数据，排除 _lastUsed 字段
+        const { _lastUsed, ...translations } = keyData;
+        cleanedRecord[modulePath][key] = translations;
+      });
+    });
+    
+    return cleanedRecord;
   }
 
   /**

@@ -25,11 +25,8 @@ export interface ModularTranslationData {
 // 新的完整记录格式
 export interface CompleteTranslationRecord {
   [translationPath: string]: {
-    [translationKey: string]: {
-      [languageKey: string]: string;
-    } & {
-      mark?: number; // 添加mark字段，可选，默认为0
-    };
+    [translationKey: string]: any; // 简化类型，允许动态字段
+    // _lastUsed?: number; // 最后使用时间戳（仅在本地维护）
   };
 }
 
@@ -402,7 +399,8 @@ export class TranslationManager {
 
     try {
       const content = await readFile(filePath, "utf-8");
-      return JSON.parse(content);
+      const rawRecord = JSON.parse(content);
+      return rawRecord;
     } catch (error) {
       Logger.warn("完整记录文件不存在或读取失败，返回空记录");
       return {};
@@ -488,9 +486,11 @@ export class TranslationManager {
     });
 
     // 填充翻译数据
-    Object.entries(moduleKeys).forEach(([key, translations]) => {
-      Object.entries(translations).forEach(([lang, translation]) => {
-        if (result[lang]) {
+    Object.entries(moduleKeys).forEach(([key, keyData]) => {
+      // 排除本地维护的字段（如 _lastUsed, mark等）
+      Object.entries(keyData).forEach(([lang, translation]) => {
+        // 只处理配置的语言，排除 _lastUsed, mark 等字段
+        if (result[lang] && this.config.languages.includes(lang)) {
           result[lang][key] = translation;
         }
       });

@@ -110,6 +110,26 @@ export class ProgressIndicator {
   }
 
   /**
+   * 暂停进度指示器以便进行用户交互
+   * 返回恢复函数
+   */
+  pauseForInteraction(message?: string): () => Promise<void> {
+    const wasRunning = !!this.spinner;
+    const currentText = this.spinner?.text || "";
+    
+    if (wasRunning) {
+      this.info(message || "等待用户交互...");
+    }
+    
+    // 返回恢复函数
+    return async () => {
+      if (wasRunning && currentText) {
+        await this.start(currentText);
+      }
+    };
+  }
+
+  /**
    * 执行异步操作并显示进度
    */
   async withProgress<T>(

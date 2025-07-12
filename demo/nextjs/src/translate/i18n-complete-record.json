@@ -9,7 +9,8 @@
       "es": "Invalid locale: %{var0}",
       "tr": "Invalid locale: %{var0}",
       "fr": "Invalid locale: %{var0}",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     }
   },
   "app/[locale]/server-test/page.ts": {
@@ -22,7 +23,8 @@
       "es": "Server Component I18n Test",
       "tr": "Server Component I18n Test",
       "fr": "Server Component I18n Test",
-      "mark": 1
+      "mark": 1,
+      "_lastUsed": 1752329176372
     },
     "Auto-detected Locale": {
       "en": "Auto-detected Locale",
@@ -33,7 +35,8 @@
       "es": "Auto-detected Locale",
       "tr": "Auto-detected Locale",
       "fr": "Auto-detected Locale",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "Detected locale:": {
       "en": "Detected locale:",
@@ -44,7 +47,8 @@
       "es": "Detected locale:",
       "tr": "Detected locale:",
       "fr": "Detected locale:",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "Welcome message:": {
       "en": "Welcome message:",
@@ -55,7 +59,8 @@
       "es": "Welcome message:",
       "tr": "Welcome message:",
       "fr": "Welcome message:",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "get_started_by_editing": {
       "en": "get_started_by_editing",
@@ -66,7 +71,8 @@
       "es": "get_started_by_editing",
       "tr": "get_started_by_editing",
       "fr": "get_started_by_editing",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "Deploy button:": {
       "en": "Deploy button:",
@@ -77,7 +83,8 @@
       "es": "Deploy button:",
       "tr": "Deploy button:",
       "fr": "Deploy button:",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "deploy_now": {
       "en": "deploy_now",
@@ -88,7 +95,8 @@
       "es": "deploy_now",
       "tr": "deploy_now",
       "fr": "deploy_now",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "Docs link:": {
       "en": "Docs link:",
@@ -99,7 +107,8 @@
       "es": "Docs link:",
       "tr": "Docs link:",
       "fr": "Docs link:",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "read_our_docs": {
       "en": "read_our_docs",
@@ -110,7 +119,8 @@
       "es": "read_our_docs",
       "tr": "read_our_docs",
       "fr": "read_our_docs",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "Manual Locale (from route)": {
       "en": "Manual Locale (from route)",
@@ -121,7 +131,8 @@
       "es": "Manual Locale (from route)",
       "tr": "Manual Locale (from route)",
       "fr": "Manual Locale (from route)",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "Route locale:": {
       "en": "Route locale:",
@@ -132,7 +143,8 @@
       "es": "Route locale:",
       "tr": "Route locale:",
       "fr": "Route locale:",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "Manual locale:": {
       "en": "Manual locale:",
@@ -143,7 +155,8 @@
       "es": "Manual locale:",
       "tr": "Manual locale:",
       "fr": "Manual locale:",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "Comparison": {
       "en": "Comparison",
@@ -154,7 +167,8 @@
       "es": "Comparison",
       "tr": "Comparison",
       "fr": "Comparison",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "Auto vs Manual locale match:": {
       "en": "Auto vs Manual locale match:",
@@ -165,7 +179,8 @@
       "es": "Auto vs Manual locale match:",
       "tr": "Auto vs Manual locale match:",
       "fr": "Auto vs Manual locale match:",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "/%{var0} /server-test": {
       "en": "/%{var0} /server-test",
@@ -176,7 +191,8 @@
       "es": "/%{var0} /server-test",
       "tr": "/%{var0} /server-test",
       "fr": "/%{var0} /server-test",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "Back to Home": {
       "en": "Back to Home",
@@ -187,7 +203,8 @@
       "es": "Back to Home",
       "tr": "Back to Home",
       "fr": "Back to Home",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "test translate": {
       "en": "test translate",
@@ -198,7 +215,8 @@
       "es": "prueba de traducción",
       "tr": "test çevirisi",
       "fr": "test de traduction",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "test translate 1 one": {
       "en": "test translate 1 one",
@@ -209,7 +227,8 @@
       "es": "prueba de traducción 1 uno",
       "tr": "test tercüme 1 bir",
       "fr": "test traduire 1 un",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "test translate 1 two": {
       "en": "test translate 1 two",
@@ -220,7 +239,8 @@
       "es": "prueba de traducción 1 dos",
       "tr": "test translate 1 two",
       "fr": "test traduire 1 deux",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "test translate 1 three": {
       "en": "test translate 1 three",
@@ -231,7 +251,8 @@
       "es": "prueba de traducción 1 tres",
       "tr": "test tercüme 1 üç",
       "fr": "test traduire 1 trois",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "test translate 1 four": {
       "en": "test translate 1 four",
@@ -242,7 +263,8 @@
       "es": "prueba de traducción 1 cuatro",
       "tr": "test tercüme 1 dört",
       "fr": "test traduire 1 quatre",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "test translate 1 five": {
       "en": "test translate 1 five",
@@ -253,7 +275,8 @@
       "es": "prueba de traducción 1 cinco",
       "tr": "test translate 1 five",
       "fr": "test traduire 1 cinq",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "test translate 1 six": {
       "en": "test translate 1 six",
@@ -264,7 +287,8 @@
       "es": "prueba de traducción 1 seis",
       "tr": "test tercüme 1 altı",
       "fr": "test traduire 1 six",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "test translate 1 seven": {
       "en": "test translate 1 seven",
@@ -275,7 +299,8 @@
       "es": "prueba de traducción 1 siete",
       "tr": "test çevir 1 yedi",
       "fr": "test de traduction 1 sept",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "test translate 1 eight": {
       "en": "test translate 1 eight",
@@ -286,7 +311,8 @@
       "es": "prueba de traducción 1 ocho",
       "tr": "test translate 1 eight",
       "fr": "test de traduction 1 huit",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "test translate 1 nine": {
       "en": "test translate 1 nine",
@@ -297,7 +323,8 @@
       "es": "prueba de traducción 1 nueve",
       "tr": "test çevir 1 dokuz",
       "fr": "test traduire 1 neuf",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "test translate 1 ten": {
       "en": "test translate 1 ten",
@@ -308,7 +335,8 @@
       "es": "prueba de traducción 1 diez",
       "tr": "test çevir 1 on",
       "fr": "test traduire 1 dix",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "test translate 1 eleven": {
       "en": "test translate 1 eleven",
@@ -319,7 +347,8 @@
       "es": "prueba de traducción 1 once",
       "tr": "test translate 1 on bir",
       "fr": "test de traduction 1 onze",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "test translate 1 twelve": {
       "en": "test translate 1 twelve",
@@ -330,7 +359,8 @@
       "es": "prueba de traducción 1 doce",
       "tr": "test tercüme 1 oniki",
       "fr": "test traduire 1 douze",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "test translate 1 thirteen": {
       "en": "test translate 1 thirteen",
@@ -341,7 +371,8 @@
       "es": "prueba de traducción 1 trece",
       "tr": "test translate 1 thirteen",
       "fr": "test de traduction 1 treize",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "test translate 1 fourteen": {
       "en": "test translate 1 fourteen",
@@ -352,7 +383,8 @@
       "es": "prueba de traducción 1 catorce",
       "tr": "test tercüme 1 on dört",
       "fr": "test de traduction 1 quatorze",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "test translate 1 fifteen": {
       "en": "test translate 1 fifteen",
@@ -363,7 +395,8 @@
       "es": "prueba de traducción 1 quince",
       "tr": "test tercüme 1 onbeş",
       "fr": "test de traduction 1 quinze",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "fei fei": {
       "en": "fei fei",
@@ -420,7 +453,8 @@
       "es": "get_started_by_editing",
       "tr": "get_started_by_editing",
       "fr": "get_started_by_editing",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "deploy_now": {
       "en": "deploy_now",
@@ -431,7 +465,8 @@
       "es": "deploy_now",
       "tr": "deploy_now",
       "fr": "deploy_now",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "read_our_docs": {
       "en": "read_our_docs",
@@ -442,7 +477,8 @@
       "es": "read_our_docs",
       "tr": "read_our_docs",
       "fr": "read_our_docs",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "src/app/page.tsx": {
       "en": "src/app/page.tsx",
@@ -453,7 +489,8 @@
       "es": "src/app/page.tsx",
       "tr": "src/app/page.tsx",
       "fr": "src/app/page.tsx",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "save_and_see_changes_instantly": {
       "en": "save_and_see_changes_instantly",
@@ -464,7 +501,8 @@
       "es": "save_and_see_changes_instantly",
       "tr": "save_and_see_changes_instantly",
       "fr": "save_and_see_changes_instantly",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "const_test": {
       "en": "const_test",
@@ -475,7 +513,8 @@
       "es": "const_test",
       "tr": "const_test",
       "fr": "const_test",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "const_test2": {
       "en": "const_test2",
@@ -486,7 +525,8 @@
       "es": "const_test2",
       "tr": "const_test2",
       "fr": "const_test2",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "Current locale: %{var0}": {
       "en": "Current locale: %{var0}",
@@ -497,7 +537,8 @@
       "es": "Current locale: %{var0}",
       "tr": "Current locale: %{var0}",
       "fr": "Current locale: %{var0}",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "Test Server Component I18n": {
       "en": "Test Server Component I18n",
@@ -508,7 +549,8 @@
       "es": "Test Server Component I18n",
       "tr": "Test Server Component I18n",
       "fr": "Test Server Component I18n",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "learn": {
       "en": "learn",
@@ -519,7 +561,8 @@
       "es": "learn",
       "tr": "learn",
       "fr": "learn",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "examples": {
       "en": "examples",
@@ -530,7 +573,8 @@
       "es": "examples",
       "tr": "examples",
       "fr": "examples",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "go_to_nextjs": {
       "en": "go_to_nextjs",
@@ -541,7 +585,8 @@
       "es": "go_to_nextjs",
       "tr": "go_to_nextjs",
       "fr": "go_to_nextjs",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.": {
       "en": "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.",
@@ -552,7 +597,8 @@
       "es": "¡Bienvenido a la Beta Privada de Edgen, anónimo! Ingresa tu código de invitación abajo para desbloquear Alpha antes que todos.",
       "tr": "Edgen Özel Beta'ya hoş geldiniz, anonim! Herkesten önce Alpha'yı açmak için aşağıya davet kodunuzu girin.",
       "fr": "Welcome to Edgen Private Beta, anon! Drop your invite code below to unlock Alpha before everyone else.",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "test_new_mark_field": {
       "en": "test_new_mark_field",
@@ -563,7 +609,8 @@
       "es": "test_new_mark_field",
       "tr": "test_new_mark_field",
       "fr": "test_new_mark_field",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     }
   },
   "components/Button/index.ts": {
@@ -576,7 +623,8 @@
       "es": "I18n22",
       "tr": "I18n22",
       "fr": "I18n22",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "I18n5": {
       "en": "I18n5",
@@ -587,7 +635,8 @@
       "es": "I18n5",
       "tr": "I18n5",
       "fr": "I18n5",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "I18n4": {
       "en": "I18n4",
@@ -598,7 +647,8 @@
       "es": "I18n4",
       "tr": "I18n4",
       "fr": "I18n4",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     }
   },
   "const/const.ts": {
@@ -611,7 +661,8 @@
       "es": "sadasdad",
       "tr": "sadasdad",
       "fr": "sadasdad",
-      "mark": 0
+      "mark": 0,
+      "_lastUsed": 1752329176372
     },
     "bbb": {
       "en": "bbb",
@@ -622,7 +673,8 @@
       "es": "bbb",
       "tr": "bbb",
       "fr": "bbb",
-      "mark": 1
+      "mark": 1,
+      "_lastUsed": 1752329176372
     }
   }
 }

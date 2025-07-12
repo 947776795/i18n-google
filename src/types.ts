@@ -9,8 +9,9 @@ export interface I18nConfig {
   endMarker: string; // 结尾标记符号
   include: string[];
   outputDir: string;
-  forceKeepKeys?: string[]; // 强制保留的Key列表
+  forceKeepKeys?: string[] | Record<string, string[]>; // 强制保留的Key列表，支持数组或模块映射格式
   logLevel?: "silent" | "normal" | "verbose"; // 日志级别配置
   sheetsReadRange?: string; // Google Sheets 读取范围，默认 "A1:Z10000"
   apiKey: string;
+  keyExpirationDays?: number; // key过期天数，不配置则不过期（默认undefined）
 }

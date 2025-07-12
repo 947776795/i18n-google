@@ -17,6 +17,7 @@ export interface ExistingReference {
   lineNumber: number; // 行号
   columnNumber: number; // 列号
   callExpression: string; // 完整的调用表达式 "I18n.t('8a709a33')"
+  scanTimestamp?: number; // 新增：本次扫描发现该引用的时间戳
 }
 
 export interface FileAnalysisResult {
@@ -91,6 +92,9 @@ export class AstTransformer {
     const j = jscodeshift.withParser("tsx");
     const root = j(source);
     const references: ExistingReference[] = [];
+    
+    // 获取当前扫描时间戳
+    const currentScanTimestamp = Date.now();
 
     Logger.debug(`📊 [DEBUG] 开始查找 I18n.t() 调用...`);
 
@@ -120,12 +124,13 @@ export class AstTransformer {
           );
 
           if (loc && loc.start) {
-            const ref = {
+            const ref: ExistingReference = {
               key,
               filePath,
               lineNumber: loc.start.line,
               columnNumber: loc.start.column,
               callExpression: `I18n.t("${key}")`,
+              scanTimestamp: currentScanTimestamp, // 新增：扫描时间戳
             };
             references.push(ref);
             Logger.debug(
@@ -155,12 +160,13 @@ export class AstTransformer {
             );
 
             if (loc && loc.start) {
-              const ref = {
+              const ref: ExistingReference = {
                 key,
                 filePath,
                 lineNumber: loc.start.line,
                 columnNumber: loc.start.column,
                 callExpression: `I18n.t(\`${key}\`)`,
+                scanTimestamp: currentScanTimestamp, // 新增：扫描时间戳
               };
               references.push(ref);
               Logger.debug(

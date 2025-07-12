@@ -1,0 +1,37 @@
+{
+  "app/[locale]/server-test/page.ts": {
+    "by by": {
+      "en": "by by",
+      "ko": "안녕히 가세요",
+      "zh-Hans": "再见",
+      "zh-Hant": "再見",
+      "vi": "tạm biệt",
+      "es": "adiós",
+      "tr": "gül güle",
+      "fr": "au revoir",
+      "mark": 0
+    },
+    "head": {
+      "en": "head",
+      "ko": "머리",
+      "zh-Hans": "头",
+      "zh-Hant": "頭部",
+      "vi": "đầu",
+      "es": "cabeza",
+      "tr": "baş",
+      "fr": "tête",
+      "mark": 0
+    },
+    "table": {
+      "en": "table",
+      "ko": "테이블",
+      "zh-Hans": "表格",
+      "zh-Hant": "桌子",
+      "vi": "bàn",
+      "es": "mesa",
+      "tr": "tablo",
+      "fr": "table",
+      "mark": 0
+    }
+  }
+}

@@ -54,6 +54,7 @@ The tool requires an `i18n.config.js` file in the project root with these key se
 - `spreadsheetId`: Google Sheets ID for remote sync
 - `startMarker`/`endMarker`: Text markers (e.g., "~text~")
 - `forceKeepKeys`: Keys to never delete even if unused
+- `keyExpirationDays`: Number of days after which unused keys expire (optional, enables time-based detection)
 
 ### Text Processing Modes
 
@@ -80,6 +81,27 @@ The tool requires an `i18n.config.js` file in the project root with these key se
 - `demo/vite/` - Vite integration example
 
 Both demos show real usage patterns and configuration setups.
+
+## Migration Scripts
+
+For existing projects that need to add time tracking to their i18n-complete-record.json files:
+
+### Simple Migration
+```bash
+node scripts/migrate-add-timestamp.js
+```
+Adds current timestamp to all existing keys without `_lastUsed` field.
+
+### Advanced Migration  
+```bash
+node scripts/migrate-advanced.js
+```
+Provides multiple migration strategies:
+- `current`: Set all keys to current time (fresh start)
+- `conservative`: Set keys to expired time to mark truly unused ones
+- `staggered`: Distribute timestamps randomly to avoid mass expiration
+
+**Note**: Migration scripts are independent and should be run manually before enabling time-based detection. The core application does not include automatic migration logic.
 
 ## Testing
 

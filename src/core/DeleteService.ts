@@ -143,9 +143,10 @@ export class DeleteService {
     Logger.info(`📖 完整记录包含 ${existingKeys.size} 个Key`);
     Logger.info(`🔗 当前扫描发现 ${currentKeys.size} 个Key`);
 
-    // 找出无用的Key（在完整记录中但不在当前扫描中）
-    const unusedKeys = Array.from(existingKeys).filter(
-      (key) => !currentKeys.has(key)
+    // 使用时间检测替代原有检测
+    const unusedKeys = this.unusedKeyAnalyzer.detectTimeBasedUnusedKeys(
+      existingCompleteRecord,
+      allReferences
     );
 
     // 构建Key到模块路径的映射
@@ -158,48 +159,30 @@ export class DeleteService {
       }
     );
 
-    // 过滤掉强制保留的Key
-    const filteredUnusedKeys = unusedKeys.filter(
-      (key) =>
-        !this.unusedKeyAnalyzer.isKeyForceKeptInCompleteRecord(
-          key,
-          existingCompleteRecord
-        )
-    );
-    const forceKeptKeys = unusedKeys.filter((key) =>
-      this.unusedKeyAnalyzer.isKeyForceKeptInCompleteRecord(
-        key,
-        existingCompleteRecord
-      )
-    );
+    // 对于时间检测，unusedKeys已经是过滤后的结果
+    const filteredUnusedKeys = unusedKeys;
+    const forceKeptKeys: string[] = []; // 强制保留的key已在时间检测中处理
 
     // 构建带模块路径的Key列表用于显示
     const formattedFilteredUnusedKeys = filteredUnusedKeys.map(
-      (key) => `[${keyToModuleMap[key]}][${key}]`
-    );
-    const formattedForceKeptKeys = forceKeptKeys.map(
       (key) => `[${keyToModuleMap[key]}][${key}]`
     );
 
     const totalUnusedKeys = filteredUnusedKeys.length;
 
     Logger.info(
-      `🗑️ 发现 ${unusedKeys.length} 个无用Key，其中 ${totalUnusedKeys} 个可删除，${forceKeptKeys.length} 个强制保留`
+      `🗑️ 发现 ${totalUnusedKeys} 个可删除的无用Key`
     );
     Logger.info(
       `📝 可删除的无用Key: ${formattedFilteredUnusedKeys.join(", ")}`
     );
 
-    if (forceKeptKeys.length > 0) {
-      Logger.info(`🔒 强制保留的Key: ${formattedForceKeptKeys.join(", ")}`);
-    }
-
     return {
-      unusedKeys,
+      unusedKeys: filteredUnusedKeys,
       filteredUnusedKeys,
       forceKeptKeys,
       formattedFilteredUnusedKeys,
-      formattedForceKeptKeys,
+      formattedForceKeptKeys: [],
       totalUnusedKeys,
       keyToModuleMap,
     };

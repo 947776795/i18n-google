@@ -78,11 +78,14 @@ export class I18nScanner {
       const { allReferences, newTranslations } = await this.processFiles(files);
 
       // 5&6. 检测无用Key、确认删除并生成处理后的完整记录
-      this.scanProgress.update("🔍 检测无用Key并生成完整记录...");
+      this.scanProgress.info("🔍 检测无用Key并等待用户确认...");
       const { totalUnusedKeys, processedRecord, previewFilePath } =
         await this.deleteService.detectUnusedKeysAndGenerateRecord(
           allReferences
         );
+      
+      // 重新启动进度条
+      await this.scanProgress.start("🔄 处理删除结果...");
 
       // 记录预览文件用于清理
       if (previewFilePath) {
@@ -94,8 +97,9 @@ export class I18nScanner {
       await this.translationManager.generateModularFilesFromCompleteRecord();
 
       // 8. 用户确认是否同步到远端
-      this.scanProgress.update("🤔 等待用户确认远端同步...");
+      const resumeProgress = this.scanProgress.pauseForInteraction("🤔 等待用户确认远端同步...");
       const shouldSyncToRemote = await UserInteraction.confirmRemoteSync();
+      await resumeProgress();
 
       if (shouldSyncToRemote) {
         // 9. 同步到远端 (Google Sheets) - 基于处理后的 CompleteRecord
@@ -209,11 +213,54 @@ export class I18nScanner {
     // 保存到实例变量供后续使用
     this.referencesMap = allReferences;
 
+    // 新增：批量更新被引用key的使用时间
+    if (this.config.keyExpirationDays) {
+      await this.updateReferencedKeysTimestamp(allReferences);
+    }
+
     Logger.info(`✅ 文件处理完成，共处理 ${files.length} 个文件`);
     Logger.info(
       `📊 统计: ${allReferences.size} 个引用keys, ${newTranslations.length} 个新翻译`
     );
 
     return { allReferences, newTranslations };
+  }
+
+  /**
+   * 批量更新被引用key的最后使用时间
+   */
+  private async updateReferencedKeysTimestamp(
+    allReferences: Map<string, ExistingReference[]>
+  ): Promise<void> {
+    const completeRecord = await this.translationManager.loadCompleteRecord();
+    if (!completeRecord) {
+      Logger.debug("📝 暂无完整记录，跳过时间更新");
+      return;
+    }
+
+    // 获取本次扫描时间戳（从引用中获取）
+    const firstRef = Array.from(allReferences.values())[0]?.[0];
+    const scanTimestamp = firstRef?.scanTimestamp;
+    if (!scanTimestamp) {
+      Logger.debug("⚠️ 无法获取扫描时间戳，跳过时间更新");
+      return;
+    }
+
+    let hasUpdates = false;
+
+    // 批量更新所有被引用key的时间
+    allReferences.forEach((refs, key) => {
+      Object.keys(completeRecord).forEach(modulePath => {
+        if (completeRecord[modulePath]?.[key]) {
+          completeRecord[modulePath][key]._lastUsed = scanTimestamp;
+          hasUpdates = true;
+        }
+      });
+    });
+
+    if (hasUpdates) {
+      await this.translationManager.saveCompleteRecordDirect(completeRecord);
+      Logger.info(`🕒 已更新 ${allReferences.size} 个key的使用时间`);
+    }
   }
 }

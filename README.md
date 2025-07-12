@@ -1,332 +1,518 @@
 # i18n-google
 
-国际化代码转换工具，自动将代码中的文本转换为国际化函数调用。
+一个智能的国际化自动化工具，支持代码转换、Google Sheets 集成和模块化翻译管理。
 
-## 功能特性
+## 🚀 核心特性
 
-- 🚀 **自动代码转换**：自动将代码中的文本替换为 `I18n.t()` 调用
-- 📝 **多种文本支持**：支持字符串字面量、模板字符串和 JSX 文本节点
-- 🎯 **智能上下文处理**：智能处理 JSX 和普通 JavaScript 上下文
-- 🔧 **灵活标记配置**：支持自定义开始和结尾标记符号
-- 📊 **Google Sheets 集成**：与 Google Sheets 双向同步翻译内容
-- 🔍 **自动生成唯一键**：基于文件路径和文本内容生成 MD5 哈希键
-- 🌐 **多语言支持**：支持多种语言的翻译文件生成
-- ⚙️ **TypeScript 支持**：完全使用 TypeScript 编写，提供类型安全
-- 🧹 **智能键清理**：自动识别和删除未使用的翻译键 ⭐ **NEW**
-- 🔍 **未使用键分析**：深度分析代码以找出废弃的翻译键 ⭐ **NEW**
-- 💬 **交互式界面**：友好的命令行交互，支持用户确认和选择 ⭐ **NEW**
-- 📊 **操作进度显示**：实时显示清理进度和详细报告 ⭐ **NEW**
-- 🛡️ **安全备份机制**：删除前自动备份，支持恢复操作 ⭐ **NEW**
+### 自动化代码转换
 
-## 配置说明
+- 🔄 **智能文本识别**：自动识别需要国际化的文本内容
+- 🎯 **多种处理模式**：支持标记符号模式和 JSX 纯文本模式
+- 🔧 **AST 级别转换**：使用 jscodeshift 进行精确的代码转换
+- 📦 **自动导入管理**：智能添加和管理 I18n 相关导入
+
+### 模块化翻译系统
+
+- 📁 **模块化文件结构**：按组件/页面组织翻译文件
+- 🔑 **原文案作为 Key**：提高可读性和维护性
+- 🌐 **多语言支持**：支持任意数量的目标语言
+- 📊 **完整记录管理**：维护翻译的完整生命周期记录
+
+### 智能键管理
+
+- 🧹 **智能清理**：自动检测和清理未使用的翻译键
+- ⏰ **时间基础检测**：支持基于时间的过期键检测
+- 🛡️ **安全保护**：强制保留关键系统键，防止误删
+- 💾 **备份恢复**：删除前自动备份，支持一键恢复
+
+### Google Sheets 集成
+
+- ☁️ **双向同步**：与 Google Sheets 进行双向翻译同步
+- 🔄 **增量更新**：智能合并远程和本地翻译数据
+- 📈 **实时协作**：支持团队协作翻译管理
+
+### 用户体验
+
+- 💬 **交互式界面**：友好的命令行交互体验
+- 📊 **进度显示**：实时显示操作进度和详细报告
+- 🎛️ **灵活配置**：丰富的配置选项满足不同需求
+- 📝 **详细日志**：支持多级别日志输出
+
+## 📋 系统架构
+
+### 核心组件
+
+```
+src/
+├── core/                    # 核心服务层
+│   ├── I18nScanner.ts      # 主扫描器 - 协调整个流程
+│   ├── FileScanner.ts      # 文件扫描器 - 递归扫描项目文件
+│   ├── FileTransformer.ts  # 文件转换器 - 代码转换和引用收集
+│   ├── AstTransformer.ts   # AST 转换器 - 底层 AST 操作
+│   ├── TranslationManager.ts # 翻译管理器 - 翻译文件和记录管理
+│   ├── GoogleSheetsSync.ts # Google Sheets 同步器
+│   ├── UnusedKeyAnalyzer.ts # 无用键分析器 - 检测过期和未使用的键
+│   ├── DeleteService.ts    # 删除服务 - 处理键删除逻辑
+│   └── PreviewFileService.ts # 预览文件服务 - 生成删除预览
+├── ui/                     # 用户界面层
+│   ├── ProgressIndicator.ts # 进度指示器
+│   └── UserInteraction.ts  # 用户交互处理
+├── utils/                  # 工具层
+│   ├── StringUtils.ts      # 字符串处理和日志工具
+│   ├── AstUtils.ts         # AST 工具函数
+│   └── PathUtils.ts        # 路径处理工具
+├── errors/                 # 错误处理
+│   └── I18nError.ts        # 自定义错误类型
+└── types.ts                # TypeScript 类型定义
+```
+
+### 核心流程图
+
+```mermaid
+flowchart TD
+    A[🚀 开始扫描] --> B[⚙️ 加载配置文件]
+    B --> C[📊 设置日志级别]
+    C --> D[🔄 从远端拉取翻译数据]
+    D --> E[📋 合并到本地完整记录]
+    E --> F[🔧 初始化翻译管理器]
+    F --> G[📁 扫描项目文件]
+    G --> H[🔍 并行处理文件]
+
+    subgraph "文件处理阶段"
+        H --> I[📖 收集现有 I18n.t() 引用]
+        H --> J[🔄 转换标记文本为 I18n.t()]
+        H --> K[📝 转换 JSX 纯文本]
+        I --> L[🔗 合并所有引用数据]
+        J --> L
+        K --> L
+    end
+
+    L --> M[🕒 更新引用时间戳]
+    M --> N[🔍 检测无用键]
+    N --> O{发现无用键?}
+
+    O -->|是| P[📄 生成删除预览文件]
+    P --> Q[💬 用户确认删除]
+    Q --> R{用户确认?}
+    R -->|是| S[🗑️ 执行键删除]
+    R -->|否| T[📝 保留无用键]
+
+    O -->|否| U[📋 生成模块化翻译文件]
+    S --> V[🔄 更新完整记录]
+    T --> V
+    V --> U
+
+    U --> W[💬 用户确认远端同步]
+    W --> X{同步到远端?}
+    X -->|是| Y[☁️ 推送到 Google Sheets]
+    X -->|否| Z[⏭️ 跳过远端同步]
+
+    Y --> AA[🧹 清理临时文件]
+    Z --> AA
+    AA --> BB[📊 显示扫描摘要]
+    BB --> CC[✅ 扫描完成]
+
+    style A fill:#e3f2fd,stroke:#1976d2,stroke-width:3px
+    style CC fill:#c8e6c9,stroke:#388e3c,stroke-width:3px
+    style P fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style S fill:#ffebee,stroke:#d32f2f,stroke-width:2px
+    style Y fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+```
+
+### 完整时序图
+
+```mermaid
+sequenceDiagram
+    participant User as 👤 用户
+    participant CLI as 🖥️ CLI界面
+    participant Scanner as 🔍 I18nScanner
+    participant FileScanner as 📁 FileScanner
+    participant FileTransformer as 🔄 FileTransformer
+    participant TranslationManager as 📋 TranslationManager
+    participant GoogleSheets as ☁️ Google Sheets
+    participant DeleteService as 🗑️ DeleteService
+    participant UserInteraction as 💬 UserInteraction
+
+    User->>CLI: 执行 i18n-google 命令
+    CLI->>Scanner: 创建扫描器实例
+
+    Note over Scanner: 🚀 开始扫描流程
+    Scanner->>Scanner: 加载配置文件
+    Scanner->>Scanner: 设置日志级别
+
+    Note over Scanner,GoogleSheets: ☁️ 远端数据同步阶段
+    Scanner->>GoogleSheets: 拉取远程翻译数据
+    GoogleSheets-->>Scanner: 返回远程完整记录
+    Scanner->>TranslationManager: 合并远程数据到本地
+
+    Note over Scanner,FileTransformer: 📁 文件扫描和处理阶段
+    Scanner->>TranslationManager: 初始化翻译管理器
+    Scanner->>FileScanner: 扫描项目文件
+    FileScanner-->>Scanner: 返回文件列表
+
+    loop 处理每个文件
+        Scanner->>FileTransformer: 分析和转换文件
+        FileTransformer->>FileTransformer: 收集现有 I18n.t() 引用
+        FileTransformer->>FileTransformer: 转换标记文本
+        FileTransformer->>FileTransformer: 转换 JSX 纯文本
+        FileTransformer-->>Scanner: 返回引用和转换结果
+    end
+
+    Scanner->>Scanner: 更新引用时间戳
+
+    Note over Scanner,DeleteService: 🧹 无用键检测和删除阶段
+    Scanner->>DeleteService: 检测无用键并生成记录
+    DeleteService->>TranslationManager: 加载现有完整记录
+    DeleteService->>DeleteService: 分析无用键
+
+    alt 发现无用键
+        DeleteService->>DeleteService: 生成删除预览文件
+        DeleteService->>UserInteraction: 请求用户确认删除
+        UserInteraction->>User: 显示删除预览
+        User-->>UserInteraction: 确认或取消
+
+        alt 用户确认删除
+            DeleteService->>TranslationManager: 执行键删除
+            DeleteService->>DeleteService: 更新完整记录
+        else 用户取消删除
+            DeleteService->>TranslationManager: 保留无用键
+        end
+    else 无无用键
+        DeleteService->>TranslationManager: 直接更新记录
+    end
+
+    DeleteService-->>Scanner: 返回处理后的记录
+
+    Note over Scanner,TranslationManager: 📋 翻译文件生成阶段
+    Scanner->>TranslationManager: 生成模块化翻译文件
+    TranslationManager->>TranslationManager: 按模块路径分组
+    TranslationManager->>TranslationManager: 生成 TypeScript 翻译文件
+
+    Note over Scanner,GoogleSheets: ☁️ 远端同步确认阶段
+    Scanner->>UserInteraction: 请求远端同步确认
+    UserInteraction->>User: 询问是否同步到远端
+    User-->>UserInteraction: 确认或跳过
+
+    alt 用户确认同步
+        Scanner->>GoogleSheets: 推送完整记录到远端
+        GoogleSheets-->>Scanner: 同步完成确认
+    else 用户跳过同步
+        Scanner->>Scanner: 记录跳过同步
+    end
+
+    Note over Scanner: 🧹 清理和完成阶段
+    Scanner->>DeleteService: 清理临时预览文件
+    Scanner->>UserInteraction: 显示扫描摘要
+    UserInteraction->>User: 展示统计信息
+
+    Scanner-->>CLI: 扫描完成
+    CLI-->>User: 返回执行结果
+
+    Note over User,UserInteraction: 📊 扫描摘要信息
+    Note right of User: • 处理文件数量<br/>• 翻译键总数<br/>• 新增键数量<br/>• 删除键数量<br/>• 执行时长
+```
+
+## ⚙️ 配置说明
 
 在项目根目录创建 `i18n.config.js` 配置文件：
 
 ```javascript
 module.exports = {
-  // 指定要扫描的根目录
-  rootDir: "./src",
+  // 基础配置
+  rootDir: "./src", // 扫描根目录
+  outputDir: "./src/translate", // 翻译文件输出目录
+  languages: ["en", "zh-CN", "zh-TC", "ko", "es", "tr", "de", "vi"],
 
-  // 配置支持的语言列表
-  languages: ["de", "en", "es", "ko", "tr", "vi", "zh-CN", "zh-TC"],
+  // 文件处理配置
+  include: ["js", "jsx", "ts", "tsx"], // 包含的文件类型
+  ignore: [
+    // 忽略的文件/目录
+    "**/test/**",
+    "**/node_modules/**",
+    "**/*.test.*",
+  ],
 
-  // 指定要忽略的目录和文件
-  ignore: ["**/test/**", "**/node_modules/**", "test.tsx"],
+  // 标记符号配置
+  startMarker: "~", // 开始标记符号
+  endMarker: "~", // 结束标记符号
 
   // Google Sheets 配置
   spreadsheetId: "your-google-sheet-id",
   sheetName: "translations",
   keyFile: "./serviceAccountKeyFile.json",
+  apiKey: "your-google-api-key",
+  sheetsReadRange: "A1:Z10000", // 读取范围
 
-  // 标记符号配置
-  startMarker: "~", // 开始标记
-  endMarker: "~", // 结尾标记
+  // 键管理配置
+  forceKeepKeys: {
+    // 强制保留的键（按模块）
+    "src/components/Header": ["system.title"],
+    "src/pages/error": ["error.network", "error.timeout"],
+  },
+  keyExpirationDays: 30, // 键过期天数（可选）
 
-  // 指定要包含的文件类型
-  include: ["js", "jsx", "ts", "tsx"],
-
-  // 指定输出目录
-  outputDir: "./src/translate",
-
-  // 强制保留的键列表（即使未使用也不会被删除）
-  forceKeepKeys: ["important_key", "system_message"],
-
-  // 日志级别配置
-  logLevel: "normal", // 推荐的默认设置
+  // 系统配置
+  logLevel: "normal", // 日志级别: silent, normal, verbose
 };
 ```
 
-### 配置选项说明
+### 配置选项详解
 
-| 选项            | 类型     | 说明                                               |
-| --------------- | -------- | -------------------------------------------------- |
-| `rootDir`       | string   | 要扫描的根目录                                     |
-| `languages`     | string[] | 支持的语言列表                                     |
-| `ignore`        | string[] | 要忽略的文件/目录匹配模式                          |
-| `include`       | string[] | 要包含的文件扩展名                                 |
-| `outputDir`     | string   | 翻译文件输出目录                                   |
-| `spreadsheetId` | string   | Google Sheets ID                                   |
-| `sheetName`     | string   | Sheet 名称                                         |
-| `keyFile`       | string   | Google 服务账号密钥文件路径                        |
-| `startMarker`   | string   | 开始标记符号                                       |
-| `endMarker`     | string   | 结尾标记符号                                       |
-| `forceKeepKeys` | string[] | 强制保留的键列表 ⭐ **NEW**                        |
-| `logLevel`      | string   | 日志级别：'silent', 'normal', 'verbose' ⭐ **NEW** |
+| 配置项              | 类型         | 说明                        | 默认值      |
+| ------------------- | ------------ | --------------------------- | ----------- |
+| `rootDir`           | string       | 扫描的根目录路径            | -           |
+| `outputDir`         | string       | 翻译文件输出目录            | -           |
+| `languages`         | string[]     | 支持的语言代码列表          | -           |
+| `include`           | string[]     | 包含的文件扩展名            | -           |
+| `ignore`            | string[]     | 忽略的文件/目录模式         | -           |
+| `startMarker`       | string       | 文本开始标记符号            | -           |
+| `endMarker`         | string       | 文本结束标记符号            | -           |
+| `spreadsheetId`     | string       | Google Sheets 文档 ID       | -           |
+| `sheetName`         | string       | 工作表名称                  | -           |
+| `keyFile`           | string       | Google 服务账号密钥文件路径 | -           |
+| `apiKey`            | string       | Google API 密钥             | -           |
+| `sheetsReadRange`   | string       | Google Sheets 读取范围      | "A1:Z10000" |
+| `forceKeepKeys`     | object/array | 强制保留的键配置            | -           |
+| `keyExpirationDays` | number       | 键过期天数（启用时间检测）  | undefined   |
+| `logLevel`          | string       | 日志级别                    | "normal"    |
 
-### 日志级别说明 ⭐ **NEW**
-
-工具支持三种日志级别，帮助用户控制输出信息的详细程度：
-
-- **`silent`**：静默模式，不输出任何日志信息
-- **`normal`**（默认）：标准模式，只输出关键操作信息和用户友好提示
-- **`verbose`**：详细模式，输出完整的调试信息，适用于开发和问题排查
-
-## 处理模式
-
-本工具支持两种文本处理模式：
+## 🔧 处理模式
 
 ### 1. 标记符号模式
 
-适用于字符串字面量和模板字符串，需要用标记符号包围文本：
-
-#### 标记符号示例
-
-**使用波浪线标记（默认）**
+适用于字符串字面量和模板字符串：
 
 ```javascript
 // 配置
 startMarker: "~";
 endMarker: "~";
 
-// 代码中的用法
+// 使用示例
 const message = "~Hello World~";
-const template = `~Hello ${user.name}!~`;
-```
+const template = `~Welcome ${user.name}!~`;
+const attr = <div title="~Click me~">Content</div>;
 
-**使用自定义标记**
-
-```javascript
-// 配置
-startMarker: "T_";
-endMarker: "_T";
-
-// 代码中的用法
-const message = "T_Hello World_T";
-const template = `T_Hello ${user.name}!_T`;
-```
-
-**使用双括号标记**
-
-```javascript
-// 配置
-startMarker: "[[";
-endMarker: "]]";
-
-// 代码中的用法
-const message = "[[Hello World]]";
-const template = `[[Hello ${user.name}!]]`;
+// 转换后
+const message = I18n.t("Hello World");
+const template = I18n.t("Welcome %{var0}!", { var0: user.name });
+const attr = <div title={I18n.t("Click me")}>Content</div>;
 ```
 
 ### 2. JSX 纯文本模式
 
-自动处理 JSX 元素中的纯文本节点，无需标记符号：
+自动处理 JSX 元素中的纯文本：
 
 ```jsx
-// 自动处理的 JSX 文本
-<div>
-  Hello World {/* 会被自动转换 */}
-  <p>Welcome to our app</p> {/* 会被自动转换 */}
-  <span>{"~Marked text~"}</span> {/* 标记模式处理 */}
-</div>
-```
-
-## 转换示例
-
-### 转换前
-
-```javascript
-const message = "~Hello World~";
-const template = `~Hello ${user.name}!~`;
-const greeting = "Normal text"; // 不会被转换（没有标记符号）
-
-function Component() {
-  return (
-    <div>
-      Pure JSX Text {/* 会被转换（JSX纯文本） */}
-      <p title="~Attribute~">Welcome</p> {/* title属性和文本都会被转换 */}
-    </div>
-  );
-}
-```
-
-### 转换后
-
-```javascript
-import { I18n } from "@utils";
-
-const message = I18n.t("a1b2c3d4");
-const template = I18n.t("e5f6g7h8", { var0: user.name });
-const greeting = "Normal text";
-
-function Component() {
-  return (
-    <div>
-      {I18n.t("f9g0h1i2")}
-      <p title={I18n.t("j3k4l5m6")}>{I18n.t("n7o8p9q0")}</p>
-    </div>
-  );
-}
-```
-
-## 核心处理逻辑
-
-1. **字符串检测**：
-
-   - 标记模式：检测以 `startMarker` 开头和 `endMarker` 结尾的字符串
-   - JSX 模式：自动检测 JSX 元素中的纯文本节点
-
-2. **格式化处理**：自动去除开始和结尾的标记符号
-
-3. **翻译键生成**：基于文件路径和文本内容生成 MD5 哈希键
-
-4. **智能替换**：
-   - 在 JSX 中包装为 `{I18n.t(key)}`
-   - 在普通 JS 中直接替换为 `I18n.t(key)`
-   - 模板字符串转换为带参数的调用
-
-## 模板字符串处理
-
-对于包含变量的模板字符串：
-
-```javascript
 // 原始代码
-`~Hello ${name}, you have ${count} items~`;
+function Component() {
+  return (
+    <div>
+      Welcome to our app {/* 自动转换 */}
+      <p>Get started now</p> {/* 自动转换 */}
+      <span>{"~Marked text~"}</span> {/* 标记模式 */}
+    </div>
+  );
+}
 
-// 转换为
-I18n.t("hash123", { var0: name, var1: count });
-
-// 翻译文本存储为
-("Hello %{var0}, you have %{var1} items");
+// 转换后
+function Component() {
+  return (
+    <div>
+      {I18n.t("Welcome to our app")}
+      <p>{I18n.t("Get started now")}</p>
+      <span>{I18n.t("Marked text")}</span>
+    </div>
+  );
+}
 ```
 
-## 工作原理
+## 📁 模块化翻译系统
 
-### 处理流程图
-
-```mermaid
-flowchart LR
-    A["🚀 开始扫描"] --> B["⚙️ 加载配置"]
-    B --> C["📁 扫描文件"]
-    C --> D["🔍 解析 AST"]
-
-    D --> E["📝 识别文本节点"]
-
-    subgraph "处理模式"
-        E --> F1["🏷️ 标记字符串<br/>~text~"]
-        E --> F2["📄 JSX纯文本<br/>&lt;div&gt;text&lt;/div&gt;"]
-        E --> F3["🔗 模板字符串<br/>`~Hello ${name}~`"]
-    end
-
-    F1 --> G["🔑 生成键值"]
-    F2 --> G
-    F3 --> G
-
-    G --> H["🔄 替换调用<br/>I18n.t()"]
-    H --> I["📦 添加导入"]
-    I --> J["💾 保存文件"]
-
-    J --> K["📋 生成翻译"]
-    K --> L["☁️ 同步远程"]
-    L --> M["✅ 完成"]
-
-    style A fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
-    style M fill:#c8e6c9,stroke:#388e3c,stroke-width:2px
-    style F1 fill:#fff9c4,stroke:#f57c00,stroke-width:2px
-    style F2 fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
-    style F3 fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
-    style G fill:#fce4ec,stroke:#c2185b,stroke-width:2px
-    style H fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
-```
-
-### 详细步骤
-
-1. **文件扫描**: 根据配置递归扫描指定目录下的文件
-2. **内容识别**: 使用标记符号或 JSX 文本节点检测需要国际化的文案
-3. **代码转换**: 使用 jscodeshift 将识别的文案替换为 `I18n.t(key)` 调用
-4. **导入注入**: 自动添加 I18n 相关的导入语句
-5. **翻译生成**: 为每种语言生成对应的 JSON 翻译文件
-6. **远程同步**: 与 Google Sheets 双向同步翻译内容
-
-### Google Sheets 配置
-
-1. 创建 Google Cloud 项目并启用 Google Sheets API
-2. 创建服务账号并下载密钥文件
-3. 将密钥文件保存为 `serviceAccountKeyFile.json`
-4. 与服务账号邮箱共享您的 Google Sheets
-
-## 🧹 智能键清理功能 ⭐ **NEW**
-
-从 v0.1.0 开始，i18n-google 提供了强大的未使用键清理功能，帮助您维护干净的翻译文件。
-
-### 功能特性
-
-- 🔍 **深度代码分析**：扫描所有代码文件，识别真正使用的翻译键
-- 🛡️ **安全机制**：删除前自动创建备份，支持一键恢复
-- 💬 **交互式界面**：友好的命令行交互，让您完全掌控清理过程
-- 📊 **详细报告**：显示清理统计和操作详情
-- ⚙️ **灵活配置**：支持强制保留特定键，避免误删
-
-### 使用场景
-
-- 🗑️ **项目重构后**：清理不再使用的旧翻译键
-- 📦 **版本发布前**：减少翻译文件大小，提升加载性能
-- 🔄 **定期维护**：保持翻译文件的整洁和最新状态
-- 👥 **团队协作**：统一清理标准，避免翻译冗余
-
-### 强制保留键配置
-
-对于某些重要的系统键或动态生成的键，您可以配置强制保留：
-
-```javascript
-module.exports = {
-  // ... 其他配置
-  forceKeepKeys: [
-    "system.error.network", // 系统错误信息
-    "dynamic.key.prefix.*", // 动态生成的键（支持通配符）
-    "api.response.success", // API 响应信息
-    "email.template.*", // 邮件模板键
-  ],
-};
-```
-
-### 备份和恢复
-
-清理操作会自动创建备份文件：
+### 文件结构
 
 ```
 src/translate/
-├── backup/
-│   ├── 2024-01-15_14-30-25/  # 时间戳备份目录
-│   │   ├── zh-CN.json
-│   │   ├── en.json
-│   │   └── ...
-├── zh-CN.json                 # 当前翻译文件
-├── en.json
-└── ...
+├── i18n-complete-record.json          # 完整翻译记录
+├── src/
+│   ├── components/
+│   │   ├── Header/
+│   │   │   └── index.ts               # Header 组件翻译
+│   │   └── Button/
+│   │       └── index.ts               # Button 组件翻译
+│   └── pages/
+│       ├── home/
+│       │   └── index.ts               # 首页翻译
+│       └── about/
+│           └── index.ts               # 关于页翻译
+└── const/
+    └── const.ts                       # 常量翻译
 ```
 
-## 使用方法
+### 翻译文件格式
+
+```typescript
+// src/translate/src/components/Header/index.ts
+const translations = {
+  en: {
+    "Welcome to our website": "Welcome to our website",
+    "User Profile": "User Profile",
+    "Sign Out": "Sign Out",
+  },
+  "zh-CN": {
+    "Welcome to our website": "欢迎来到我们的网站",
+    "User Profile": "用户资料",
+    "Sign Out": "退出登录",
+  },
+  "zh-TC": {
+    "Welcome to our website": "歡迎來到我們的網站",
+    "User Profile": "用戶資料",
+    "Sign Out": "退出登錄",
+  },
+};
+
+export default translations;
+```
+
+### 完整记录格式
+
+```json
+{
+  "src/components/Header": {
+    "Welcome to our website": {
+      "en": "Welcome to our website",
+      "zh-CN": "欢迎来到我们的网站",
+      "zh-TC": "歡迎來到我們的網站",
+      "_lastUsed": 1704067200000
+    },
+    "User Profile": {
+      "en": "User Profile",
+      "zh-CN": "用户资料",
+      "zh-TC": "用戶資料",
+      "_lastUsed": 1704067200000
+    }
+  }
+}
+```
+
+## 🧹 智能键管理
+
+### 无用键检测
+
+工具提供两种检测模式：
+
+#### 1. 引用检测模式（默认）
+
+```javascript
+// 配置
+module.exports = {
+  // 不设置 keyExpirationDays 或设置为 undefined
+  keyExpirationDays: undefined,
+};
+```
+
+#### 2. 时间检测模式
+
+```javascript
+// 配置
+module.exports = {
+  keyExpirationDays: 30, // 30天未使用的键视为过期
+};
+```
+
+### 强制保留配置
+
+```javascript
+// 数组格式（全局保留）
+forceKeepKeys: ["system.error", "api.timeout"]
+
+// 对象格式（按模块保留）
+forceKeepKeys: {
+  "src/components/ErrorBoundary": ["error.network", "error.unknown"],
+  "src/utils/api": ["api.timeout", "api.retry"],
+  "src/pages/admin": ["admin.*"]  // 支持通配符
+}
+```
+
+### 删除预览
+
+删除前会生成详细的预览文件：
+
+```json
+{
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "totalKeysToDelete": 5,
+  "keysToDelete": [
+    {
+      "key": "Old unused message",
+      "translations": {
+        "en": "Old unused message",
+        "zh-CN": "旧的未使用消息"
+      },
+      "reason": "未在代码中找到引用"
+    }
+  ],
+  "affectedLanguages": ["en", "zh-CN"]
+}
+```
+
+## 📊 Google Sheets 集成
+
+### 设置步骤
+
+1. **创建 Google Cloud 项目**
+
+   - 访问 [Google Cloud Console](https://console.cloud.google.com/)
+   - 创建新项目或选择现有项目
+
+2. **启用 Google Sheets API**
+
+   - 在 API 库中搜索并启用 "Google Sheets API"
+
+3. **创建服务账号**
+
+   - 创建服务账号并下载 JSON 密钥文件
+   - 将文件保存为 `serviceAccountKeyFile.json`
+
+4. **共享 Google Sheets**
+   - 将服务账号邮箱添加到 Google Sheets 的编辑者列表
+
+### 同步机制
+
+```mermaid
+sequenceDiagram
+    participant L as 本地工具
+    participant S as Google Sheets
+
+    L->>S: 1. 拉取远程翻译数据
+    L->>L: 2. 合并到本地完整记录
+    L->>L: 3. 扫描和转换代码
+    L->>L: 4. 检测和删除无用键
+    L->>L: 5. 生成模块化翻译文件
+    L->>S: 6. 推送更新到远程
+```
+
+## 🚀 使用方法
+
+### 安装
+
+```bash
+# 全局安装
+npm install -g i18n-google
+
+# 项目安装
+npm install i18n-google --save-dev
+```
 
 ### 命令行使用
 
 ```bash
-# 全局安装后
+# 直接运行（全局安装后）
 i18n-google
 
-# 或通过 npx
+# 通过 npx 运行
 npx i18n-google
 
-# 项目中使用
+# 项目脚本
 npm run scan
 ```
 
@@ -337,58 +523,125 @@ import { I18nScanner } from "i18n-google";
 import config from "./i18n.config.js";
 
 const scanner = new I18nScanner(config);
-await scanner.scan();
-```
 
-## 生成的翻译文件
-
-`src/translate/zh-CN.json`:
-
-```json
-{
-  "a1b2c3d4": "Hello World",
-  "e5f6g7h8": "Hello %{var0}!",
-  "f9g0h1i2": "Pure JSX Text"
+async function runScan() {
+  try {
+    await scanner.scan();
+    console.log("扫描完成！");
+  } catch (error) {
+    console.error("扫描失败:", error);
+  }
 }
+
+runScan();
 ```
 
-`src/translate/en.json`:
+## 🎯 前端集成
 
-```json
-{
-  "a1b2c3d4": "Hello World",
-  "e5f6g7h8": "Hello %{var0}!",
-  "f9g0h1i2": "Pure JSX Text"
+### I18n 工具类
+
+```typescript
+// src/utils/i18n.ts
+interface ModuleTranslations {
+  [locale: string]: { [key: string]: string };
 }
+
+class I18nUtil {
+  static getCurrentLocale(): string {
+    if (typeof window === "undefined") return "en";
+    const params = new URLSearchParams(window.location.search);
+    return localStorage.getItem("locale") || params.get("lang") || "en";
+  }
+
+  static createScoped(translations: ModuleTranslations) {
+    const locale = this.getCurrentLocale();
+    return {
+      t: (key: string, params?: Record<string, any>) => {
+        let text = translations[locale]?.[key] || key;
+
+        // 处理参数插值
+        if (params) {
+          Object.entries(params).forEach(([key, value]) => {
+            text = text.replace(new RegExp(`%{${key}}`, "g"), String(value));
+          });
+        }
+
+        return text;
+      },
+    };
+  }
+
+  static switchLocale(newLocale: string): void {
+    localStorage.setItem("locale", newLocale);
+    const url = new URL(window.location.href);
+    url.searchParams.set("lang", newLocale);
+    window.location.href = url.toString();
+  }
+}
+
+export { I18nUtil };
 ```
 
-## 安装
+### 组件使用示例
 
-### 全局安装
+```typescript
+// src/components/Header.tsx
+import React from "react";
+import { I18nUtil } from "@/utils/i18n";
+import translations from "@/translate/src/components/Header";
 
-```bash
-npm install -g i18n-google
+function Header() {
+  const I18n = I18nUtil.createScoped(translations);
+
+  return (
+    <header>
+      <h1>{I18n.t("Welcome to our website")}</h1>
+      <nav>
+        <a href="/profile">{I18n.t("User Profile")}</a>
+        <button onClick={() => signOut()}>{I18n.t("Sign Out")}</button>
+      </nav>
+    </header>
+  );
+}
+
+export default Header;
 ```
 
-### 项目安装
+### 语言切换组件
 
-```bash
-npm install i18n-google
+```typescript
+// src/components/LanguageSwitcher.tsx
+import React from "react";
+import { I18nUtil } from "@/utils/i18n";
+
+const languages = [
+  { code: "en", name: "English" },
+  { code: "zh-CN", name: "中文（简体）" },
+  { code: "zh-TC", name: "中文（繁體）" },
+  { code: "ko", name: "한국어" },
+];
+
+function LanguageSwitcher() {
+  const currentLocale = I18nUtil.getCurrentLocale();
+
+  return (
+    <select
+      value={currentLocale}
+      onChange={(e) => I18nUtil.switchLocale(e.target.value)}
+    >
+      {languages.map((lang) => (
+        <option key={lang.code} value={lang.code}>
+          {lang.name}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+export default LanguageSwitcher;
 ```
 
-## 开发
-
-### 安装依赖
-
-```bash
-npm install
-```
-
-### 构建项目
-
-```bash
-npm run build
-```
+## 🧪 测试和开发
 
 ### 运行测试
 
@@ -402,26 +655,134 @@ npm test
 npm run dev
 ```
 
-## 优势
+### 构建项目
 
-- **灵活性**：支持任意自定义标记符号
-- **智能化**：自动处理 JSX 纯文本节点
-- **向后兼容**：现有项目可以选择适合的标记符号
-- **可读性**：标记符号在代码中清晰可见
-- **自动化**：一键完成整个国际化流程
+```bash
+npm run build
+```
 
-## 许可证
+### 示例项目
 
-ISC License
+项目包含两个完整的示例：
 
-## 贡献
+- `demo/nextjs/` - Next.js 集成示例
+- `demo/vite/` - Vite + React 集成示例
+
+## 📈 最佳实践
+
+### 1. 翻译键命名
+
+```javascript
+// ✅ 推荐：使用清晰的英文描述
+"Welcome to our platform";
+"User profile updated successfully";
+"Please enter a valid email address";
+
+// ❌ 避免：使用缩写或不清晰的描述
+"WelcomeMsg";
+"UpSuccess";
+"EmailErr";
+```
+
+### 2. 模块化组织
+
+```
+// ✅ 推荐：按功能模块组织
+src/translate/
+├── src/components/auth/     # 认证相关组件
+├── src/components/profile/  # 用户资料相关
+├── src/pages/dashboard/     # 仪表板页面
+└── src/utils/validation/    # 验证工具
+
+// ❌ 避免：所有翻译放在一个文件
+src/translate/all-translations.ts
+```
+
+### 3. 强制保留配置
+
+```javascript
+// ✅ 推荐：按模块精确配置
+forceKeepKeys: {
+  "src/components/ErrorBoundary": ["error.*"],
+  "src/utils/api": ["api.timeout", "api.retry"],
+  "src/config/constants": ["app.name", "app.version"]
+}
+
+// ❌ 避免：全局保留过多键
+forceKeepKeys: ["error.*", "api.*", "system.*", "app.*"]
+```
+
+### 4. 日志级别选择
+
+```javascript
+// 开发环境：详细日志
+logLevel: "verbose";
+
+// 生产环境：标准日志
+logLevel: "normal";
+
+// CI/CD：静默模式
+logLevel: "silent";
+```
+
+## 🔧 故障排除
+
+### 常见问题
+
+1. **Google Sheets 同步失败**
+
+   - 检查服务账号权限
+   - 确认 API 密钥有效性
+   - 验证 spreadsheetId 正确性
+
+2. **翻译文件未生成**
+
+   - 检查 outputDir 权限
+   - 确认配置文件格式正确
+   - 查看详细日志输出
+
+3. **代码转换异常**
+   - 检查文件编码格式
+   - 确认语法没有错误
+   - 查看 AST 解析日志
+
+### 调试技巧
+
+```bash
+# 启用详细日志
+echo 'module.exports = { ...config, logLevel: "verbose" }' > i18n.config.js
+
+# 查看扫描过程
+npx i18n-google 2>&1 | tee scan.log
+
+# 检查生成的文件
+find ./src/translate -name "*.ts" -exec echo "=== {} ===" \; -exec cat {} \;
+```
+
+## 📄 许可证
+
+MIT License
+
+## 🤝 贡献
 
 欢迎提交 Issue 和 Pull Request！
 
-## 支持
+### 开发指南
+
+1. Fork 项目
+2. 创建功能分支
+3. 提交更改
+4. 推送到分支
+5. 创建 Pull Request
+
+## 📞 支持
 
 如果您在使用过程中遇到问题，请：
 
-1. 查看示例配置
-2. 检查 Google Sheets 权限设置
-3. 提交 Issue 描述问题
+1. 查看[示例项目](./demo/)
+2. 检查[配置文档](#-配置说明)
+3. 提交 [Issue](https://github.com/947776795/i18n-google/issues)
+
+---
+
+![CodeRabbit](https://img.shields.io/coderabbit/prs/github/947776795/i18n-google?utm_source=oss&utm_medium=github&utm_campaign=947776795%2Fi18n-google&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
