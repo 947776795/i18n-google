@@ -1,0 +1,15 @@
+{
+  "src/app/(root)/crypto-fundraise-tracker/page.ts": {
+    "test": {
+      "en": "test",
+      "ko": "test",
+      "zh-Hans": "test",
+      "zh-Hant": "test",
+      "vi": "test",
+      "es": "test",
+      "tr": "test",
+      "fr": "test",
+      "mark": 0
+    }
+  }
+}

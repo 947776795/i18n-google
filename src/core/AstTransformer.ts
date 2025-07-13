@@ -629,10 +629,8 @@ export class AstTransformer {
     filePath: string
   ): void {
     // 1. 添加翻译文件导入
-    const modulePath = PathUtils.getModulePathForFile(filePath);
     const translationImportPath = PathUtils.getTranslationImportPath(
       filePath,
-      modulePath,
       this.config
     );
 

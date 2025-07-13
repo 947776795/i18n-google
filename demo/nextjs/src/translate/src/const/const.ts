@@ -8,8 +8,8 @@ const translations = {
     "bbb": "bbb"
   },
   "zh-Hans": {
-    "sadasdad": "sadasdad_nihao",
-    "bbb": "bbb_nihao"
+    "sadasdad": "sadasdad",
+    "bbb": "bbb"
   },
   "zh-Hant": {
     "sadasdad": "sadasdad",
