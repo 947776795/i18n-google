@@ -4,6 +4,14 @@ interface PageProps {
   params: Promise<{ locale: string }>;
 }
 
+/**
+ * React server component that renders a test page for internationalization (i18n) using a locale from route parameters.
+ *
+ * Displays localized content for both auto-detected and manually specified locales, compares them, and provides navigation and translation test outputs.
+ *
+ * @param params - A promise resolving to an object containing the `locale` string used for localization.
+ * @returns A JSX element rendering the i18n test page.
+ */
 export default async function ServerTestPage({ params }: PageProps) {
   // 获取路由参数
   const { locale: routeLocale } = await params;

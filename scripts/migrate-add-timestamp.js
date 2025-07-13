@@ -2,7 +2,9 @@ const fs = require('fs');
 const path = require('path');
 
 /**
- * 数据迁移脚本：为现有的 i18n-complete-record.json 添加 _lastUsed 字段（时间戳格式）
+ * Migrates the i18n-complete-record.json file by adding a `_lastUsed` timestamp field to each key entry that does not already have one.
+ *
+ * Creates a backup of the original file before making changes. Updates each key in all modules with the current timestamp if the `_lastUsed` field is missing. Logs detailed progress and outputs a summary upon completion.
  */
 function migrateCompleteRecord() {
   // 配置路径（根据你的项目调整）

@@ -2,7 +2,9 @@ const fs = require('fs');
 const path = require('path');
 
 /**
- * 高级数据迁移脚本：提供多种时间策略选择（时间戳格式）
+ * Migrates missing `_lastUsed` timestamps in a translation record JSON file using a selectable time strategy.
+ *
+ * Reads the translation record file, creates a backup, and assigns a `_lastUsed` timestamp to each key that lacks one, based on the configured strategy (`current`, `conservative`, or `staggered`). Updates the file in place and logs migration statistics.
  */
 function migrateWithStrategy() {
   const recordPath = './src/translate/i18n-complete-record.json';
@@ -62,7 +64,15 @@ function migrateWithStrategy() {
 }
 
 /**
- * 根据策略获取时间戳
+ * Returns a timestamp for a translation key based on the specified migration strategy.
+ *
+ * Depending on the strategy, the timestamp may represent the current time, a conservative past time (older than the expiration period), or a staggered time distributed across the expiration window to avoid simultaneous expiration of all keys.
+ *
+ * @param {string} strategy - The timestamp assignment strategy: 'current', 'conservative', or 'staggered'.
+ * @param {number} expirationDays - The expiration period in days, used to calculate past timestamps.
+ * @param {string} key - The translation key being processed.
+ * @param {string} modulePath - The module path associated with the key.
+ * @returns {number} The computed timestamp in milliseconds since the Unix epoch.
  */
 function getTimestampByStrategy(strategy, expirationDays, key, modulePath) {
   const now = Date.now(); // 使用时间戳
@@ -90,7 +100,9 @@ function getTimestampByStrategy(strategy, expirationDays, key, modulePath) {
 }
 
 /**
- * 简单哈希函数
+ * Computes a simple deterministic 32-bit integer hash for a given string.
+ * @param {string} str - The input string to hash.
+ * @return {number} The absolute value of the computed hash.
  */
 function simpleHash(str) {
   let hash = 0;
