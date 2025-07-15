@@ -260,11 +260,18 @@ export class GoogleSheetsSync {
       });
 
       // 计算动态范围
-      const dynamicRange = this.calculateRange(headers.length, 10000);
+      const maxRows = this.config.sheetsMaxRows || 10000;
+      const dynamicRange = this.calculateRange(headers.length, maxRows);
 
-      // 如果数据行数不足 10000，用空白行填充
-      const targetRowCount = 10000;
+      // 如果数据行数不足 10,000，用空白行填充
+      const targetRowCount = maxRows;
       const currentRowCount = values.length;
+      
+      if (currentRowCount > targetRowCount) {
+        Logger.warn(
+          `⚠️ 数据行数 (${currentRowCount}) 超过最大限制 (${targetRowCount})，将被截断`
+        );
+      }
 
       if (currentRowCount < targetRowCount) {
         const emptyRow = new Array(headers.length).fill("");
