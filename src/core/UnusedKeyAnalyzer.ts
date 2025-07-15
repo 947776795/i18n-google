@@ -1,5 +1,8 @@
 import type { I18nConfig } from "../types";
-import type { CompleteTranslationRecord } from "./TranslationManager";
+import type {
+  CompleteTranslationRecord,
+  TranslationValue,
+} from "./TranslationManager";
 import { ExistingReference } from "./AstTransformer";
 import { Logger } from "../utils/StringUtils";
 import * as fs from "fs";
@@ -55,13 +58,16 @@ export class UnusedKeyAnalyzer {
       // 没有配置过期时间，使用原有逻辑
       const allKeys = this.extractAllKeysFromCompleteRecord(completeRecord);
       const referencedKeys = new Set(referencesMap.keys());
-      return allKeys.filter(key => 
-        !referencedKeys.has(key) && 
-        !this.isKeyForceKeptInCompleteRecord(key, completeRecord)
+      return allKeys.filter(
+        (key) =>
+          !referencedKeys.has(key) &&
+          !this.isKeyForceKeptInCompleteRecord(key, completeRecord)
       );
     }
 
-    Logger.info(`🕒 使用时间检测逻辑，过期阈值: ${this.config.keyExpirationDays} 天`);
+    Logger.info(
+      `🕒 使用时间检测逻辑，过期阈值: ${this.config.keyExpirationDays} 天`
+    );
 
     const currentTime = new Date().getTime();
     const expirationMs = this.config.keyExpirationDays * 24 * 60 * 60 * 1000;
@@ -71,31 +77,40 @@ export class UnusedKeyAnalyzer {
     Object.entries(completeRecord).forEach(([modulePath, moduleKeys]) => {
       Object.entries(moduleKeys).forEach(([key, keyData]) => {
         const hasReference = referencesMap.has(key);
-        
+
         if (!hasReference) {
           const lastUsed = keyData._lastUsed;
-          
+
           if (!lastUsed) {
             // 没有lastUsed记录，视为过期
             Logger.debug(`🔍 Key [${key}] 无lastUsed记录，标记为过期`);
             expiredKeys.push(key);
           } else {
             // 检查是否超过过期时间
-            const lastUsedTime = typeof lastUsed === 'number' ? lastUsed : new Date(lastUsed).getTime();
-            
+            const lastUsedTime =
+              typeof lastUsed === "number"
+                ? lastUsed
+                : new Date(lastUsed).getTime();
+
             // 检查时间是否有效
             if (isNaN(lastUsedTime)) {
               // 无效时间格式，视为过期
               Logger.debug(`🔍 Key [${key}] 时间格式无效，标记为过期`);
               expiredKeys.push(key);
             } else {
-              const daysSinceLastUsed = Math.floor((currentTime - lastUsedTime) / (24 * 60 * 60 * 1000));
-              
+              const daysSinceLastUsed = Math.floor(
+                (currentTime - lastUsedTime) / (24 * 60 * 60 * 1000)
+              );
+
               if (currentTime - lastUsedTime > expirationMs) {
-                Logger.debug(`🔍 Key [${key}] 已过期 ${daysSinceLastUsed} 天，标记删除`);
+                Logger.debug(
+                  `🔍 Key [${key}] 已过期 ${daysSinceLastUsed} 天，标记删除`
+                );
                 expiredKeys.push(key);
               } else {
-                Logger.debug(`🔍 Key [${key}] 未过期，最后使用: ${daysSinceLastUsed} 天前`);
+                Logger.debug(
+                  `🔍 Key [${key}] 未过期，最后使用: ${daysSinceLastUsed} 天前`
+                );
               }
             }
           }
@@ -108,8 +123,8 @@ export class UnusedKeyAnalyzer {
     Logger.info(`🕒 时间检测完成，发现 ${expiredKeys.length} 个过期key`);
 
     // 过滤掉强制保留的key
-    const filteredExpiredKeys = expiredKeys.filter(key => 
-      !this.isKeyForceKeptInCompleteRecord(key, completeRecord)
+    const filteredExpiredKeys = expiredKeys.filter(
+      (key) => !this.isKeyForceKeptInCompleteRecord(key, completeRecord)
     );
 
     const forceKeptCount = expiredKeys.length - filteredExpiredKeys.length;
@@ -127,8 +142,8 @@ export class UnusedKeyAnalyzer {
     completeRecord: CompleteTranslationRecord
   ): string[] {
     const allKeys = new Set<string>();
-    Object.values(completeRecord).forEach(moduleKeys => {
-      Object.keys(moduleKeys).forEach(key => allKeys.add(key));
+    Object.values(completeRecord).forEach((moduleKeys) => {
+      Object.keys(moduleKeys).forEach((key) => allKeys.add(key));
     });
     return Array.from(allKeys);
   }
@@ -357,8 +372,7 @@ export class UnusedKeyAnalyzer {
 
     // 遍历完整记录，只保留即将被删除的Key
     Object.entries(completeRecord).forEach(([modulePath, moduleKeys]) => {
-      const moduleUnusedKeys: { [key: string]: { [lang: string]: string } } =
-        {};
+      const moduleUnusedKeys: { [key: string]: TranslationValue } = {};
 
       Object.entries(moduleKeys).forEach(([key, translations]) => {
         if (unusedKeySet.has(key)) {

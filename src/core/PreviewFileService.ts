@@ -1,7 +1,10 @@
 import * as fs from "fs";
 import * as path from "path";
 import type { I18nConfig } from "../types";
-import type { CompleteTranslationRecord } from "./TranslationManager";
+import type {
+  CompleteTranslationRecord,
+  TranslationValue,
+} from "./TranslationManager";
 import { Logger } from "../utils/StringUtils";
 
 // 删除预览数据结构
@@ -130,8 +133,7 @@ export class PreviewFileService {
 
     // 遍历完整记录，只保留即将被删除的Key
     Object.entries(completeRecord).forEach(([modulePath, moduleKeys]) => {
-      const moduleUnusedKeys: { [key: string]: { [lang: string]: string } } =
-        {};
+      const moduleUnusedKeys: { [key: string]: TranslationValue } = {};
 
       Object.entries(moduleKeys).forEach(([key, translations]) => {
         if (unusedKeySet.has(key)) {

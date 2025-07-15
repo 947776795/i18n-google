@@ -14,4 +14,5 @@ export interface I18nConfig {
   sheetsReadRange?: string; // Google Sheets 读取范围，默认 "A1:Z10000"
   apiKey: string;
   keyExpirationDays?: number; // key过期天数，不配置则不过期（默认undefined）
+  sheetsMaxRows?: number; // Google Sheets 最大行数，默认10000
 }

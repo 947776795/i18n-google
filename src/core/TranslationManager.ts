@@ -13,6 +13,12 @@ export interface TranslationMap {
   [key: string]: string;
 }
 
+// 翻译值的类型定义 - 使用联合类型支持语言翻译和元数据
+export interface TranslationValue {
+  [key: string]: string | number | undefined;
+  mark?: number; // 标记字段，用于外部人员标记翻译状态
+}
+
 // 新增：模块化翻译相关类型定义
 export interface ModuleTranslations {
   [locale: string]: { [key: string]: string };
@@ -25,12 +31,7 @@ export interface ModularTranslationData {
 // 新的完整记录格式
 export interface CompleteTranslationRecord {
   [translationPath: string]: {
-    [translationKey: string]: {
-      [language: string]: string;
-      _lastUsed?: number;
-      mark?: number;
-    } & Record<string, any>;
-    // _lastUsed?: number; // 最后使用时间戳（仅在本地维护）
+    [translationKey: string]: TranslationValue;
   };
 }
 
@@ -480,7 +481,7 @@ export class TranslationManager {
    * 构建模块翻译数据
    */
   private buildModuleTranslations(
-    moduleKeys: Record<string, Record<string, string>>
+    moduleKeys: Record<string, TranslationValue>
   ): ModuleTranslations {
     const result: ModuleTranslations = {};
 
@@ -493,8 +494,12 @@ export class TranslationManager {
     Object.entries(moduleKeys).forEach(([key, keyData]) => {
       // 排除本地维护的字段（如 _lastUsed, mark等）
       Object.entries(keyData).forEach(([lang, translation]) => {
-        // 只处理配置的语言，排除 _lastUsed, mark 等字段
-        if (result[lang] && this.config.languages.includes(lang)) {
+        // 只处理配置的语言，排除 _lastUsed, mark 等字段，并确保是字符串类型
+        if (
+          result[lang] &&
+          this.config.languages.includes(lang) &&
+          typeof translation === "string"
+        ) {
           result[lang][key] = translation;
         }
       });
