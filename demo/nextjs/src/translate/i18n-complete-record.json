@@ -13,7 +13,20 @@
       "_lastUsed": 1752329176372
     }
   },
-  "app/[locale]/server-test/page.ts": {
+  "src/app/[locale]/page.ts": {
+    "Invalid locale: %{var0}": {
+      "en": "Invalid locale: %{var0}",
+      "ko": "Invalid locale: %{var0}",
+      "zh-Hans": "Invalid locale: %{var0}",
+      "zh-Hant": "Invalid locale: %{var0}",
+      "vi": "Invalid locale: %{var0}",
+      "es": "Configuración regional no válida: %{var0}",
+      "tr": "Geçersiz yerel ayar: %{var0}",
+      "fr": "Paramètre régional non valide : %{var0}",
+      "mark": 0
+    }
+  },
+  "src/app/[locale]/server-test/page.ts": {
     "Server Component I18n Test": {
       "en": "Server Component I18n Test",
       "ko": "Server Component I18n Test_hans",
@@ -184,11 +197,11 @@
     },
     "/%{var0} /server-test": {
       "en": "/%{var0} /server-test",
-      "ko": "/%{var0} /server-test",
+      "ko": "/%{var0} /서버-테스트",
       "zh-Hans": "/%{var0} /server-test",
-      "zh-Hant": "/%{var0} /server-test",
+      "zh-Hant": "／％{var0}／伺服器測試",
       "vi": "/%{var0} /server-test",
-      "es": "/%{var0} /server-test",
+      "es": "/%{var0} /prueba-de-servidor",
       "tr": "/%{var0} /server-test",
       "fr": "/%{var0} /server-test",
       "mark": 0,
@@ -220,12 +233,12 @@
     },
     "test translate 1 one": {
       "en": "test translate 1 one",
-      "ko": "테스트 번역 1 하나",
+      "ko": "테스트 번역 1 일(一)",
       "zh-Hans": "测试翻译 1 一",
       "zh-Hant": "測試翻譯 1 一",
       "vi": "bài kiểm tra dịch 1 một",
       "es": "prueba de traducción 1 uno",
-      "tr": "test tercüme 1 bir",
+      "tr": "test translate 1 bir",
       "fr": "test traduire 1 un",
       "mark": 0,
       "_lastUsed": 1752329176372
@@ -259,9 +272,9 @@
       "ko": "테스트 번역 1 넷",
       "zh-Hans": "测试翻译 1 四",
       "zh-Hant": "測試翻譯 1 四",
-      "vi": "bốn một dịch thử",
+      "vi": "bốn test dịch 1",
       "es": "prueba de traducción 1 cuatro",
-      "tr": "test tercüme 1 dört",
+      "tr": "test translate 1 four",
       "fr": "test traduire 1 quatre",
       "mark": 0,
       "_lastUsed": 1752329176372
@@ -283,7 +296,7 @@
       "ko": "테스트 번역 1 육",
       "zh-Hans": "测试翻译 1 六",
       "zh-Hant": "測試翻譯 1 六",
-      "vi": "kiểm tra dịch 1 six",
+      "vi": "bài kiểm tra dịch 1 sáu",
       "es": "prueba de traducción 1 seis",
       "tr": "test tercüme 1 altı",
       "fr": "test traduire 1 six",
@@ -295,19 +308,19 @@
       "ko": "테스트 번역 1 일곱",
       "zh-Hans": "测试翻译 1 七",
       "zh-Hant": "測試翻譯 1 seven",
-      "vi": "bảy thử dịch 1",
+      "vi": "kiểm tra dịch 1 bảy",
       "es": "prueba de traducción 1 siete",
-      "tr": "test çevir 1 yedi",
+      "tr": "test translate 1 yedi",
       "fr": "test de traduction 1 sept",
       "mark": 0,
       "_lastUsed": 1752329176372
     },
     "test translate 1 eight": {
       "en": "test translate 1 eight",
-      "ko": "테스트 번역 1 팔",
+      "ko": "테스트 번역 1 여덟",
       "zh-Hans": "测试翻译 1 八",
       "zh-Hant": "測試翻譯 1 八",
-      "vi": "kiểm tra dịch 1 tám",
+      "vi": "dịch thử 1 tám",
       "es": "prueba de traducción 1 ocho",
       "tr": "test translate 1 eight",
       "fr": "test de traduction 1 huit",
@@ -318,10 +331,10 @@
       "en": "test translate 1 nine",
       "ko": "테스트 번역 1 구",
       "zh-Hans": "测试翻译 1 九",
-      "zh-Hant": "測試翻譯 1 nine",
+      "zh-Hant": "測試翻譯 1 九",
       "vi": "kiểm tra dịch 1 chín",
       "es": "prueba de traducción 1 nueve",
-      "tr": "test çevir 1 dokuz",
+      "tr": "test tercüme 1 dokuz",
       "fr": "test traduire 1 neuf",
       "mark": 0,
       "_lastUsed": 1752329176372
@@ -345,14 +358,14 @@
       "zh-Hant": "測試翻譯 1 十一",
       "vi": "kiểm tra dịch 1 mười một",
       "es": "prueba de traducción 1 once",
-      "tr": "test translate 1 on bir",
+      "tr": "test translate 1 eleven",
       "fr": "test de traduction 1 onze",
       "mark": 0,
       "_lastUsed": 1752329176372
     },
     "test translate 1 twelve": {
       "en": "test translate 1 twelve",
-      "ko": "테스트 번역 1 twelve",
+      "ko": "테스트 번역 1 열두 개",
       "zh-Hans": "测试翻译 1 十二",
       "zh-Hant": "測試翻譯 1 十二",
       "vi": "bài kiểm tra dịch 1 mười hai",
@@ -364,12 +377,12 @@
     },
     "test translate 1 thirteen": {
       "en": "test translate 1 thirteen",
-      "ko": "테스트 번역 1 열세",
+      "ko": "테스트 번역 1 thirteen",
       "zh-Hans": "测试翻译1十三",
       "zh-Hant": "測試翻譯 1 十三",
-      "vi": "kiểm tra dịch 1 mười ba",
+      "vi": "kiểm tra dịch 1 thirteen",
       "es": "prueba de traducción 1 trece",
-      "tr": "test translate 1 thirteen",
+      "tr": "test tercüme 1 on üç",
       "fr": "test de traduction 1 treize",
       "mark": 0,
       "_lastUsed": 1752329176372
@@ -388,10 +401,10 @@
     },
     "test translate 1 fifteen": {
       "en": "test translate 1 fifteen",
-      "ko": "테스트 번역 1 fifteen",
+      "ko": "테스트 번역 1 15",
       "zh-Hans": "测试翻译1十五",
       "zh-Hant": "測試翻譯 1 十五",
-      "vi": "kiểm tra dịch 1 fifteen",
+      "vi": "kiểm tra dịch 1 mười lăm",
       "es": "prueba de traducción 1 quince",
       "tr": "test tercüme 1 onbeş",
       "fr": "test de traduction 1 quinze",
@@ -400,8 +413,8 @@
     },
     "fei fei": {
       "en": "fei fei",
-      "ko": "비비",
-      "zh-Hans": "飞飞",
+      "ko": "페이페이",
+      "zh-Hans": "菲菲",
       "zh-Hant": "飛飛",
       "vi": "phi phi",
       "es": "fei fei",
@@ -416,7 +429,7 @@
       "zh-Hant": "再見",
       "vi": "tạm biệt",
       "es": "adiós",
-      "tr": "gül güle",
+      "tr": "bay bay",
       "fr": "au revoir",
       "mark": 0
     },
@@ -438,12 +451,12 @@
       "zh-Hant": "桌子",
       "vi": "bàn",
       "es": "mesa",
-      "tr": "tablo",
+      "tr": "masa",
       "fr": "table",
       "mark": 0
     }
   },
-  "components/ClientHome.ts": {
+  "src/components/ClientHome.ts": {
     "get_started_by_editing": {
       "en": "get_started_by_editing",
       "ko": "get_started_by_editing",
@@ -507,8 +520,8 @@
     "const_test": {
       "en": "const_test",
       "ko": "const_test",
-      "zh-Hans": "const_test",
-      "zh-Hant": "const_test",
+      "zh-Hans": "常量测试",
+      "zh-Hant": "常數測試",
       "vi": "const_test",
       "es": "const_test",
       "tr": "const_test",
@@ -519,8 +532,8 @@
     "const_test2": {
       "en": "const_test2",
       "ko": "const_test2",
-      "zh-Hans": "const_test",
-      "zh-Hant": "const_test2",
+      "zh-Hans": "常量测试2",
+      "zh-Hant": "常數測試2",
       "vi": "const_test2",
       "es": "const_test2",
       "tr": "const_test2",
@@ -578,11 +591,11 @@
     },
     "go_to_nextjs": {
       "en": "go_to_nextjs",
-      "ko": "go_to_nextjs",
-      "zh-Hans": "go_to_nextjs",
-      "zh-Hant": "go_to_nextjs",
-      "vi": "go_to_nextjs",
-      "es": "go_to_nextjs",
+      "ko": "다음 단계로 이동: Next.js",
+      "zh-Hans": "前往 Next.js",
+      "zh-Hant": "前往Next.js",
+      "vi": "chuyển_sang_nextjs",
+      "es": "ir_a_nextjs",
       "tr": "go_to_nextjs",
       "fr": "go_to_nextjs",
       "mark": 0,
@@ -602,23 +615,23 @@
     },
     "test_new_mark_field": {
       "en": "test_new_mark_field",
-      "ko": "test_new_mark_field",
-      "zh-Hans": "test_new_mark_field",
-      "zh-Hant": "test_new_mark_field",
-      "vi": "test_new_mark_field",
-      "es": "test_new_mark_field",
+      "ko": "테스트_신규_마크_필드",
+      "zh-Hans": "测试新标记字段",
+      "zh-Hant": "測試新標記欄位",
+      "vi": "kiểm_tra_trường_đánh_dấu_mới",
+      "es": "prueba_campo_nueva_marca",
       "tr": "test_new_mark_field",
       "fr": "test_new_mark_field",
       "mark": 0,
       "_lastUsed": 1752329176372
     }
   },
-  "components/Button/index.ts": {
+  "src/components/Button/index.ts": {
     "I18n22": {
       "en": "I18n22",
       "ko": "I18n22",
-      "zh-Hans": "I18n22",
-      "zh-Hant": "I18n22",
+      "zh-Hans": "国际化22",
+      "zh-Hant": "國際化22",
       "vi": "I18n22",
       "es": "I18n22",
       "tr": "I18n22",
@@ -629,8 +642,8 @@
     "I18n5": {
       "en": "I18n5",
       "ko": "I18n5",
-      "zh-Hans": "I18n5",
-      "zh-Hant": "I18n5",
+      "zh-Hans": "国际化5",
+      "zh-Hant": "國際化5",
       "vi": "I18n5",
       "es": "I18n5",
       "tr": "I18n5",
@@ -641,21 +654,21 @@
     "I18n4": {
       "en": "I18n4",
       "ko": "I18n4",
-      "zh-Hans": "I18n4",
-      "zh-Hant": "I18n4",
+      "zh-Hans": "国际化4",
+      "zh-Hant": "國際化4",
       "vi": "I18n4",
       "es": "I18n4",
-      "tr": "I18n4",
+      "tr": "Yerelleştirme4",
       "fr": "I18n4",
       "mark": 0,
       "_lastUsed": 1752329176372
     }
   },
-  "const/const.ts": {
+  "src/const/const.ts": {
     "sadasdad": {
       "en": "sadasdad",
       "ko": "sadasdad",
-      "zh-Hans": "sadasdad_nihao",
+      "zh-Hans": "sadasdad",
       "zh-Hant": "sadasdad",
       "vi": "sadasdad",
       "es": "sadasdad",
@@ -667,7 +680,7 @@
     "bbb": {
       "en": "bbb",
       "ko": "bbb",
-      "zh-Hans": "bbb_nihao",
+      "zh-Hans": "bbb",
       "zh-Hant": "bbb",
       "vi": "bbb",
       "es": "bbb",

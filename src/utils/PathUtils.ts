@@ -1,4 +1,5 @@
 import type { I18nConfig } from "../types";
+import * as path from "path";
 
 /**
  * 路径转换工具类
@@ -46,73 +47,24 @@ export class PathUtils {
   /**
    * 获取翻译文件的导入路径
    * @param currentFilePath 当前文件路径
-   * @param modulePath 模块路径
    * @param config 配置对象
    * @returns 导入路径
    */
   static getTranslationImportPath(
     currentFilePath: string,
-    modulePath: string,
     config: I18nConfig
   ): string {
-    // 路径逻辑: @translate + 当前文件相对于扫描入口的路径
-    // 例如：demo/src/TestNewComponent.tsx -> @translate/TestNewComponent
-
-    const path = require("path");
-
-    // 规范化 rootDir，移除 ./ 前缀和末尾的斜杠
-    let rootDir = "";
-    if (config.rootDir) {
-      rootDir = config.rootDir.replace(/^\.\//, "").replace(/\/$/, "");
-    }
-
-    // 规范化 modulePath（处理 Windows 路径分隔符）
-    const normalizedModulePath = modulePath.replace(/\\/g, "/");
-
-    // 查找 rootDir 在 modulePath 中的位置
-    let fileRelativePath = "";
-    if (rootDir) {
-      const rootDirIndex = normalizedModulePath.lastIndexOf(
-        "/" + rootDir + "/"
-      );
-      if (rootDirIndex !== -1) {
-        // 找到了 rootDir，提取其后的路径
-        fileRelativePath = normalizedModulePath.substring(
-          rootDirIndex + rootDir.length + 2
-        );
-      } else {
-        // 检查是否以 rootDir 结尾
-        const rootDirEndIndex = normalizedModulePath.lastIndexOf("/" + rootDir);
-        if (
-          rootDirEndIndex !== -1 &&
-          rootDirEndIndex + rootDir.length + 1 === normalizedModulePath.length
-        ) {
-          // modulePath 以 rootDir 结尾，说明这就是根目录
-          const lastSlashIndex = normalizedModulePath.lastIndexOf("/");
-          fileRelativePath = normalizedModulePath.substring(lastSlashIndex + 1);
-        } else {
-          // 没有找到 rootDir，使用文件名
-          const lastSlashIndex = normalizedModulePath.lastIndexOf("/");
-          fileRelativePath =
-            lastSlashIndex !== -1
-              ? normalizedModulePath.substring(lastSlashIndex + 1)
-              : normalizedModulePath;
-        }
-      }
-    } else {
-      // 没有配置 rootDir，使用文件名
-      const lastSlashIndex = normalizedModulePath.lastIndexOf("/");
-      fileRelativePath =
-        lastSlashIndex !== -1
-          ? normalizedModulePath.substring(lastSlashIndex + 1)
-          : normalizedModulePath;
-    }
-
+    // 计算 rootDir 的绝对路径
+    const rootDirAbsolute = path.resolve(process.cwd(), config.rootDir);
+    
+    // 计算文件相对于 rootDir 的路径
+    const relativePath = path.relative(rootDirAbsolute, currentFilePath);
+    
     // 移除文件扩展名
-    const fileNameWithoutExt = fileRelativePath.replace(/\.(tsx?|jsx?)$/, "");
-
-    // 返回完整的导入路径
-    return `@translate/${fileNameWithoutExt}`;
+    const pathWithoutExt = relativePath.replace(/\.(tsx?|jsx?)$/, '');
+    
+    // 生成 @translate 导入路径
+    return `@translate/${pathWithoutExt}`;
   }
 
   /**
