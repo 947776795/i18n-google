@@ -78,7 +78,6 @@ export class DeleteService {
 
       // 5. 生成删除预览
       const previewPath = await this.generateDeletePreview(
-        unusedKeysAnalysis.filteredUnusedKeys,
         existingCompleteRecord
       );
 
@@ -92,7 +91,6 @@ export class DeleteService {
         // 7a. 执行删除操作
         const processedRecord = await this.executeKeyDeletion(
           existingCompleteRecord,
-          unusedKeysAnalysis.filteredUnusedKeys,
           allReferences,
           previewPath
         );
@@ -195,7 +193,6 @@ export class DeleteService {
    * @returns 预览文件路径
    */
   private async generateDeletePreview(
-    filteredUnusedKeys: string[],
     existingCompleteRecord: CompleteTranslationRecord
   ): Promise<string> {
     return await this.previewFileService.generateDeletePreviewFromCompleteRecord(
@@ -207,14 +204,13 @@ export class DeleteService {
   /**
    * 执行Key删除操作 - 基于预览文件精确删除
    * @param existingCompleteRecord 现有完整记录
-   * @param filteredUnusedKeys 要删除的Key列表（已废弃）
+
    * @param allReferences 当前引用
    * @param previewFilePath 预览文件路径
    * @returns 处理后的记录
    */
   private async executeKeyDeletion(
     existingCompleteRecord: CompleteTranslationRecord,
-    filteredUnusedKeys: string[],
     allReferences: Map<string, ExistingReference[]>,
     previewFilePath: string
   ): Promise<CompleteTranslationRecord> {
