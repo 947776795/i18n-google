@@ -17,16 +17,12 @@ function migrateCompleteRecord() {
       return;
     }
     
-    // 2. 备份原文件
-    const backupPath = recordPath.replace('.json', '-backup.json');
-    fs.copyFileSync(recordPath, backupPath);
-    console.log('💾 已创建备份文件:', backupPath);
     
-    // 3. 读取原文件
+    // 2. 读取原文件
     const content = fs.readFileSync(recordPath, 'utf-8');
     const record = JSON.parse(content);
     
-    // 4. 添加时间戳字段
+    // 3. 添加时间戳字段
     const currentTimestamp = Date.now(); // 使用时间戳格式
     let totalKeys = 0;
     let migratedKeys = 0;
@@ -46,10 +42,10 @@ function migrateCompleteRecord() {
       }
     }
     
-    // 5. 保存迁移后的文件
+    // 4. 保存迁移后的文件
     fs.writeFileSync(recordPath, JSON.stringify(record, null, 2));
     
-    // 6. 输出统计信息
+    // 5. 输出统计信息
     console.log('\n📊 迁移完成统计:');
     console.log(`   总key数量: ${totalKeys}`);
     console.log(`   迁移key数量: ${migratedKeys}`);
