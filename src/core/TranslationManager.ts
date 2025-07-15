@@ -25,7 +25,11 @@ export interface ModularTranslationData {
 // 新的完整记录格式
 export interface CompleteTranslationRecord {
   [translationPath: string]: {
-    [translationKey: string]: any; // 简化类型，允许动态字段
+    [translationKey: string]: {
+      [language: string]: string;
+      _lastUsed?: number;
+      mark?: number;
+    } & Record<string, any>;
     // _lastUsed?: number; // 最后使用时间戳（仅在本地维护）
   };
 }
