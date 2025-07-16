@@ -110,8 +110,6 @@ export class TranslationManager {
    * 保存新格式的完整记录
    */
   async saveCompleteRecord(allReferences: Map<string, any[]>): Promise<void> {
-    Logger.info("🔧 [DEBUG] TranslationManager.saveCompleteRecord 被调用");
-
     const completeRecord = await this.buildCompleteRecord(allReferences);
 
     // 确保输出目录存在
@@ -126,8 +124,6 @@ export class TranslationManager {
       JSON.stringify(completeRecord, null, 2),
       "utf-8"
     );
-
-    Logger.info("💾 [DEBUG] TranslationManager 保存完成");
   }
 
   /**
@@ -136,10 +132,6 @@ export class TranslationManager {
   async mergeWithExistingRecord(
     allReferences: Map<string, any[]>
   ): Promise<void> {
-    Logger.debug(
-      "🔧 [DEBUG] TranslationManager.mergeWithExistingRecord 被调用"
-    );
-
     try {
       // 1. 加载现有的完整记录
       const existingRecord = await this.loadCompleteRecord();
@@ -195,10 +187,6 @@ export class TranslationManager {
   async mergeRemoteCompleteRecord(
     remoteRecord: CompleteTranslationRecord
   ): Promise<void> {
-    Logger.debug(
-      "🔧 [DEBUG] TranslationManager.mergeRemoteCompleteRecord 被调用"
-    );
-
     try {
       // 1. 加载现有的完整记录
       const existingRecord = await this.loadCompleteRecord();
@@ -441,8 +429,6 @@ export class TranslationManager {
       // 写入文件
       await writeFile(filePath, content, "utf-8");
     }
-
-    console.log("\n🎉 [DEBUG] 所有翻译文件夹生成完成！");
   }
 
   /**

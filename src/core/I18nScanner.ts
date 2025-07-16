@@ -78,12 +78,14 @@ export class I18nScanner {
       const { allReferences, newTranslations } = await this.processFiles(files);
 
       // 5&6. 检测无用Key、确认删除并生成处理后的完整记录
-      this.scanProgress.update("🔍 检测无用Key并生成完整记录...");
+      this.scanProgress.info("🔍 检测无用Key并等待用户确认...");
       const { totalUnusedKeys, processedRecord, previewFilePath } =
         await this.deleteService.detectUnusedKeysAndGenerateRecord(
           allReferences
         );
 
+      // 重新启动进度条
+      await this.scanProgress.start("🔄 处理删除结果...");
       // 记录预览文件用于清理
       if (previewFilePath) {
         this.previewFilesToCleanup.push(previewFilePath);
@@ -94,8 +96,10 @@ export class I18nScanner {
       await this.translationManager.generateModularFilesFromCompleteRecord();
 
       // 8. 用户确认是否同步到远端
-      this.scanProgress.update("🤔 等待用户确认远端同步...");
+      const resumeProgress =
+        this.scanProgress.pauseForInteraction("🤔 等待用户确认远端同步...");
       const shouldSyncToRemote = await UserInteraction.confirmRemoteSync();
+      await resumeProgress();
 
       if (shouldSyncToRemote) {
         // 9. 同步到远端 (Google Sheets) - 基于处理后的 CompleteRecord
