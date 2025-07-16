@@ -44,7 +44,7 @@ export class DeleteService {
         await this.translationManager.loadCompleteRecord();
 
       Logger.info(`🔍 开始检测无用Key...`);
-      Logger.info(`🔗 当前扫描发现 ${allReferences.size} 个引用Key`);
+      // Logger.info(`🔗 当前扫描发现 ${allReferences.size} 个引用Key`);
 
       // 2. 如果没有现有记录，直接生成新记录
       if (
@@ -138,8 +138,8 @@ export class DeleteService {
     // 提取当前扫描到的所有Key
     const currentKeys = new Set(allReferences.keys());
 
-    Logger.info(`📖 完整记录包含 ${existingKeys.size} 个Key`);
-    Logger.info(`🔗 当前扫描发现 ${currentKeys.size} 个Key`);
+    // Logger.info(`📖 完整记录包含 ${existingKeys.size} 个Key`);
+    // Logger.info(`🔗 当前扫描发现 ${currentKeys.size} 个Key`);
 
     // 找出无用的Key（在完整记录中但不在当前扫描中）
     const unusedKeys = Array.from(existingKeys).filter(
@@ -194,9 +194,6 @@ export class DeleteService {
     const totalUnusedKeys = formattedFilteredUnusedKeys.length; // 使用实际实例数量
 
     Logger.info(`🗑️ 发现 ${totalUnusedKeys} 个可删除的无用Key`);
-    Logger.info(
-      `📝 可删除的无用Key: ${formattedFilteredUnusedKeys.join(", ")}`
-    );
 
     if (forceKeptKeys.length > 0) {
       Logger.info(`🔒 强制保留的Key: ${formattedForceKeptKeys.join(", ")}`);
