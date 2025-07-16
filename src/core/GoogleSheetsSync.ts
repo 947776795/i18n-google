@@ -260,7 +260,8 @@ export class GoogleSheetsSync {
       const dynamicRange = this.calculateRange(headers.length, 10000);
 
       // 如果数据行数不足 10000，用空白行填充
-      const targetRowCount = 10000;
+      const maxRows = this.config.sheetsMaxRows || 10000;
+      const targetRowCount = maxRows;
       const currentRowCount = values.length;
 
       if (currentRowCount < targetRowCount) {
