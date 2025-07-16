@@ -3,7 +3,6 @@ import { FileScanner } from "./FileScanner";
 import { FileTransformer } from "./FileTransformer";
 import { TranslationManager } from "./TranslationManager";
 import { GoogleSheetsSync } from "./GoogleSheetsSync";
-import { UnusedKeyAnalyzer } from "./UnusedKeyAnalyzer";
 import { DeleteService } from "./DeleteService";
 import { ExistingReference, TransformResult } from "./AstTransformer";
 import { ErrorHandler } from "../errors/I18nError";
@@ -16,7 +15,6 @@ export class I18nScanner {
   private fileTransformer: FileTransformer;
   private translationManager: TranslationManager;
   private googleSheetsSync: GoogleSheetsSync;
-  private unusedKeyAnalyzer: UnusedKeyAnalyzer;
   private deleteService: DeleteService;
   private referencesMap: Map<string, ExistingReference[]> = new Map();
   private scanProgress: ScanProgressIndicator;
@@ -30,12 +28,7 @@ export class I18nScanner {
     this.fileTransformer = new FileTransformer(config);
     this.translationManager = new TranslationManager(config);
     this.googleSheetsSync = new GoogleSheetsSync(config);
-    this.unusedKeyAnalyzer = new UnusedKeyAnalyzer(config);
-    this.deleteService = new DeleteService(
-      config,
-      this.translationManager,
-      this.unusedKeyAnalyzer
-    );
+    this.deleteService = new DeleteService(config, this.translationManager);
     this.scanProgress = new ScanProgressIndicator();
   }
 

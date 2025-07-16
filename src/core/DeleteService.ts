@@ -2,7 +2,6 @@ import type { I18nConfig } from "../types";
 import type { ExistingReference } from "./AstTransformer";
 import type { CompleteTranslationRecord } from "./TranslationManager";
 import { TranslationManager } from "./TranslationManager";
-import { UnusedKeyAnalyzer } from "./UnusedKeyAnalyzer";
 import { PreviewFileService } from "./PreviewFileService";
 import { UserInteraction } from "../ui/UserInteraction";
 import { Logger } from "../utils/StringUtils";
@@ -14,17 +13,45 @@ import * as fs from "fs";
  */
 export class DeleteService {
   private translationManager: TranslationManager;
-  private unusedKeyAnalyzer: UnusedKeyAnalyzer;
   private previewFileService: PreviewFileService;
 
   constructor(
     private config: I18nConfig,
-    translationManager: TranslationManager,
-    unusedKeyAnalyzer: UnusedKeyAnalyzer
+    translationManager: TranslationManager
   ) {
     this.translationManager = translationManager;
-    this.unusedKeyAnalyzer = unusedKeyAnalyzer;
     this.previewFileService = new PreviewFileService(config);
+  }
+
+  /**
+   * 检查CompleteRecord中的key是否被强制保留
+   * 用于无用Key检测时的强制保留检查
+   */
+  private isKeyForceKeptInCompleteRecord(
+    key: string,
+    completeRecord: CompleteTranslationRecord
+  ): boolean {
+    if (!this.config.forceKeepKeys) {
+      return false;
+    }
+
+    // 在完整记录中查找包含该key的模块
+    for (const [modulePath, moduleKeys] of Object.entries(completeRecord)) {
+      if (moduleKeys[key]) {
+        // 检查该模块是否配置了强制保留该key
+        const forceKeepKeys = this.config.forceKeepKeys;
+        if (forceKeepKeys && modulePath in forceKeepKeys) {
+          const forceKeepList = (
+            forceKeepKeys as unknown as Record<string, string[]>
+          )[modulePath];
+          if (forceKeepList && forceKeepList.includes(key)) {
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
   }
 
   /**
@@ -76,23 +103,55 @@ export class DeleteService {
         return { totalUnusedKeys: 0, processedRecord: updatedRecord };
       }
 
-      // 5. 生成删除预览
+      // 5. 用户选择要删除的Key
+      const selectedKeysForDeletion =
+        await UserInteraction.selectKeysForDeletion(
+          formattedFilteredUnusedKeys
+        );
+
+      // 如果用户没有选择任何Key，跳过删除
+      if (selectedKeysForDeletion.length === 0) {
+        Logger.info("ℹ️ 用户未选择任何Key进行删除，保留所有无用Key");
+        const processedRecord = await this.preserveUnusedKeys(allReferences);
+        return { totalUnusedKeys, processedRecord };
+      }
+
+      // 6. 根据用户选择过滤要删除的Key
+      const { actualKeysToDelete, filteredFormattedKeys } =
+        this.filterKeysByUserSelection(
+          selectedKeysForDeletion,
+          unusedKeysAnalysis.filteredUnusedKeys,
+          formattedFilteredUnusedKeys,
+          existingCompleteRecord
+        );
+
+      Logger.info(
+        `📝 用户选择删除 ${actualKeysToDelete.length} 个Key`,
+        "---",
+        filteredFormattedKeys,
+        "---",
+        actualKeysToDelete,
+        "---"
+        // existingCompleteRecord
+      );
+
+      // 7. 生成删除预览
       const previewPath = await this.generateDeletePreview(
-        unusedKeysAnalysis.filteredUnusedKeys,
+        filteredFormattedKeys,
         existingCompleteRecord
       );
 
-      // 6. 用户确认删除
+      // 8. 用户确认删除
       const shouldDelete = await UserInteraction.confirmDeletion(
-        formattedFilteredUnusedKeys,
+        filteredFormattedKeys,
         previewPath
       );
 
       if (shouldDelete) {
-        // 7a. 执行删除操作
+        // 9a. 执行删除操作
         const processedRecord = await this.executeKeyDeletion(
           existingCompleteRecord,
-          unusedKeysAnalysis.filteredUnusedKeys,
+          actualKeysToDelete,
           allReferences,
           previewPath
         );
@@ -102,10 +161,10 @@ export class DeleteService {
           previewFilePath: previewPath,
         };
       } else {
-        // 7b. 取消删除，保留无用Key
+        // 9b. 取消删除，保留无用Key
         const processedRecord = await this.preserveUnusedKeys(allReferences);
         return {
-          totalUnusedKeys,
+          totalUnusedKeys: selectedKeysForDeletion.length,
           processedRecord,
           previewFilePath: previewPath,
         };
@@ -117,6 +176,52 @@ export class DeleteService {
       const errorRecord = await this.translationManager.loadCompleteRecord();
       return { totalUnusedKeys: 0, processedRecord: errorRecord };
     }
+  }
+
+  /**
+   * 根据用户选择过滤要删除的Key
+   * @param selectedFormattedKeys 用户选择的格式化Key列表
+   * @param allFilteredUnusedKeys 所有过滤后的无用Key
+   * @param allFormattedKeys 所有格式化的Key列表
+   * @param existingCompleteRecord 现有完整记录
+   * @returns 实际要删除的Key和过滤后的格式化Key
+   */
+  private filterKeysByUserSelection(
+    selectedFormattedKeys: string[],
+    allFilteredUnusedKeys: string[],
+    allFormattedKeys: string[],
+    existingCompleteRecord: CompleteTranslationRecord
+  ): {
+    actualKeysToDelete: string[];
+    filteredFormattedKeys: string[];
+  } {
+    const selectedSet = new Set(selectedFormattedKeys);
+    const actualKeysToDelete: string[] = [];
+
+    // 根据用户选择的格式化Key，提取实际的Key
+    Object.entries(existingCompleteRecord).forEach(
+      ([modulePath, moduleKeys]) => {
+        Object.keys(moduleKeys).forEach((key) => {
+          const formattedKey = `[${modulePath}][${key}]`;
+          if (
+            selectedSet.has(formattedKey) &&
+            allFilteredUnusedKeys.includes(key)
+          ) {
+            actualKeysToDelete.push(key);
+          }
+        });
+      }
+    );
+
+    // 过滤格式化Key列表，只保留用户选择的
+    const filteredFormattedKeys = allFormattedKeys.filter((key) =>
+      selectedSet.has(key)
+    );
+
+    return {
+      actualKeysToDelete,
+      filteredFormattedKeys,
+    };
   }
 
   /**
@@ -160,23 +265,16 @@ export class DeleteService {
 
     // 过滤掉强制保留的Key
     const filteredUnusedKeys = unusedKeys.filter(
-      (key) =>
-        !this.unusedKeyAnalyzer.isKeyForceKeptInCompleteRecord(
-          key,
-          existingCompleteRecord
-        )
+      (key) => !this.isKeyForceKeptInCompleteRecord(key, existingCompleteRecord)
     );
     const forceKeptKeys = unusedKeys.filter((key) =>
-      this.unusedKeyAnalyzer.isKeyForceKeptInCompleteRecord(
-        key,
-        existingCompleteRecord
-      )
+      this.isKeyForceKeptInCompleteRecord(key, existingCompleteRecord)
     );
 
     // 构建带模块路径的Key列表用于显示
     // 注意：这里需要显示实际的key实例数量，包括在多个模块中重复的key
     const formattedFilteredUnusedKeys: string[] = [];
-    const actualKeyInstances: string[] = []; // 实际的key实例（包括重复）
+    const actualKeyInstances: string[] = [];
 
     // 从完整记录中找出所有要删除的key实例
     Object.entries(existingCompleteRecord).forEach(
@@ -214,16 +312,16 @@ export class DeleteService {
 
   /**
    * 生成删除预览文件
-   * @param filteredUnusedKeys 过滤后的无用Key列表
+   * @param filteredFormattedKeys 过滤后的格式化Key列表，格式为 [modulePath][key]
    * @param existingCompleteRecord 现有完整记录
    * @returns 预览文件路径
    */
   private async generateDeletePreview(
-    filteredUnusedKeys: string[],
+    filteredFormattedKeys: string[],
     existingCompleteRecord: CompleteTranslationRecord
   ): Promise<string> {
     return await this.previewFileService.generateDeletePreviewFromCompleteRecord(
-      filteredUnusedKeys,
+      filteredFormattedKeys,
       existingCompleteRecord
     );
   }

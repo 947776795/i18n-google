@@ -13,6 +13,112 @@ export interface DeletionSummary {
  */
 export class UserInteraction {
   /**
+   * 用户选择要删除的无用Key（多选）
+   * @param formattedUnusedKeys 格式化的无用Key列表 [模块路径][Key]
+   * @returns 用户选择的Key列表
+   */
+  static async selectKeysForDeletion(
+    formattedUnusedKeys: string[]
+  ): Promise<string[]> {
+    if (formattedUnusedKeys.length === 0) {
+      return [];
+    }
+
+    Logger.info(
+      `\n🔍 发现 ${formattedUnusedKeys.length} 个可删除的无用翻译Key\n`
+    );
+
+    // 如果Key数量很少，直接显示选项
+    if (formattedUnusedKeys.length <= 20) {
+      Logger.info("📝 无用Key列表:");
+      formattedUnusedKeys.forEach((key, index) => {
+        Logger.info(`   ${index + 1}. ${key}`);
+      });
+      Logger.info("");
+    } else {
+      Logger.info(
+        `📝 找到 ${formattedUnusedKeys.length} 个无用Key，请在下面的选择界面中选择要删除的Key\n`
+      );
+    }
+
+    // 提供选择选项
+    const choices = [
+      {
+        name: `🗑️ 全部删除 (${formattedUnusedKeys.length} 个Key)`,
+        value: "all",
+      },
+      {
+        name: "🎯 手动选择要删除的Key",
+        value: "manual",
+      },
+      {
+        name: "❌ 跳过删除",
+        value: "skip",
+      },
+    ];
+
+    const { selectionMode } = await inquirer.prompt([
+      {
+        type: "list",
+        name: "selectionMode",
+        message: "请选择删除方式:",
+        choices,
+        default: "skip", // 默认选择跳过删除
+      },
+    ]);
+
+    switch (selectionMode) {
+      case "all":
+        return formattedUnusedKeys;
+
+      case "manual":
+        return await this.manualSelectKeys(formattedUnusedKeys);
+
+      case "skip":
+        return [];
+
+      default:
+        return [];
+    }
+  }
+
+  /**
+   * 手动选择要删除的Key
+   */
+  private static async manualSelectKeys(
+    formattedUnusedKeys: string[]
+  ): Promise<string[]> {
+    const pageSize = 15;
+
+    // 为每个选项添加序号
+    const choices = formattedUnusedKeys.map((key, index) => ({
+      name: `${(index + 1).toString().padStart(3, " ")}. ${key}`,
+      value: key,
+      checked: false, // 默认不选中，让用户主动选择
+    }));
+
+    const { selectedKeys } = await inquirer.prompt({
+      type: "checkbox",
+      name: "selectedKeys",
+      message: `请选择要删除的Key (共${formattedUnusedKeys.length}个`,
+      choices,
+      pageSize: pageSize, // 一次显示15个选项，可以用PageUp/PageDown翻页
+      validate: (input: any) => {
+        if (!input || input.length === 0) {
+          return "请至少选择一个Key，或按 Ctrl+C 取消操作";
+        }
+        return true;
+      },
+    });
+
+    if (selectedKeys.length > 0) {
+      Logger.info(`\n✅ 已选择 ${selectedKeys.length} 个Key进行删除\n`);
+    }
+
+    return selectedKeys;
+  }
+
+  /**
    * 显示删除确认对话框（增强版）
    */
   static async confirmDeletion(
@@ -38,28 +144,6 @@ export class UserInteraction {
     }
 
     Logger.info(`\n⚠️  发现 ${summary.totalKeys} 个可删除的无用翻译Key\n`);
-
-    // 如果Key数量较少，直接显示
-    if (summary.totalKeys <= 10) {
-      Logger.info("📝 无用Key列表:");
-      unusedKeys.forEach((key, index) => {
-        Logger.info(`   ${index + 1}. ${key}`);
-      });
-      Logger.info("");
-    } else {
-      // 显示预览文件信息
-      Logger.info(`\n📄 详细预览已生成: ${previewFilePath}`);
-      Logger.info("   请查看文件内容，然后返回继续操作\n");
-
-      // 等待用户查看文件
-      await inquirer.prompt([
-        {
-          type: "input",
-          name: "continue",
-          message: "查看完预览文件后，按 Enter 继续...",
-        },
-      ]);
-    }
 
     // 最终确认
     const { confirmDeletion } = await inquirer.prompt([
