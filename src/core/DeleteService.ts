@@ -172,18 +172,28 @@ export class DeleteService {
     );
 
     // 构建带模块路径的Key列表用于显示
-    const formattedFilteredUnusedKeys = filteredUnusedKeys.map(
-      (key) => `[${keyToModuleMap[key]}][${key}]`
+    // 注意：这里需要显示实际的key实例数量，包括在多个模块中重复的key
+    const formattedFilteredUnusedKeys: string[] = [];
+    const actualKeyInstances: string[] = []; // 实际的key实例（包括重复）
+
+    // 从完整记录中找出所有要删除的key实例
+    Object.entries(existingCompleteRecord).forEach(
+      ([modulePath, moduleKeys]) => {
+        Object.keys(moduleKeys).forEach((key) => {
+          if (filteredUnusedKeys.includes(key)) {
+            formattedFilteredUnusedKeys.push(`[${modulePath}][${key}]`);
+            actualKeyInstances.push(key);
+          }
+        });
+      }
     );
     const formattedForceKeptKeys = forceKeptKeys.map(
       (key) => `[${keyToModuleMap[key]}][${key}]`
     );
 
-    const totalUnusedKeys = filteredUnusedKeys.length;
+    const totalUnusedKeys = formattedFilteredUnusedKeys.length; // 使用实际实例数量
 
-    Logger.info(
-      `🗑️ 发现 ${unusedKeys.length} 个无用Key，其中 ${totalUnusedKeys} 个可删除，${forceKeptKeys.length} 个强制保留`
-    );
+    Logger.info(`🗑️ 发现 ${totalUnusedKeys} 个可删除的无用Key`);
     Logger.info(
       `📝 可删除的无用Key: ${formattedFilteredUnusedKeys.join(", ")}`
     );
