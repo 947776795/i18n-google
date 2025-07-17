@@ -90,6 +90,13 @@ export class UserInteraction {
   ): Promise<string[]> {
     const pageSize = 15;
 
+    // 显示操作提示
+    Logger.info("\n📝 手动选择操作说明:");
+    Logger.info("   • 使用 ↑↓ 箭头键移动光标");
+    Logger.info("   • 使用 空格键 选择/取消选择项目");
+    Logger.info("   • 选择完成后按 回车键 确认");
+    Logger.info("   • 按 Ctrl+C 取消操作\n");
+
     // 为每个选项添加序号
     const choices = formattedUnusedKeys.map((key, index) => ({
       name: `${(index + 1).toString().padStart(3, " ")}. ${key}`,
@@ -100,7 +107,7 @@ export class UserInteraction {
     const { selectedKeys } = await inquirer.prompt({
       type: "checkbox",
       name: "selectedKeys",
-      message: `请选择要删除的Key (共${formattedUnusedKeys.length}个`,
+      message: `请选择要删除的Key (共${formattedUnusedKeys.length}个) - 使用空格选择，回车确认`,
       choices,
       pageSize: pageSize, // 一次显示15个选项，可以用PageUp/PageDown翻页
       validate: (input: any) => {
