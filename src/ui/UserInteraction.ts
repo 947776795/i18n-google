@@ -72,7 +72,7 @@ export class UserInteraction {
         return formattedUnusedKeys;
 
       case "manual":
-        return await this.manualSelectKeys(formattedUnusedKeys);
+        return await UserInteraction.manualSelectKeys(formattedUnusedKeys);
 
       case "skip":
         return [];
