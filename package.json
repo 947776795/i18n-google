@@ -1,6 +1,6 @@
 {
   "name": "i18n-google",
-  "version": "0.2.18",
+  "version": "0.2.19",
   "description": "I18n scanning system with Google Sheets integration",
   "main": "dist/scan.js",
   "bin": {
