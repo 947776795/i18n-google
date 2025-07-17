@@ -218,28 +218,6 @@ export class UserInteraction {
   }
 
   /**
-   * 显示简要摘要
-   */
-  private static displayBriefSummary(unusedKeys: string[]): void {
-    Logger.info("\n📊 删除摘要:");
-    Logger.info(`   - 无用Key数量: ${unusedKeys.length}`);
-
-    if (unusedKeys.length <= 5) {
-      Logger.info("   - Key列表:");
-      unusedKeys.forEach((key, index) => {
-        Logger.info(`     ${index + 1}. ${key}`);
-      });
-    } else {
-      Logger.info("   - 前5个Key:");
-      unusedKeys.slice(0, 5).forEach((key, index) => {
-        Logger.info(`     ${index + 1}. ${key}`);
-      });
-      Logger.info(`     ... 还有 ${unusedKeys.length - 5} 个`);
-    }
-    Logger.info("");
-  }
-
-  /**
    * 显示操作选项菜单
    */
   static async showActionMenu(

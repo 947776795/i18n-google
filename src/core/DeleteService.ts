@@ -41,9 +41,7 @@ export class DeleteService {
         // 检查该模块是否配置了强制保留该key
         const forceKeepKeys = this.config.forceKeepKeys;
         if (forceKeepKeys && modulePath in forceKeepKeys) {
-          const forceKeepList = (
-            forceKeepKeys as unknown as Record<string, string[]>
-          )[modulePath];
+          const forceKeepList = forceKeepKeys[modulePath];
           if (forceKeepList && forceKeepList.includes(key)) {
             return true;
           }
@@ -151,7 +149,6 @@ export class DeleteService {
         // 9a. 执行删除操作
         const processedRecord = await this.executeKeyDeletion(
           existingCompleteRecord,
-          actualKeysToDelete,
           allReferences,
           previewPath
         );
@@ -329,22 +326,29 @@ export class DeleteService {
   /**
    * 执行Key删除操作 - 基于预览文件精确删除
    * @param existingCompleteRecord 现有完整记录
-   * @param filteredUnusedKeys 要删除的Key列表（已废弃）
    * @param allReferences 当前引用
    * @param previewFilePath 预览文件路径
    * @returns 处理后的记录
    */
   private async executeKeyDeletion(
     existingCompleteRecord: CompleteTranslationRecord,
-    filteredUnusedKeys: string[],
     allReferences: Map<string, ExistingReference[]>,
     previewFilePath: string
   ): Promise<CompleteTranslationRecord> {
     Logger.info("✅ 用户确认删除无用Key");
 
     // 读取预览文件内容
-    const previewContent = await fs.promises.readFile(previewFilePath, "utf-8");
-    const previewRecord: CompleteTranslationRecord = JSON.parse(previewContent);
+    let previewRecord: CompleteTranslationRecord;
+    try {
+      const previewContent = await fs.promises.readFile(
+        previewFilePath,
+        "utf-8"
+      );
+      previewRecord = JSON.parse(previewContent);
+    } catch (error) {
+      Logger.error(`读取或解析预览文件失败: ${error}`);
+      throw new Error(`无法处理预览文件 ${previewFilePath}: ${error}`);
+    }
 
     Logger.info(`📄 从预览文件读取删除指令: ${previewFilePath}`);
 
