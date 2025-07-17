@@ -123,7 +123,6 @@ export class FileTransformer {
 
       // 如果有新翻译，写入修改后的文件
       if (result.newTranslations.length > 0) {
-        Logger.debug(`💾 [DEBUG] 写入修改后的文件: ${filePath}`);
         await writeFile(filePath, result.transformedCode);
         Logger.debug(`✅ [DEBUG] 文件写入完成`);
       } else {

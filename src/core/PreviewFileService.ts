@@ -25,16 +25,16 @@ export class PreviewFileService {
 
   /**
    * 生成删除预览文件 - 基于 CompleteRecord
-   * @param unusedKeys 无用Key列表
+   * @param formattedKeys 格式化的Key列表，格式为 [modulePath][key]
    * @param completeRecord 完整翻译记录
    * @returns 预览文件路径
    */
   async generateDeletePreviewFromCompleteRecord(
-    unusedKeys: string[],
+    formattedKeys: string[],
     completeRecord: CompleteTranslationRecord
   ): Promise<string> {
     const previewRecord = this.buildDeletePreviewRecord(
-      unusedKeys,
+      formattedKeys,
       completeRecord
     );
 
@@ -117,31 +117,37 @@ export class PreviewFileService {
 
   /**
    * 构建删除预览记录，结构与CompleteRecord一致，只包含即将被删除的Key
-   * @param unusedKeys 无用Key列表
+   * @param formattedKeys 格式化的Key列表，格式为 [modulePath][key]
    * @param completeRecord 完整翻译记录
    * @returns 预览记录
    */
   private buildDeletePreviewRecord(
-    unusedKeys: string[],
+    formattedKeys: string[],
     completeRecord: CompleteTranslationRecord
   ): CompleteTranslationRecord {
     const previewRecord: CompleteTranslationRecord = {};
-    const unusedKeySet = new Set(unusedKeys);
 
-    // 遍历完整记录，只保留即将被删除的Key
-    Object.entries(completeRecord).forEach(([modulePath, moduleKeys]) => {
-      const moduleUnusedKeys: { [key: string]: { [lang: string]: string } } =
-        {};
+    // 解析每个格式化的key，提取模块路径和实际key
+    formattedKeys.forEach((formattedKey) => {
+      const match = formattedKey.match(/^\[([^\]]+)\]\[([^\]]+)\]$/);
+      if (!match) {
+        Logger.warn(`⚠️ 无法解析格式化Key: ${formattedKey}`);
+        return;
+      }
 
-      Object.entries(moduleKeys).forEach(([key, translations]) => {
-        if (unusedKeySet.has(key)) {
-          moduleUnusedKeys[key] = translations;
+      const [, modulePath, key] = match;
+
+      // 检查完整记录中是否存在该模块和key
+      if (completeRecord[modulePath] && completeRecord[modulePath][key]) {
+        // 初始化预览记录中的模块
+        if (!previewRecord[modulePath]) {
+          previewRecord[modulePath] = {};
         }
-      });
 
-      // 只有当模块中有无用Key时才添加到预览记录中
-      if (Object.keys(moduleUnusedKeys).length > 0) {
-        previewRecord[modulePath] = moduleUnusedKeys;
+        // 复制该key的所有翻译数据
+        previewRecord[modulePath][key] = completeRecord[modulePath][key];
+      } else {
+        Logger.warn(`⚠️ 在完整记录中找不到: [${modulePath}][${key}]`);
       }
     });
 

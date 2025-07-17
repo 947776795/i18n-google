@@ -257,7 +257,25 @@ export class GoogleSheetsSync {
       });
 
       // 计算动态范围
-      const dynamicRange = this.calculateRange(headers.length, values.length);
+      const dynamicRange = this.calculateRange(headers.length, 10000);
+
+      // 如果数据行数不足 10000，用空白行填充
+      const maxRows = this.config.sheetsMaxRows || 10000;
+      const targetRowCount = maxRows;
+      const currentRowCount = values.length;
+
+      if (currentRowCount < targetRowCount) {
+        const emptyRow = new Array(headers.length).fill("");
+        const rowsToAdd = targetRowCount - currentRowCount;
+
+        for (let i = 0; i < rowsToAdd; i++) {
+          values.push([...emptyRow]);
+        }
+
+        Logger.info(
+          `📝 用空白行填充到 ${targetRowCount} 行 (添加了 ${rowsToAdd} 行)`
+        );
+      }
 
       // 更新 Google Sheets
       await this.googleSheets.spreadsheets.values.update({
