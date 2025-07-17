@@ -123,16 +123,6 @@ export class DeleteService {
           existingCompleteRecord
         );
 
-      Logger.info(
-        `📝 用户选择删除 ${actualKeysToDelete.length} 个Key`,
-        "---",
-        filteredFormattedKeys,
-        "---",
-        actualKeysToDelete,
-        "---"
-        // existingCompleteRecord
-      );
-
       // 7. 生成删除预览
       const previewPath = await this.generateDeletePreview(
         filteredFormattedKeys,
