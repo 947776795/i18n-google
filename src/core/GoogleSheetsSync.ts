@@ -215,7 +215,42 @@ export class GoogleSheetsSync {
   }
 
   /**
+   * 合并两个 CompleteTranslationRecord，远端数据优先
+   * 规则：
+   * 1. 本地没有的key，远端没有 → 最终同步到远端的也没有
+   * 2. 本地有的key，远端也有 → 翻译以远端为主
+   * 3. 本地有的key，远端没有 → 同步到远端也要有
+   */
+  private mergeCompleteRecords(
+    localRecord: CompleteTranslationRecord,
+    remoteRecord: CompleteTranslationRecord
+  ): CompleteTranslationRecord {
+    // 以远端记录为基础
+    const mergedRecord: CompleteTranslationRecord = { ...remoteRecord };
+
+    // 遍历本地记录，只添加本地有而远端没有的内容
+    Object.entries(localRecord).forEach(([modulePath, moduleKeys]) => {
+      if (!mergedRecord[modulePath]) {
+        // 新模块（本地有，远端没有），直接添加
+        mergedRecord[modulePath] = moduleKeys;
+      } else {
+        // 现有模块，检查每个Key
+        Object.entries(moduleKeys).forEach(([key, translations]) => {
+          if (!mergedRecord[modulePath][key]) {
+            // 新Key（本地有，远端没有），直接添加
+            mergedRecord[modulePath][key] = translations;
+          }
+          // 如果远端也有这个Key，则保持远端的值不变（远端优先）
+        });
+      }
+    });
+
+    return mergedRecord;
+  }
+
+  /**
    * 将 CompleteTranslationRecord 同步到 Google Sheets
+   * 在推送前会先拉取远端最新数据进行合并
    */
   public async syncCompleteRecordToSheet(
     completeRecord: CompleteTranslationRecord
@@ -228,12 +263,35 @@ export class GoogleSheetsSync {
     }
 
     try {
-      // 构建表头 - 包含mark列
+      Logger.info("🔄 开始同步到 Google Sheets，先拉取远端最新数据...");
+
+      // 1. 先拉取远端最新数据
+      let remoteRecord: CompleteTranslationRecord = {};
+      try {
+        remoteRecord = await this.syncCompleteRecordFromSheet();
+        Logger.info(
+          `✅ 成功拉取远端数据，包含 ${Object.keys(remoteRecord).length} 个模块`
+        );
+      } catch (error) {
+        Logger.error("❌ 同步远端数据时出错，将直接使用本地数据:", error);
+        // 如果拉取失败，继续使用本地数据
+      }
+
+      // 2. 合并远端和本地数据（本地优先）
+      const mergedRecord = this.mergeCompleteRecords(
+        completeRecord,
+        remoteRecord
+      );
+      Logger.info(
+        `🔀 数据合并完成，最终包含 ${Object.keys(mergedRecord).length} 个模块`
+      );
+
+      // 3. 构建表头 - 包含mark列
       const headers = ["key", ...this.config.languages, "mark"];
       const values = [headers];
 
-      // 构建数据行 - 新格式
-      Object.entries(completeRecord).forEach(([modulePath, moduleKeys]) => {
+      // 4. 构建数据行 - 使用合并后的数据
+      Object.entries(mergedRecord).forEach(([modulePath, moduleKeys]) => {
         Object.entries(moduleKeys as Record<string, any>).forEach(
           ([translationKey, translations]) => {
             // 第一列格式：[文件路径][en文案]
@@ -286,7 +344,9 @@ export class GoogleSheetsSync {
       });
 
       Logger.info(
-        `✅ 成功同步 ${values.length - 1} 条翻译到 Google Sheets (包含mark字段)`
+        `✅ 成功同步 ${
+          values.length - 1
+        } 条翻译到 Google Sheets (包含mark字段，已合并远端数据)`
       );
     } catch (error) {
       this.handleSyncError(error, "向Google Sheets同步CompleteRecord");
