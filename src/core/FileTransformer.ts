@@ -121,12 +121,19 @@ export class FileTransformer {
       Logger.debug(`  - 新翻译: ${result.newTranslations.length}`);
       Logger.debug(`  - 转换后代码长度: ${result.transformedCode.length} 字符`);
 
-      // 如果有新翻译，写入修改后的文件
-      if (result.newTranslations.length > 0) {
+      // 检查是否需要写入文件（有新翻译或导入路径被修复）
+      const shouldWriteFile =
+        result.newTranslations.length > 0 || result.transformedCode !== source;
+
+      if (shouldWriteFile) {
         await writeFile(filePath, result.transformedCode);
-        Logger.debug(`✅ [DEBUG] 文件写入完成`);
+        if (result.newTranslations.length > 0) {
+          Logger.debug(`✅ [DEBUG] 文件写入完成（包含新翻译）`);
+        } else {
+          Logger.debug(`✅ [DEBUG] 文件写入完成（导入路径修复）`);
+        }
       } else {
-        Logger.debug(`📄 [DEBUG] 没有新翻译，跳过文件写入`);
+        Logger.debug(`📄 [DEBUG] 文件无变化，跳过写入`);
       }
 
       return result;

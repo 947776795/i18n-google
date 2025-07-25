@@ -203,40 +203,94 @@ export class AstTransformer {
   }
 
   /**
-   * 扩展的转换方法，同时返回现有引用和新翻译
-   * @param source - 源码字符串
-   * @param filePath - 文件路径
-   * @returns 完整的文件分析结果
+   * 分析和转换源码：收集现有引用 + 处理新翻译
    */
   public analyzeAndTransformSource(
     source: string,
     filePath: string
   ): FileAnalysisResult {
-    // 1. 收集现有引用
+    const j = jscodeshift.withParser("tsx");
+    const root = j(source);
+
+    // 收集现有的 I18n 引用
     const existingReferences = this.collectExistingI18nCalls(source, filePath);
 
-    // 2. 进行转换
-    const {
-      results: newTranslations,
-      transformedCode: initialTransformedCode,
-    } = this.transformSource(source, filePath);
+    // 检查并修复导入路径不匹配的问题
+    this.validateAndFixImportPaths(j, root, filePath);
 
-    // 3. 如果有现有引用但没有新翻译，仍需要检查和更新导入路径
-    let finalTransformedCode = initialTransformedCode;
-    if (existingReferences.length > 0 && newTranslations.length === 0) {
-      const j = jscodeshift.withParser("tsx");
-      const root = j(source);
+    // 查找和转换新的翻译内容 - 重新使用transformSource但只获取结果
+    const { results: newTranslations, transformedCode: finalCode } =
+      this.transformSource(source, filePath);
 
-      // 只更新导入，不进行其他转换
-      this.addModularImports(j, root, filePath);
-      finalTransformedCode = root.toSource();
-    }
+    // 使用更新后的代码（包含了导入路径修复）
+    // 如果有新翻译，使用transformSource的结果；否则使用我们修复导入路径后的代码
+    const transformedCode =
+      newTranslations.length > 0
+        ? finalCode
+        : root.toSource({
+            quote: "double",
+            trailingComma: true,
+          });
 
     return {
       existingReferences,
       newTranslations,
-      transformedCode: finalTransformedCode,
+      transformedCode,
     };
+  }
+
+  /**
+   * 验证并修复导入路径
+   */
+  private validateAndFixImportPaths(
+    j: JSCodeshiftAPI,
+    root: JSCodeshiftCollection,
+    filePath: string
+  ): void {
+    // 获取当前文件应该使用的正确导入路径
+    const correctImportPath = PathUtils.getTranslationImportPath(
+      filePath,
+      this.config
+    );
+
+    // 查找现有的翻译导入
+    const existingTranslationImports = root
+      .find(j.ImportDeclaration)
+      .filter((path: ASTPath<n.ImportDeclaration>) => {
+        const sourceValue = path.node.source?.value as string;
+        return sourceValue?.startsWith("@translate/");
+      });
+
+    let hasCorrectImport = false;
+    let hasIncorrectImport = false;
+
+    // 检查是否有正确或错误的导入
+    existingTranslationImports.forEach((path: ASTPath<n.ImportDeclaration>) => {
+      const sourceValue = path.node.source?.value as string;
+      if (sourceValue === correctImportPath) {
+        hasCorrectImport = true;
+      } else {
+        hasIncorrectImport = true;
+      }
+    });
+
+    // 如果有错误的导入路径，需要修复
+    if (hasIncorrectImport && !hasCorrectImport) {
+      Logger.info(`🔧 检测到导入路径不匹配，正在修复: ${filePath}`);
+      Logger.debug(`   期望路径: ${correctImportPath}`);
+
+      // 移除所有错误的翻译导入
+      existingTranslationImports.remove();
+
+      // 添加正确的导入
+      const importDecl = j.importDeclaration(
+        [j.importDefaultSpecifier(j.identifier("Translations"))],
+        j.literal(correctImportPath)
+      );
+      root.get().node.program.body.unshift(importDecl);
+
+      Logger.debug(`✅ 已更新导入路径为: ${correctImportPath}`);
+    }
   }
 
   /**

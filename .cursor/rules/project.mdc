@@ -1,0 +1,13 @@
+---
+alwaysApply: true
+---
+
+- **TDD**: Follow Test-Driven Development (TDD) principles. Write tests before implementing features to ensure functionality and reliability. ALWAYS write tests for new features and bug fixes.
+- **Code Quality**: Ensure that the code is well-structured, modular, and follows best practices for readability and maintainability.
+  - ALWAYS make sure each file has a limit of 400 lines of code to ensure readability and maintainability.
+  - ALWAYS use typing and eliminate the typing errors and ensure that the code is free of linting issues.
+- **Documentation**: Provide clear and concise documentation for the code, including comments and README files. ALWAYS update the documentation when making changes to the codebase.
+- **Testing**: Implement unit tests to ensure the functionality of the agent and its components.
+- **Version Control**: Use Git for version control and maintain a clean commit history.
+- **Error Handling**: Implement robust error handling to ensure the agent can gracefully handle unexpected situations.
+- Use context7 for library documents## General Guidelines

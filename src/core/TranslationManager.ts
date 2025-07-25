@@ -238,6 +238,7 @@ export class TranslationManager {
    * 1. 先加载现有完整记录（包含远程翻译数据）
    * 2. 分类所有翻译key到对应路径
    * 3. 构建完整的翻译记录，优先保留现有翻译，新key使用原文案
+   * 4. 检测和处理文件移动导致的路径变更
    */
   private async buildCompleteRecord(
     allReferences: Map<string, any[]>
@@ -260,7 +261,13 @@ export class TranslationManager {
       } 个模块路径`
     );
 
-    // 第三步：构建新的完整记录，智能合并翻译数据
+    // 第三步：检测文件移动并创建迁移映射
+    const migrationMap = this.detectFileMigrations(
+      existingRecord,
+      pathClassification
+    );
+
+    // 第四步：构建新的完整记录，智能合并翻译数据
     const record: CompleteTranslationRecord = {};
 
     for (const [modulePath, keys] of Object.entries(pathClassification)) {
@@ -277,16 +284,38 @@ export class TranslationManager {
         // 检查现有记录中是否有这个key的翻译数据
         let existingTranslations: any = null;
 
-        // 在现有记录的所有模块中查找这个key
-        for (const [existingModulePath, existingModuleKeys] of Object.entries(
-          existingRecord
-        )) {
-          if (existingModuleKeys[key]) {
-            existingTranslations = existingModuleKeys[key];
-            Logger.debug(
-              `✅ [DEBUG] 在模块 "${existingModulePath}" 中找到key "${key}" 的现有翻译`
+        // 首先在当前模块路径中查找
+        if (existingRecord[modulePath] && existingRecord[modulePath][key]) {
+          existingTranslations = existingRecord[modulePath][key];
+          Logger.debug(
+            `✅ [DEBUG] 在当前模块 "${modulePath}" 中找到key "${key}" 的现有翻译`
+          );
+        } else {
+          // 检查是否有迁移映射
+          const oldModulePath = migrationMap.get(modulePath);
+          if (
+            oldModulePath &&
+            existingRecord[oldModulePath] &&
+            existingRecord[oldModulePath][key]
+          ) {
+            existingTranslations = existingRecord[oldModulePath][key];
+            Logger.info(
+              `🔄 [MIGRATION] 从旧路径 "${oldModulePath}" 迁移key "${key}" 到新路径 "${modulePath}"`
             );
-            break;
+          } else {
+            // 在现有记录的所有模块中查找这个key（兼容旧逻辑）
+            for (const [
+              existingModulePath,
+              existingModuleKeys,
+            ] of Object.entries(existingRecord)) {
+              if (existingModuleKeys[key]) {
+                existingTranslations = existingModuleKeys[key];
+                Logger.debug(
+                  `✅ [DEBUG] 在模块 "${existingModulePath}" 中找到key "${key}" 的现有翻译`
+                );
+                break;
+              }
+            }
           }
         }
 
@@ -318,7 +347,79 @@ export class TranslationManager {
       }
     }
 
+    // 第五步：清理迁移后的旧数据
+    await this.cleanupMigratedData(record, existingRecord, migrationMap);
+
     return record;
+  }
+
+  /**
+   * 检测文件移动，创建迁移映射
+   */
+  private detectFileMigrations(
+    existingRecord: CompleteTranslationRecord,
+    pathClassification: Record<string, string[]>
+  ): Map<string, string> {
+    const migrationMap = new Map<string, string>();
+
+    // 当前引用中的模块路径
+    const currentModulePaths = new Set(Object.keys(pathClassification));
+    // 现有记录中的模块路径
+    const existingModulePaths = new Set(Object.keys(existingRecord));
+
+    // 寻找可能的文件移动
+    for (const currentPath of currentModulePaths) {
+      if (!existingModulePaths.has(currentPath)) {
+        // 新路径不在现有记录中，可能是文件移动
+        const keys = pathClassification[currentPath];
+
+        // 寻找包含相同keys的旧路径
+        for (const existingPath of existingModulePaths) {
+          if (!currentModulePaths.has(existingPath)) {
+            // 旧路径不在当前引用中，可能是被移动的路径
+            const existingKeys = Object.keys(existingRecord[existingPath]);
+
+            // 检查key的重叠度
+            const overlappingKeys = keys.filter((key) =>
+              existingKeys.includes(key)
+            );
+
+            // 如果重叠度超过阈值（比如80%），认为是文件移动
+            if (
+              overlappingKeys.length > 0 &&
+              overlappingKeys.length / keys.length >= 0.8
+            ) {
+              migrationMap.set(currentPath, existingPath);
+              Logger.info(
+                `🔍 [MIGRATION] 检测到文件移动: "${existingPath}" -> "${currentPath}" (${overlappingKeys.length}/${keys.length} keys匹配)`
+              );
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    return migrationMap;
+  }
+
+  /**
+   * 清理迁移后的旧数据
+   */
+  private async cleanupMigratedData(
+    newRecord: CompleteTranslationRecord,
+    existingRecord: CompleteTranslationRecord,
+    migrationMap: Map<string, string>
+  ): Promise<void> {
+    // 这里可以选择是否删除旧的模块数据
+    // 为了安全起见，暂时不自动删除，只记录日志
+    for (const [newPath, oldPath] of migrationMap.entries()) {
+      Logger.debug(
+        `📝 [CLEANUP] 可清理的旧路径: "${oldPath}" (已迁移到 "${newPath}")`
+      );
+      // 未来可以添加自动清理逻辑
+      // delete existingRecord[oldPath];
+    }
   }
 
   /**

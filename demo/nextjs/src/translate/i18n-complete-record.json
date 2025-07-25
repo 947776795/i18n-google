@@ -1,5 +1,5 @@
 {
-  "src/app/(root)/crypto-fundraise-tracker/page.ts": {
+  "app/(root)/crypto-fundraise-tracker/page.ts": {
     "page test": {
       "en": "page test",
       "ko": "page test",
@@ -12,7 +12,7 @@
       "mark": 0
     }
   },
-  "src/app/[locale]/page.ts": {
+  "app/[locale]/page.ts": {
     "Invalid locale: %{var0}": {
       "en": "Invalid locale: %{var0}",
       "ko": "Invalid locale: %{var0}",
@@ -25,7 +25,7 @@
       "mark": 0
     }
   },
-  "src/app/[locale]/server-test/page.ts": {
+  "app/[locale]/server-test/page.ts": {
     "Server Component I18n Test": {
       "en": "Server Component I18n Test",
       "ko": "서버 컴포넌트 I18n 테스트",
@@ -214,7 +214,7 @@
       "mark": 0
     },
     "test translate 1 one": {
-      "en": "test translate 1 one",
+      "en": "test translate 1 one test",
       "ko": "테스트 번역 1 일(一)",
       "zh-Hans": "测试翻译 1 一",
       "zh-Hant": "測試翻譯 1 一",
@@ -423,7 +423,7 @@
       "mark": 0
     }
   },
-  "src/components/ClientHome.ts": {
+  "components/ClientHome.ts": {
     "get_started_by_editing": {
       "en": "get_started_by_editing",
       "ko": "편집하여 시작하기",
@@ -579,7 +579,7 @@
       "mark": 0
     }
   },
-  "src/components/Button/index.ts": {
+  "components/Button/index.ts": {
     "I18n22": {
       "en": "I18n22",
       "ko": "I18n22",
@@ -614,7 +614,7 @@
       "mark": 0
     }
   },
-  "src/const/const.ts": {
+  "const/const.ts": {
     "sadasdad": {
       "en": "sadasdad",
       "ko": "sadasdad",
@@ -635,6 +635,393 @@
       "es": "bbb",
       "tr": "bbb",
       "fr": "bbb",
+      "mark": 0
+    }
+  },
+  "app/[locale]/server-test/client-test/page.ts": {
+    "Server Component I18n Test": {
+      "en": "Server Component I18n Test",
+      "ko": "서버 컴포넌트 I18n 테스트",
+      "zh-Hans": "服务器组件国际化测试",
+      "zh-Hant": "伺服器組件 I18n 測試",
+      "vi": "Kiểm tra I18n Thành phần Máy chủ",
+      "es": "Prueba de i18n del componente del servidor",
+      "tr": "Sunucu Bileşeni I18n Testi",
+      "fr": "Test I18n du composant serveur",
+      "mark": 0
+    },
+    "Auto-detected Locale": {
+      "en": "Auto-detected Locale",
+      "ko": "자동 감지된 로케일",
+      "zh-Hans": "自动检测区域设置",
+      "zh-Hant": "自動偵測的地區設定",
+      "vi": "Phát hiện tự động múi giờ",
+      "es": "Configuración regional detectada automáticamente",
+      "tr": "Otomatik Algılanan Yerel Ayar",
+      "fr": "Paramètres régionaux détectés automatiquement",
+      "mark": 0
+    },
+    "Detected locale:": {
+      "en": "Detected locale:",
+      "ko": "감지된 로케일:",
+      "zh-Hans": "检测到的语言环境：",
+      "zh-Hant": "偵測到的地區設定：",
+      "vi": "Đã phát hiện ngôn ngữ:",
+      "es": "Configuración regional detectada:",
+      "tr": "Belirlenen yerel ayar:",
+      "fr": "Paramètres régionaux détectés :",
+      "mark": 0
+    },
+    "Welcome message:": {
+      "en": "Welcome message:",
+      "ko": "환영 메시지:",
+      "zh-Hans": "欢迎信息：",
+      "zh-Hant": "歡迎訊息：",
+      "vi": "Thông báo chào mừng:",
+      "es": "Mensaje de bienvenida:",
+      "tr": "Hoş geldiniz mesajı:",
+      "fr": "Message de bienvenue :",
+      "mark": 0
+    },
+    "get_started_by_editing": {
+      "en": "get_started_by_editing",
+      "ko": "편집하여 시작하기",
+      "zh-Hans": "通过编辑开始",
+      "zh-Hant": "通過編輯開始",
+      "vi": "Bắt đầu bằng cách chỉnh sửa",
+      "es": "comience_editando",
+      "tr": "Düzenleyerek başlayın",
+      "fr": "Commencer par modifier",
+      "mark": 0
+    },
+    "Deploy button:": {
+      "en": "Deploy button:",
+      "ko": "배포 버튼:",
+      "zh-Hans": "部署按钮：",
+      "zh-Hant": "部署按鈕：",
+      "vi": "Nút triển khai:",
+      "es": "Botón de implementación:",
+      "tr": "Dağıtım düğmesi:",
+      "fr": "Bouton de déploiement :",
+      "mark": 0
+    },
+    "deploy_now": {
+      "en": "deploy_now",
+      "ko": "지금 배포하기",
+      "zh-Hans": "立即部署",
+      "zh-Hant": "立即部署",
+      "vi": "triển_khai_ngay",
+      "es": "desplegar_ahora",
+      "tr": "şimdi_dağıt",
+      "fr": "déployer_maintenant",
+      "mark": 0
+    },
+    "Docs link:": {
+      "en": "Docs link:",
+      "ko": "문서 링크:",
+      "zh-Hans": "文档链接：",
+      "zh-Hant": "文件連結：",
+      "vi": "Liên kết tài liệu:",
+      "es": "Enlace a documentos:",
+      "tr": "Belgeler bağlantısı:",
+      "fr": "Lien vers les documents :",
+      "mark": 0
+    },
+    "read_our_docs": {
+      "en": "read_our_docs",
+      "ko": "문서를 읽어보세요",
+      "zh-Hans": "阅读我们的文档",
+      "zh-Hant": "閱讀我們的文件",
+      "vi": "đọc_tài_liệu_của_chúng_tôi",
+      "es": "leer_nuestra_documentación",
+      "tr": "belgelerimizi_okuyun",
+      "fr": "lire_nos_docs",
+      "mark": 0
+    },
+    "Manual Locale (from route)": {
+      "en": "Manual Locale (from route)",
+      "ko": "수동 로케일(경로에서)",
+      "zh-Hans": "手动区域设置（来自路由）",
+      "zh-Hant": "手動地區設定（來自路由）",
+      "vi": "Thủ công Vị trí (từ tuyến đường)",
+      "es": "Configuración regional manual (desde la ruta)",
+      "tr": "Elle yapılan yerelleştirme (rota üzerinden)",
+      "fr": "Paramètres régionaux manuels (à partir de l'itinéraire)",
+      "mark": 0
+    },
+    "Route locale:": {
+      "en": "Route locale:",
+      "ko": "로컬 라우트:",
+      "zh-Hans": "本地路由：",
+      "zh-Hant": "本地路線：",
+      "vi": "Tuyến đường địa phương:",
+      "es": "Ruta local:",
+      "tr": "Yerel rota:",
+      "fr": "Itinéraire local :",
+      "mark": 0
+    },
+    "Manual locale:": {
+      "en": "Manual locale:",
+      "ko": "수동 로케일:",
+      "zh-Hans": "手动区域设置:",
+      "zh-Hant": "手動地區設定：",
+      "vi": "Thiết lập múi giờ thủ công:",
+      "es": "Configuración regional manual:",
+      "tr": "Elle yapılan yerelleştirme:",
+      "fr": "Paramètres régionaux manuels :",
+      "mark": 0
+    },
+    "Comparison": {
+      "en": "Comparison",
+      "ko": "비교",
+      "zh-Hans": "比较",
+      "zh-Hant": "比較",
+      "vi": "So sánh",
+      "es": "Comparación",
+      "tr": "Karşılaştırma",
+      "fr": "Comparaison",
+      "mark": 0
+    },
+    "Auto vs Manual locale match:": {
+      "en": "Auto vs Manual locale match:",
+      "ko": "자동 대 수동 로케일 일치:",
+      "zh-Hans": "自动与手动区域设置匹配：",
+      "zh-Hant": "自動與手動語系匹配：",
+      "vi": "Tự động so với thủ công khớp locale:",
+      "es": "Coincidencia de configuración regional automática vs manual:",
+      "tr": "Otomatik vs Manuel yerel ayar eşleşmesi:",
+      "fr": "Correspondance auto. vs manuelle des paramètres régionaux :",
+      "mark": 0
+    },
+    "/%{var0} /server-test": {
+      "en": "/%{var0} /server-test",
+      "ko": "/%{var0} /서버-테스트",
+      "zh-Hans": "/%{var0} /server-test",
+      "zh-Hant": "／％{var0}／伺服器測試",
+      "vi": "/%{var0} /server-test",
+      "es": "/%{var0} /prueba-de-servidor",
+      "tr": "/%{var0} /server-test",
+      "fr": "/%{var0} /server-test",
+      "mark": 0
+    },
+    "Back to Home": {
+      "en": "Back to Home",
+      "ko": "홈으로 돌아가기",
+      "zh-Hans": "返回首页",
+      "zh-Hant": "返回首頁",
+      "vi": "Quay lại Trang chủ",
+      "es": "Volver a Inicio",
+      "tr": "Anasayfaya Dön",
+      "fr": "Retour à l'accueil",
+      "mark": 0
+    },
+    "test translate": {
+      "en": "test translate",
+      "ko": "테스트 번역",
+      "zh-Hans": "测试翻译",
+      "zh-Hant": "測試翻譯",
+      "vi": "kiểm tra dịch",
+      "es": "prueba de traducción",
+      "tr": "test çevirisi",
+      "fr": "test de traduction",
+      "mark": 0
+    },
+    "test translate 1 one": {
+      "en": "test translate 1 one test",
+      "ko": "테스트 번역 1 일(一)",
+      "zh-Hans": "测试翻译 1 一",
+      "zh-Hant": "測試翻譯 1 一",
+      "vi": "bài kiểm tra dịch 1 một",
+      "es": "prueba de traducción 1 uno",
+      "tr": "test translate 1 bir",
+      "fr": "test traduire 1 un",
+      "mark": 0
+    },
+    "test translate 1 two": {
+      "en": "test translate 1 two",
+      "ko": "번역 테스트 1 두 개",
+      "zh-Hans": "测试翻译 1 二",
+      "zh-Hant": "測試翻譯 1 兩個",
+      "vi": "bài kiểm tra dịch 1 hai",
+      "es": "prueba de traducción 1 dos",
+      "tr": "test translate 1 two",
+      "fr": "test traduire 1 deux",
+      "mark": 0
+    },
+    "test translate 1 three": {
+      "en": "test translate 1 three",
+      "ko": "테스트 번역 1 삼",
+      "zh-Hans": "测试翻译 1 三",
+      "zh-Hant": "測試翻譯 1 三",
+      "vi": "kiểm tra dịch 1 ba",
+      "es": "prueba de traducción 1 tres",
+      "tr": "test tercüme 1 üç",
+      "fr": "test traduire 1 trois",
+      "mark": 0
+    },
+    "test translate 1 four": {
+      "en": "test translate 1 four",
+      "ko": "테스트 번역 1 넷",
+      "zh-Hans": "测试翻译 1 四",
+      "zh-Hant": "測試翻譯 1 四",
+      "vi": "bốn test dịch 1",
+      "es": "prueba de traducción 1 cuatro",
+      "tr": "test translate 1 four",
+      "fr": "test traduire 1 quatre",
+      "mark": 0
+    },
+    "test translate 1 five": {
+      "en": "test translate 1 five",
+      "ko": "테스트 번역 1 다섯",
+      "zh-Hans": "测试翻译 1 五",
+      "zh-Hant": "測試翻譯 1 五",
+      "vi": "bài kiểm tra dịch 1 năm",
+      "es": "prueba de traducción 1 cinco",
+      "tr": "test çevirisi 1 beş",
+      "fr": "test de traduction 1 cinq",
+      "mark": 0
+    },
+    "test translate 1 six": {
+      "en": "test translate 1 six",
+      "ko": "테스트 번역 1 육",
+      "zh-Hans": "测试翻译 1 六",
+      "zh-Hant": "測試翻譯 1 六",
+      "vi": "bài kiểm tra dịch 1 sáu",
+      "es": "prueba de traducción 1 seis",
+      "tr": "test çevir 1 six",
+      "fr": "test de traduction 1 six",
+      "mark": 0
+    },
+    "test translate 1 seven": {
+      "en": "test translate 1 seven",
+      "ko": "테스트 번역 1 일곱",
+      "zh-Hans": "测试翻译 1 七",
+      "zh-Hant": "測試翻譯 1 seven",
+      "vi": "kiểm tra dịch 1 bảy",
+      "es": "prueba de traducción 1 siete",
+      "tr": "test translate 1 yedi",
+      "fr": "test de traduction 1 sept",
+      "mark": 0
+    },
+    "test translate 1 eight": {
+      "en": "test translate 1 eight",
+      "ko": "테스트 번역 1 여덟",
+      "zh-Hans": "测试翻译 1 八",
+      "zh-Hant": "測試翻譯 1 八",
+      "vi": "dịch thử 1 tám",
+      "es": "prueba de traducción 1 ocho",
+      "tr": "test translate 1 eight",
+      "fr": "test traduire 1 huit",
+      "mark": 0
+    },
+    "test translate 1 nine": {
+      "en": "test translate 1 nine",
+      "ko": "테스트 번역 1 구",
+      "zh-Hans": "测试翻译 1 九",
+      "zh-Hant": "測試翻譯 1 九",
+      "vi": "kiểm tra dịch 1 chín",
+      "es": "prueba de traducción 1 nueve",
+      "tr": "test tercüme 1 dokuz",
+      "fr": "test traduire 1 neuf",
+      "mark": 0
+    },
+    "test translate 1 ten": {
+      "en": "test translate 1 ten",
+      "ko": "테스트 번역 1 십",
+      "zh-Hans": "测试翻译 1 十",
+      "zh-Hant": "測試翻譯 1 十",
+      "vi": "kiểm tra dịch 1 mười",
+      "es": "prueba de traducción 1 diez",
+      "tr": "test çevir 1 on",
+      "fr": "test traduire 1 dix",
+      "mark": 0
+    },
+    "test translate 1 eleven": {
+      "en": "test translate 1 eleven",
+      "ko": "테스트 번역 1 eleven",
+      "zh-Hans": "测试翻译 1 十一",
+      "zh-Hant": "測試翻譯 1 十一",
+      "vi": "kiểm tra dịch 1 mười một",
+      "es": "prueba de traducción 1 once",
+      "tr": "test translate 1 eleven",
+      "fr": "test de traduction 1 onze",
+      "mark": 0
+    },
+    "test translate 1 twelve": {
+      "en": "test translate 1 twelve",
+      "ko": "테스트 번역 1 열두 개",
+      "zh-Hans": "测试翻译 1 十二",
+      "zh-Hant": "測試翻譯 1 十二",
+      "vi": "bài kiểm tra dịch 1 mười hai",
+      "es": "prueba de traducción 1 doce",
+      "tr": "test tercüme 1 oniki",
+      "fr": "test traduire 1 douze",
+      "mark": 0
+    },
+    "test translate 1 thirteen": {
+      "en": "test translate 1 thirteen",
+      "ko": "테스트 번역 1 thirteen",
+      "zh-Hans": "测试翻译1十三",
+      "zh-Hant": "測試翻譯 1 十三",
+      "vi": "kiểm tra dịch 1 thirteen",
+      "es": "prueba de traducción 1 trece",
+      "tr": "test tercüme 1 on üç",
+      "fr": "test de traduction 1 treize",
+      "mark": 0
+    },
+    "test translate 1 fourteen": {
+      "en": "test translate 1 fourteen",
+      "ko": "테스트 번역 1 십사",
+      "zh-Hans": "测试翻译 1 十四",
+      "zh-Hant": "測試翻譯 1 十四",
+      "vi": "kiểm tra dịch 1 mười bốn",
+      "es": "prueba de traducción 1 catorce",
+      "tr": "test tercüme 1 on dört",
+      "fr": "test de traduction 1 quatorze",
+      "mark": 0
+    },
+    "test translate 1 fifteen": {
+      "en": "test translate 1 fifteen",
+      "ko": "테스트 번역 1 15",
+      "zh-Hans": "测试翻译1十五",
+      "zh-Hant": "測試翻譯 1 十五",
+      "vi": "kiểm tra dịch 1 mười lăm",
+      "es": "prueba de traducción 1 quince",
+      "tr": "test tercüme 1 onbeş",
+      "fr": "test de traduction 1 quinze",
+      "mark": 0
+    },
+    "fei fei": {
+      "en": "fei fei",
+      "ko": "페이페이",
+      "zh-Hans": "菲菲",
+      "zh-Hant": "飛飛",
+      "vi": "phi phi",
+      "es": "fei fei",
+      "tr": "fei fei",
+      "fr": "fei fei",
+      "mark": 0
+    },
+    "by by": {
+      "en": "by by",
+      "ko": "안녕히 가세요",
+      "zh-Hans": "再见",
+      "zh-Hant": "再見",
+      "vi": "tạm biệt",
+      "es": "adiós",
+      "tr": "bay bay",
+      "fr": "au revoir",
+      "mark": 0
+    },
+    "head": {
+      "en": "head",
+      "ko": "머리",
+      "zh-Hans": "头",
+      "zh-Hant": "頭部",
+      "vi": "đầu",
+      "es": "cabeza",
+      "tr": "baş",
+      "fr": "tête",
       "mark": 0
     }
   }
