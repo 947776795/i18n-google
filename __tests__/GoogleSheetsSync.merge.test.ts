@@ -140,6 +140,7 @@ describe("GoogleSheetsSync - Merge Functionality", () => {
       row[0].includes("[Hello]")
     );
     expect(helloRow).toBeDefined();
+    expect(helloRow[0]).toBe("[components/Header.ts][Hello]"); // Key should remain stable
     expect(helloRow[1]).toBe("Hello"); // Remote version wins
     expect(helloRow[2]).toBe("你好"); // Remote version wins
     expect(helloRow[4]).toBe("1"); // Remote mark wins
@@ -225,5 +226,90 @@ describe("GoogleSheetsSync - Merge Functionality", () => {
       expect.stringContaining("从 Google Sheets 同步失败"),
       expect.any(Error)
     );
+  });
+
+  it("should keep keys stable when remote English translations are modified", async () => {
+    // Mock remote data where English translation has been modified
+    const remoteData = {
+      data: {
+        values: [
+          ["key", "en", "zh", "ja", "mark"],
+          // Original key was "Hello", but English translation was modified to "Hello World"
+          [
+            "[components/Header.ts][Hello]",
+            "Hello World",
+            "你好",
+            "こんにちは",
+            "1",
+          ],
+          [
+            "[components/Header.ts][Goodbye]",
+            "Goodbye Updated",
+            "再见更新",
+            "さようなら",
+            "0",
+          ],
+        ],
+      },
+    };
+
+    mockGet.mockResolvedValue(remoteData);
+    mockUpdate.mockResolvedValue({ data: {} });
+
+    // Local data with the original translation keys
+    const localRecord = {
+      "components/Header.ts": {
+        Hello: {
+          en: "Hello", // Original English text
+          zh: "你好",
+          ja: "こんにちは",
+          mark: 0,
+        },
+        Goodbye: {
+          en: "Goodbye", // Original English text
+          zh: "再见",
+          ja: "さようなら",
+          mark: 0,
+        },
+        Welcome: {
+          // New key only in local
+          en: "Welcome",
+          zh: "欢迎",
+          ja: "ようこそ",
+          mark: 0,
+        },
+      },
+    } as unknown as CompleteTranslationRecord;
+
+    await googleSheetsSync.syncCompleteRecordToSheet(localRecord);
+
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+    const values = mockUpdate.mock.calls[0][0].resource.values;
+    const dataRows = values
+      .slice(1)
+      .filter((row: string[]) => row[0] && row[0] !== "");
+
+    // Verify that keys remain stable even when English translations change
+    const helloRow = dataRows.find((row: string[]) =>
+      row[0].includes("[Hello]")
+    );
+    expect(helloRow).toBeDefined();
+    expect(helloRow[0]).toBe("[components/Header.ts][Hello]"); // Key should remain "Hello", not "Hello World"
+    expect(helloRow[1]).toBe("Hello World"); // But content should be from remote (remote wins)
+
+    const goodbyeRow = dataRows.find((row: string[]) =>
+      row[0].includes("[Goodbye]")
+    );
+    expect(goodbyeRow).toBeDefined();
+    expect(goodbyeRow[0]).toBe("[components/Header.ts][Goodbye]"); // Key should remain "Goodbye", not "Goodbye Updated"
+    expect(goodbyeRow[1]).toBe("Goodbye Updated"); // But content should be from remote (remote wins)
+
+    // New local key should be added
+    const welcomeRow = dataRows.find((row: string[]) =>
+      row[0].includes("[Welcome]")
+    );
+    expect(welcomeRow).toBeDefined();
+    expect(welcomeRow[0]).toBe("[components/Header.ts][Welcome]");
+    expect(welcomeRow[1]).toBe("Welcome");
   });
 });

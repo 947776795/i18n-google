@@ -294,10 +294,10 @@ export class GoogleSheetsSync {
       Object.entries(mergedRecord).forEach(([modulePath, moduleKeys]) => {
         Object.entries(moduleKeys as Record<string, any>).forEach(
           ([translationKey, translations]) => {
-            // 第一列格式：[文件路径][en文案]
+            // 第一列格式：[文件路径][固定的翻译key]
+            // 使用固定的translationKey，避免因英文翻译变化导致key变化
             const filePath = this.convertModulePathToFilePath(modulePath);
-            const enText = translations["en"] || translationKey; // 优先使用英文翻译，否则使用原key
-            const uploadKey = `[${filePath}][${enText}]`;
+            const uploadKey = `[${filePath}][${translationKey}]`;
 
             const row = [uploadKey];
 

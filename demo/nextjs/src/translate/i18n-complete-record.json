@@ -1,5 +1,5 @@
 {
-  "src/app/(root)/crypto-fundraise-tracker/page.ts": {
+  "app/(root)/crypto-fundraise-tracker/page.ts": {
     "page test": {
       "en": "page test",
       "ko": "page test",
@@ -12,7 +12,7 @@
       "mark": 0
     }
   },
-  "src/app/[locale]/page.ts": {
+  "app/[locale]/page.ts": {
     "Invalid locale: %{var0}": {
       "en": "Invalid locale: %{var0}",
       "ko": "Invalid locale: %{var0}",
@@ -25,7 +25,7 @@
       "mark": 0
     }
   },
-  "src/app/[locale]/server-test/page.ts": {
+  "app/[locale]/server-test/page.ts": {
     "Server Component I18n Test": {
       "en": "Server Component I18n Test",
       "ko": "서버 컴포넌트 I18n 테스트",
@@ -214,7 +214,7 @@
       "mark": 0
     },
     "test translate 1 one": {
-      "en": "test translate 1 one",
+      "en": "test translate 1 one test",
       "ko": "테스트 번역 1 일(一)",
       "zh-Hans": "测试翻译 1 一",
       "zh-Hant": "測試翻譯 1 一",
@@ -423,7 +423,7 @@
       "mark": 0
     }
   },
-  "src/components/ClientHome.ts": {
+  "components/ClientHome.ts": {
     "get_started_by_editing": {
       "en": "get_started_by_editing",
       "ko": "편집하여 시작하기",
@@ -579,7 +579,7 @@
       "mark": 0
     }
   },
-  "src/components/Button/index.ts": {
+  "components/Button/index.ts": {
     "I18n22": {
       "en": "I18n22",
       "ko": "I18n22",
@@ -614,7 +614,7 @@
       "mark": 0
     }
   },
-  "src/const/const.ts": {
+  "const/const.ts": {
     "sadasdad": {
       "en": "sadasdad",
       "ko": "sadasdad",
