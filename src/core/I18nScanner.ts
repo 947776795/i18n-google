@@ -66,9 +66,14 @@ export class I18nScanner {
       this.scanProgress.update("📁 扫描项目文件...");
       const files = await this.fileScanner.scanFiles();
 
-      // 4. 并行处理：收集引用 + 转换翻译
+      // 4. 并行处理：收集引用 + 转换翻译 + 检查导入路径
       this.scanProgress.showReferenceCollection();
       const { allReferences, newTranslations } = await this.processFiles(files);
+
+      // 4.5. 如果没有新翻译但检测到了路径变更，记录相关信息
+      if (newTranslations.length === 0 && allReferences.size > 0) {
+        Logger.info("🔍 没有发现新翻译，但已检查并更新了导入路径（如果需要）");
+      }
 
       // 5&6. 检测无用Key、确认删除并生成处理后的完整记录
       this.scanProgress.info("🔍 检测无用Key并等待用户确认...");
@@ -97,39 +102,33 @@ export class I18nScanner {
       if (shouldSyncToRemote) {
         // 9. 同步到远端 (Google Sheets) - 基于处理后的 CompleteRecord
         this.scanProgress.update("☁️ 同步到 Google Sheets...");
-        await this.googleSheetsSync.syncCompleteRecordToSheet(processedRecord);
+        const finalCompleteRecord =
+          await this.translationManager.loadCompleteRecord();
+        await this.googleSheetsSync.syncCompleteRecordToSheet(
+          finalCompleteRecord
+        );
       } else {
         this.scanProgress.update("⏭️ 跳过远端同步");
         Logger.info("⏭️ 用户选择跳过远端同步");
       }
 
-      // 完成主要扫描流程
-      const duration = Date.now() - startTime;
+      const endTime = Date.now();
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
 
       this.scanProgress.showScanComplete({
         totalFiles: files.length,
-        totalKeys: this.referencesMap.size,
+        totalKeys: allReferences.size,
         newKeys: newTranslations.length,
         unusedKeys: totalUnusedKeys,
-        duration,
+        duration: endTime - startTime,
       });
 
-      // 显示扫描摘要
-      UserInteraction.displayScanSummary({
-        totalFiles: files.length,
-        totalKeys: this.referencesMap.size,
-        newKeys: newTranslations.length,
-        unusedKeys: totalUnusedKeys,
-        duration,
-      });
-    } catch (error) {
-      this.scanProgress.fail("❌ 扫描过程中发生错误");
-      ErrorHandler.handle(error as Error, "scan");
-      throw error;
-    } finally {
-      // 清理临时的delete-preview文件
+      // 清理预览文件
       await this.deleteService.cleanupPreviewFiles(this.previewFilesToCleanup);
       this.previewFilesToCleanup = [];
+    } catch (error) {
+      this.scanProgress.fail("❌ 扫描过程中发生错误");
+      throw error;
     }
   }
 
@@ -146,60 +145,53 @@ export class I18nScanner {
     Logger.info(`🔍 开始处理 ${files.length} 个文件...`);
 
     for (const file of files) {
-      Logger.debug(`📂 处理文件: ${file}`);
+      Logger.debug(`📁 [DEBUG] 正在处理文件: ${file}`);
 
-      // 使用扩展的分析方法，同时获取现有引用和新翻译
+      // 使用新的分析和转换方法，包含导入路径验证
       const analysisResult = await this.fileTransformer.analyzeAndTransformFile(
         file
       );
+
+      Logger.debug(`📋 [DEBUG] 文件分析结果:`);
+      Logger.debug(`  - 现有引用: ${analysisResult.existingReferences.length}`);
+      Logger.debug(`  - 新翻译: ${analysisResult.newTranslations.length}`);
 
       // 收集现有引用
       analysisResult.existingReferences.forEach((ref) => {
         if (!allReferences.has(ref.key)) {
           allReferences.set(ref.key, []);
         }
-        allReferences.get(ref.key)!.push(ref);
+
+        // 检查重复引用
+        const existingRefs = allReferences.get(ref.key)!;
+        const isDuplicate = existingRefs.some(
+          (existingRef) =>
+            existingRef.filePath === ref.filePath &&
+            existingRef.lineNumber === ref.lineNumber &&
+            existingRef.columnNumber === ref.columnNumber
+        );
+
+        if (!isDuplicate) {
+          existingRefs.push(ref);
+        }
       });
 
       // 收集新翻译
-      analysisResult.newTranslations.forEach((result) => {
-        newTranslations.push(result);
-      });
+      newTranslations.push(...analysisResult.newTranslations);
 
-      // 如果有新翻译，收集新生成的引用位置
+      // 记录处理结果
       if (analysisResult.newTranslations.length > 0) {
         Logger.info(
           `📝 在 ${file} 中发现 ${analysisResult.newTranslations.length} 个新翻译`
         );
+      }
 
-        // 重新扫描文件获取新的引用位置
-        const newRefs = await this.fileTransformer.collectFileReferences(file);
-
-        // 只添加新翻译对应的引用
-        const newTranslationKeys = new Set(
-          analysisResult.newTranslations.map((t) => t.key)
-        );
-
-        newRefs.forEach((ref) => {
-          if (newTranslationKeys.has(ref.key)) {
-            if (!allReferences.has(ref.key)) {
-              allReferences.set(ref.key, []);
-            }
-
-            // 检查重复引用
-            const existingRefs = allReferences.get(ref.key)!;
-            const isDuplicate = existingRefs.some(
-              (existingRef) =>
-                existingRef.filePath === ref.filePath &&
-                existingRef.lineNumber === ref.lineNumber &&
-                existingRef.columnNumber === ref.columnNumber
-            );
-
-            if (!isDuplicate) {
-              existingRefs.push(ref);
-            }
-          }
-        });
+      // 如果有现有引用但没有新翻译，可能是路径更新场景
+      if (
+        analysisResult.existingReferences.length > 0 &&
+        analysisResult.newTranslations.length === 0
+      ) {
+        Logger.debug(`🔧 文件 ${file} 包含现有翻译引用，已检查导入路径`);
       }
     }
 

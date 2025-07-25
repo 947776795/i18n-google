@@ -1,5 +1,5 @@
+import Translations from "@translate/app/[locale]/server-test/client-test/page";
 import { I18nUtil } from "@utils/i18n";
-import Translations from "@translate/app/[locale]/server-test/page";
 interface PageProps {
   params: Promise<{ locale: string }>;
 }
@@ -115,7 +115,8 @@ export default async function ServerTestPage({ params }: PageProps) {
       <div>{I18n.t("fei fei")}</div>
       <div>{I18n.t("by by")}</div>
       <div>{I18n.t("head")}</div>
-      <div>{I18n.t("table")}</div>
+      {/* <div>{I18n.t("table")}</div> */}
+      <div>{I18n.t("ppp")}</div>
     </div>
   );
 }
