@@ -19,6 +19,7 @@ export class I18nScanner {
   private referencesMap: Map<string, ExistingReference[]> = new Map();
   private scanProgress: ScanProgressIndicator;
   private previewFilesToCleanup: string[] = []; // 跟踪需要清理的预览文件
+  private lastDeletedKeys: string[] = []; // 存储最近删除的keys，用于远端同步
 
   constructor(private config: I18nConfig) {
     // 设置日志级别
@@ -77,10 +78,13 @@ export class I18nScanner {
 
       // 5&6. 检测无用Key、确认删除并生成处理后的完整记录
       this.scanProgress.info("🔍 检测无用Key并等待用户确认...");
-      const { totalUnusedKeys, processedRecord, previewFilePath } =
+      const { totalUnusedKeys, processedRecord, previewFilePath, deletedKeys } =
         await this.deleteService.detectUnusedKeysAndGenerateRecord(
           allReferences
         );
+
+      // 保存已删除的key信息以供远端同步使用
+      this.lastDeletedKeys = deletedKeys || [];
 
       // 重新启动进度条
       await this.scanProgress.start("🔄 处理删除结果...");
@@ -105,7 +109,8 @@ export class I18nScanner {
         const finalCompleteRecord =
           await this.translationManager.loadCompleteRecord();
         await this.googleSheetsSync.syncCompleteRecordToSheet(
-          finalCompleteRecord
+          finalCompleteRecord,
+          deletedKeys || []
         );
       } else {
         this.scanProgress.update("⏭️ 跳过远端同步");

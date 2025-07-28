@@ -249,13 +249,53 @@ export class GoogleSheetsSync {
   }
 
   /**
+   * 过滤被用户删除的翻译key
+   */
+  private filterDeletedKeys(
+    record: CompleteTranslationRecord,
+    deletedKeys: string[]
+  ): CompleteTranslationRecord {
+    const filteredRecord: CompleteTranslationRecord = {};
+    const deletedKeySet = new Set(deletedKeys);
+
+    Object.entries(record).forEach(([modulePath, moduleKeys]) => {
+      filteredRecord[modulePath] = {};
+
+      Object.entries(moduleKeys).forEach(([key, translations]) => {
+        if (!deletedKeySet.has(key)) {
+          filteredRecord[modulePath][key] = translations;
+        } else {
+          Logger.debug(
+            `🚫 [DEBUG] 过滤用户删除的翻译: [${modulePath}][${key}]`
+          );
+        }
+      });
+
+      // 如果模块为空，删除该模块
+      if (Object.keys(filteredRecord[modulePath]).length === 0) {
+        delete filteredRecord[modulePath];
+      }
+    });
+
+    return filteredRecord;
+  }
+
+  /**
    * 将 CompleteTranslationRecord 同步到 Google Sheets
    * 在推送前会先拉取远端最新数据进行合并
    */
   public async syncCompleteRecordToSheet(
-    completeRecord: CompleteTranslationRecord
+    completeRecord: CompleteTranslationRecord,
+    deletedKeys: string[] = []
   ): Promise<void> {
     await this.ensureInitialized(); // 确保初始化完成
+
+    // 调试日志
+    Logger.debug(
+      `🔍 [DEBUG] syncCompleteRecordToSheet 接收到的 deletedKeys: ${JSON.stringify(
+        deletedKeys
+      )}`
+    );
 
     if (!this.isInitialized) {
       Logger.info("🔄 Google Sheets 未初始化，跳过同步");
@@ -278,10 +318,17 @@ export class GoogleSheetsSync {
       }
 
       // 2. 合并远端和本地数据（本地优先）
-      const mergedRecord = this.mergeCompleteRecords(
+      let mergedRecord = this.mergeCompleteRecords(
         completeRecord,
         remoteRecord
       );
+
+      // 3. 过滤被用户删除的翻译key
+      if (deletedKeys.length > 0) {
+        mergedRecord = this.filterDeletedKeys(mergedRecord, deletedKeys);
+        Logger.info(`🚫 已过滤 ${deletedKeys.length} 个用户删除的翻译key`);
+      }
+
       Logger.info(
         `🔀 数据合并完成，最终包含 ${Object.keys(mergedRecord).length} 个模块`
       );

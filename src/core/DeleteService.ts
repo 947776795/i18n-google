@@ -63,6 +63,7 @@ export class DeleteService {
     totalUnusedKeys: number;
     processedRecord: any;
     previewFilePath?: string;
+    deletedKeys?: string[]; // 新增：返回被删除的key列表
   }> {
     try {
       // 1. 读取现有的完整记录
@@ -80,7 +81,11 @@ export class DeleteService {
         Logger.info("ℹ️ 暂无现有完整记录，直接生成新记录");
         await this.translationManager.saveCompleteRecord(allReferences);
         const newRecord = await this.translationManager.loadCompleteRecord();
-        return { totalUnusedKeys: 0, processedRecord: newRecord };
+        return {
+          totalUnusedKeys: 0,
+          processedRecord: newRecord,
+          deletedKeys: [],
+        };
       }
 
       // 3. 分析无用Key
@@ -98,7 +103,11 @@ export class DeleteService {
         await this.translationManager.saveCompleteRecord(allReferences);
         const updatedRecord =
           await this.translationManager.loadCompleteRecord();
-        return { totalUnusedKeys: 0, processedRecord: updatedRecord };
+        return {
+          totalUnusedKeys: 0,
+          processedRecord: updatedRecord,
+          deletedKeys: [],
+        };
       }
 
       // 5. 用户选择要删除的Key
@@ -111,7 +120,7 @@ export class DeleteService {
       if (selectedKeysForDeletion.length === 0) {
         Logger.info("ℹ️ 用户未选择任何Key进行删除，保留所有无用Key");
         const processedRecord = await this.preserveUnusedKeys(allReferences);
-        return { totalUnusedKeys, processedRecord };
+        return { totalUnusedKeys, processedRecord, deletedKeys: [] };
       }
 
       // 6. 根据用户选择过滤要删除的Key
@@ -146,6 +155,7 @@ export class DeleteService {
           totalUnusedKeys: 0,
           processedRecord,
           previewFilePath: previewPath,
+          deletedKeys: actualKeysToDelete, // 返回实际删除的key列表
         };
       } else {
         // 9b. 取消删除，保留无用Key
@@ -154,6 +164,7 @@ export class DeleteService {
           totalUnusedKeys: selectedKeysForDeletion.length,
           processedRecord,
           previewFilePath: previewPath,
+          deletedKeys: [], // 取消删除，没有删除任何key
         };
       }
     } catch (error) {
@@ -161,7 +172,11 @@ export class DeleteService {
       // 发生错误时，直接生成新记录
       await this.translationManager.saveCompleteRecord(allReferences);
       const errorRecord = await this.translationManager.loadCompleteRecord();
-      return { totalUnusedKeys: 0, processedRecord: errorRecord };
+      return {
+        totalUnusedKeys: 0,
+        processedRecord: errorRecord,
+        deletedKeys: [],
+      };
     }
   }
 

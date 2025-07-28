@@ -129,13 +129,29 @@ export class PreviewFileService {
 
     // 解析每个格式化的key，提取模块路径和实际key
     formattedKeys.forEach((formattedKey) => {
-      const match = formattedKey.match(/^\[([^\]]+)\]\[([^\]]+)\]$/);
-      if (!match) {
-        Logger.warn(`⚠️ 无法解析格式化Key: ${formattedKey}`);
+      // 更精确的解析方法：找到第一个][来分隔模块路径和key
+      if (!formattedKey.startsWith("[")) {
+        Logger.warn(`⚠️ 格式化Key格式错误，应以[开头: ${formattedKey}`);
         return;
       }
 
-      const [, modulePath, key] = match;
+      // 找到第一个][的位置来分隔模块路径和key
+      const separatorIndex = formattedKey.indexOf("][");
+      if (separatorIndex === -1) {
+        Logger.warn(`⚠️ 无法找到模块路径和Key的分隔符][: ${formattedKey}`);
+        return;
+      }
+
+      // 提取模块路径（去掉开头的[）
+      const modulePath = formattedKey.substring(1, separatorIndex);
+
+      // 提取key（去掉结尾的]）
+      const keyPart = formattedKey.substring(separatorIndex + 2);
+      if (!keyPart.endsWith("]")) {
+        Logger.warn(`⚠️ 格式化Key格式错误，应以]结尾: ${formattedKey}`);
+        return;
+      }
+      const key = keyPart.substring(0, keyPart.length - 1);
 
       // 检查完整记录中是否存在该模块和key
       if (completeRecord[modulePath] && completeRecord[modulePath][key]) {
