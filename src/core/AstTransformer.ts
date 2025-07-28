@@ -232,8 +232,21 @@ export class AstTransformer {
             trailingComma: true,
           });
 
+    // 关键修复：如果有新翻译，从转换后的代码中重新收集所有引用
+    let finalExistingReferences = existingReferences;
+    if (newTranslations.length > 0) {
+      Logger.debug(`🔄 [DEBUG] 发现新翻译，从转换后代码重新收集引用...`);
+      finalExistingReferences = this.collectExistingI18nCalls(
+        transformedCode,
+        filePath
+      );
+      Logger.debug(
+        `📊 [DEBUG] 重新收集后的引用数量: ${finalExistingReferences.length}`
+      );
+    }
+
     return {
-      existingReferences,
+      existingReferences: finalExistingReferences,
       newTranslations,
       transformedCode,
     };
