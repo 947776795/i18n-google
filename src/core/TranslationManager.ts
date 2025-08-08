@@ -119,11 +119,8 @@ export class TranslationManager {
       this.config.outputDir,
       "i18n-complete-record.json"
     );
-    await writeFile(
-      outputPath,
-      JSON.stringify(completeRecord, null, 2),
-      "utf-8"
-    );
+    const normalized = this.normalizeCompleteRecord(completeRecord);
+    await writeFile(outputPath, JSON.stringify(normalized, null, 2), "utf-8");
   }
 
   /**
@@ -606,11 +603,44 @@ export class TranslationManager {
       this.config.outputDir,
       "i18n-complete-record.json"
     );
-    await writeFile(
-      outputPath,
-      JSON.stringify(completeRecord, null, 2),
-      "utf-8"
-    );
+    const normalized = this.normalizeCompleteRecord(completeRecord);
+    await writeFile(outputPath, JSON.stringify(normalized, null, 2), "utf-8");
+  }
+
+  /**
+   * 规范化完整记录中每个翻译条目的键顺序：
+   * - 按 config.languages 顺序输出语言字段
+   * - 其他非语言字段（不含 mark）跟随其后
+   * - 最后输出 mark 字段（如果存在）
+   */
+  private normalizeCompleteRecord(
+    record: CompleteTranslationRecord
+  ): CompleteTranslationRecord {
+    const normalized: CompleteTranslationRecord = {};
+    Object.entries(record).forEach(([modulePath, moduleKeys]) => {
+      normalized[modulePath] = {} as any;
+      Object.entries(moduleKeys).forEach(([key, translations]) => {
+        const ordered: Record<string, any> = {};
+        // 语言字段按配置顺序
+        this.config.languages.forEach((lang) => {
+          if ((translations as any)[lang] !== undefined) {
+            ordered[lang] = (translations as any)[lang];
+          }
+        });
+        // 追加其他非语言字段（排除 mark）
+        Object.keys(translations).forEach((k) => {
+          if (k !== "mark" && !this.config.languages.includes(k)) {
+            ordered[k] = (translations as any)[k];
+          }
+        });
+        // 最后追加 mark（如果存在）
+        if ((translations as any).mark !== undefined) {
+          (ordered as any).mark = (translations as any).mark;
+        }
+        (normalized[modulePath] as any)[key] = ordered as any;
+      });
+    });
+    return normalized;
   }
 
   /**
