@@ -71,14 +71,12 @@ export class FileTransformer {
       // 显示文件的前200个字符用于验证内容
       Logger.debug(`📝 [DEBUG] 文件内容预览: "${source.substring(0, 200)}..."`);
 
-      // 使用 AstTransformer 收集引用
-      const references = this.astTransformer.collectExistingI18nCalls(
-        source,
-        filePath
-      );
+      // 使用 AstTransformer 收集引用（通过 analyzeAndTransformSource 返回的 AST 结果更稳妥）
+      const { existingReferences } =
+        this.astTransformer.analyzeAndTransformSource(source, filePath);
 
-      Logger.debug(`📋 [DEBUG] 收集到 ${references.length} 个引用`);
-      references.forEach((ref, index) => {
+      Logger.debug(`📋 [DEBUG] 收集到 ${existingReferences.length} 个引用`);
+      existingReferences.forEach((ref: ExistingReference, index: number) => {
         Logger.debug(
           `  ${index + 1}. ${ref.key} -> ${ref.filePath}:${ref.lineNumber}:${
             ref.columnNumber
@@ -86,7 +84,7 @@ export class FileTransformer {
         );
       });
 
-      return references;
+      return existingReferences;
     } catch (error) {
       Logger.error(`❌ 收集文件引用 ${filePath} 时发生错误:`, error);
       throw error;

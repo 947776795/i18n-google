@@ -8,6 +8,9 @@ import { ExistingReference, TransformResult } from "./AstTransformer";
 import { ErrorHandler } from "../errors/I18nError";
 import { ScanProgressIndicator } from "../ui/ProgressIndicator";
 import { UserInteraction } from "../ui/UserInteraction";
+import type { IUserInteraction } from "../ui/IUserInteraction";
+import { AutoInteraction } from "../ui/AutoInteraction";
+import { InquirerInteractionAdapter } from "../ui/InquirerInteractionAdapter";
 import { Logger } from "../utils/StringUtils";
 
 export class I18nScanner {
@@ -16,6 +19,7 @@ export class I18nScanner {
   private translationManager: TranslationManager;
   private googleSheetsSync: GoogleSheetsSync;
   private deleteService: DeleteService;
+  private userInteraction: IUserInteraction;
   private referencesMap: Map<string, ExistingReference[]> = new Map();
   private scanProgress: ScanProgressIndicator;
   private previewFilesToCleanup: string[] = []; // 跟踪需要清理的预览文件
@@ -29,7 +33,27 @@ export class I18nScanner {
     this.fileTransformer = new FileTransformer(config);
     this.translationManager = new TranslationManager(config);
     this.googleSheetsSync = new GoogleSheetsSync(config);
-    this.deleteService = new DeleteService(config, this.translationManager);
+
+    // 非交互环境（如 Jest 或无 TTY）默认使用自动交互以避免阻塞（不依赖环境变量）
+    const isTestRuntime =
+      typeof (globalThis as any).jest !== "undefined" ||
+      typeof (globalThis as any).it === "function" ||
+      typeof (globalThis as any).describe === "function";
+    const nonInteractive =
+      !process.stdout.isTTY || isTestRuntime || (config as any).testMode === true;
+    this.userInteraction = nonInteractive
+      ? new AutoInteraction({
+          selectionMode: "skip",
+          autoConfirmDelete: true,
+          autoFinalConfirm: true,
+        })
+      : new InquirerInteractionAdapter();
+
+    this.deleteService = new DeleteService(
+      config,
+      this.translationManager,
+      this.userInteraction
+    );
     this.scanProgress = new ScanProgressIndicator();
   }
 
@@ -100,7 +124,11 @@ export class I18nScanner {
       // 8. 用户确认是否同步到远端
       const resumeProgress =
         this.scanProgress.pauseForInteraction("🤔 等待用户确认远端同步...");
-      const shouldSyncToRemote = await UserInteraction.confirmRemoteSync();
+      const shouldSyncToRemote = this.userInteraction.confirmRemoteSync
+        ? await this.userInteraction.confirmRemoteSync()
+        : await UserInteraction.confirmRemoteSync({
+            testMode: this.config.testMode,
+          });
       await resumeProgress();
 
       if (shouldSyncToRemote) {

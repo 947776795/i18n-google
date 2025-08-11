@@ -41,6 +41,8 @@ export class UserInteraction {
       );
     }
 
+    // 移除环境变量快捷通道，统一走交互或由上层注入的 IUserInteraction 控制
+
     // 提供选择选项
     const choices = [
       {
@@ -107,7 +109,7 @@ export class UserInteraction {
     const { selectedKeys } = await inquirer.prompt({
       type: "checkbox",
       name: "selectedKeys",
-      message: `请选择要删除的Key (共${formattedUnusedKeys.length}个) - 使用空格选择，回车确认`,
+      message: `请选择要删除的Key (共${formattedUnusedKeys.length}个`,
       choices,
       pageSize: pageSize, // 一次显示15个选项，可以用PageUp/PageDown翻页
       validate: (input: any) => {
@@ -131,7 +133,8 @@ export class UserInteraction {
   static async confirmDeletion(
     unusedKeys: string[],
     previewFilePath: string,
-    forceKeptKeys: string[] = []
+    forceKeptKeys: string[] = [],
+    options: { testMode?: boolean } = {}
   ): Promise<boolean> {
     const summary: DeletionSummary = {
       keysToDelete: unusedKeys,
@@ -151,6 +154,8 @@ export class UserInteraction {
     }
 
     Logger.info(`\n⚠️  发现 ${summary.totalKeys} 个可删除的无用翻译Key\n`);
+
+    // 统一交互确认，由上层策略控制是否使用非交互实现
 
     // 最终确认
     const { confirmDeletion } = await inquirer.prompt([
@@ -260,10 +265,14 @@ export class UserInteraction {
   /**
    * 确认是否上传到远端
    */
-  static async confirmRemoteSync(): Promise<boolean> {
+  static async confirmRemoteSync(
+    options: { testMode?: boolean } = {}
+  ): Promise<boolean> {
     Logger.info("\n" + "=".repeat(60));
     Logger.info("☁️  准备同步到远端 (Google Sheets)");
     Logger.info("=".repeat(60));
+
+    // 统一交互确认，由上层策略控制是否使用非交互实现
 
     const { confirmSync } = await inquirer.prompt([
       {

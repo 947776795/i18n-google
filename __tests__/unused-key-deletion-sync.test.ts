@@ -302,8 +302,12 @@ describe("Unused Key Deletion and Sync Workflow", () => {
         });
 
         // Verify that used keys are still in the synced data
-        expect(syncedKeys).toContain(expect.stringContaining("Hello"));
-        expect(syncedKeys).toContain(expect.stringContaining("Copyright"));
+        expect(syncedKeys).toEqual(
+          expect.arrayContaining([expect.stringContaining("Hello")])
+        );
+        expect(syncedKeys).toEqual(
+          expect.arrayContaining([expect.stringContaining("Copyright")])
+        );
       } catch (error) {
         console.error("Test failed with error:", error);
         throw error;
@@ -376,9 +380,15 @@ describe("Unused Key Deletion and Sync Workflow", () => {
         expect(syncedKeys).not.toContain(expect.stringContaining("UnusedKey4"));
 
         // Verify that non-selected unused keys are still present
-        expect(syncedKeys).toContain(expect.stringContaining("UnusedKey2"));
-        expect(syncedKeys).toContain(expect.stringContaining("UnusedKey3"));
-        expect(syncedKeys).toContain(expect.stringContaining("UnusedKey5"));
+        expect(syncedKeys).toEqual(
+          expect.arrayContaining([expect.stringContaining("UnusedKey2")])
+        );
+        expect(syncedKeys).toEqual(
+          expect.arrayContaining([expect.stringContaining("UnusedKey3")])
+        );
+        expect(syncedKeys).toEqual(
+          expect.arrayContaining([expect.stringContaining("UnusedKey5")])
+        );
       } catch (error) {
         console.error("Test failed with error:", error);
         throw error;
@@ -434,13 +444,27 @@ describe("Unused Key Deletion and Sync Workflow", () => {
           .filter((key: string) => key && key.trim() !== "");
 
         // All keys should still be present in the sync
-        expect(syncedKeys).toContain(expect.stringContaining("Hello"));
-        expect(syncedKeys).toContain(expect.stringContaining("Copyright"));
-        expect(syncedKeys).toContain(expect.stringContaining("UnusedKey1"));
-        expect(syncedKeys).toContain(expect.stringContaining("UnusedKey2"));
-        expect(syncedKeys).toContain(expect.stringContaining("UnusedKey3"));
-        expect(syncedKeys).toContain(expect.stringContaining("UnusedKey4"));
-        expect(syncedKeys).toContain(expect.stringContaining("UnusedKey5"));
+        expect(syncedKeys).toEqual(
+          expect.arrayContaining([expect.stringContaining("Hello")])
+        );
+        expect(syncedKeys).toEqual(
+          expect.arrayContaining([expect.stringContaining("Copyright")])
+        );
+        expect(syncedKeys).toEqual(
+          expect.arrayContaining([expect.stringContaining("UnusedKey1")])
+        );
+        expect(syncedKeys).toEqual(
+          expect.arrayContaining([expect.stringContaining("UnusedKey2")])
+        );
+        expect(syncedKeys).toEqual(
+          expect.arrayContaining([expect.stringContaining("UnusedKey3")])
+        );
+        expect(syncedKeys).toEqual(
+          expect.arrayContaining([expect.stringContaining("UnusedKey4")])
+        );
+        expect(syncedKeys).toEqual(
+          expect.arrayContaining([expect.stringContaining("UnusedKey5")])
+        );
       } catch (error) {
         console.error("Test failed with error:", error);
         throw error;

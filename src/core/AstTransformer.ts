@@ -84,122 +84,9 @@ export class AstTransformer {
     source: string,
     filePath: string
   ): ExistingReference[] {
-    Logger.debug(
-      `🔍 [DEBUG] AstTransformer.collectExistingI18nCalls: ${filePath}`
-    );
-
     const j = jscodeshift.withParser("tsx");
     const root = j(source);
-    const references: ExistingReference[] = [];
-
-    Logger.debug(`📊 [DEBUG] 开始查找 I18n.t() 调用...`);
-
-    // 查找所有 I18n.t() 调用
-    root.find(j.CallExpression).forEach((path: ASTPath<n.CallExpression>) => {
-      const callExpr = path.node;
-
-      Logger.debug(`🔍 [DEBUG] 检查调用表达式: ${path.node.type}`);
-
-      // 检查是否是 I18n.t() 调用
-      if (this.isI18nTCall(callExpr)) {
-        Logger.debug(`✅ [DEBUG] 找到 I18n.t() 调用`);
-
-        const keyArg = callExpr.arguments[0];
-        Logger.debug(`🔑 [DEBUG] 第一个参数类型: ${keyArg?.type}`);
-
-        // 处理字符串字面量参数
-        if (n.Literal.check(keyArg) && typeof keyArg.value === "string") {
-          const key = keyArg.value;
-          const loc = callExpr.loc;
-
-          Logger.debug(`📝 [DEBUG] 字符串字面量 key: "${key}"`);
-          Logger.debug(
-            `📍 [DEBUG] 位置信息: ${
-              loc ? `${loc.start.line}:${loc.start.column}` : "null"
-            }`
-          );
-
-          if (loc && loc.start) {
-            const ref = {
-              key,
-              filePath,
-              lineNumber: loc.start.line,
-              columnNumber: loc.start.column,
-              callExpression: `I18n.t("${key}")`,
-            };
-            references.push(ref);
-            Logger.debug(
-              `✅ [DEBUG] 添加字符串字面量引用: ${JSON.stringify(ref)}`
-            );
-          } else {
-            Logger.debug(`⚠️  [DEBUG] 字符串字面量缺少位置信息`);
-          }
-        }
-        // 处理模板字面量参数（如果是纯字符串）
-        else if (n.TemplateLiteral.check(keyArg)) {
-          Logger.debug(
-            `📝 [DEBUG] 模板字面量，表达式数量: ${keyArg.expressions.length}, quasis数量: ${keyArg.quasis.length}`
-          );
-
-          // 只处理没有表达式的纯字符串模板
-          if (keyArg.expressions.length === 0 && keyArg.quasis.length === 1) {
-            const key =
-              keyArg.quasis[0].value.cooked || keyArg.quasis[0].value.raw;
-            const loc = callExpr.loc;
-
-            Logger.debug(`📝 [DEBUG] 纯字符串模板 key: "${key}"`);
-            Logger.debug(
-              `📍 [DEBUG] 位置信息: ${
-                loc ? `${loc.start.line}:${loc.start.column}` : "null"
-              }`
-            );
-
-            if (loc && loc.start) {
-              const ref = {
-                key,
-                filePath,
-                lineNumber: loc.start.line,
-                columnNumber: loc.start.column,
-                callExpression: `I18n.t(\`${key}\`)`,
-              };
-              references.push(ref);
-              Logger.debug(
-                `✅ [DEBUG] 添加模板字面量引用: ${JSON.stringify(ref)}`
-              );
-            } else {
-              Logger.debug(`⚠️  [DEBUG] 模板字面量缺少位置信息`);
-            }
-          } else {
-            Logger.debug(`⚠️  [DEBUG] 跳过复杂模板字面量（有表达式）`);
-          }
-        } else {
-          Logger.debug(
-            `⚠️  [DEBUG] 跳过非字符串参数: ${keyArg?.type || "undefined"}`
-          );
-        }
-      } else {
-        // 只在找到其他调用表达式时记录（避免太多日志）
-        const callee = callExpr.callee;
-        if (n.MemberExpression.check(callee)) {
-          const objectName = n.Identifier.check(callee.object)
-            ? callee.object.name
-            : "unknown";
-          const propertyName = n.Identifier.check(callee.property)
-            ? callee.property.name
-            : "unknown";
-          if (objectName === "I18n" || propertyName === "t") {
-            Logger.debug(
-              `🔍 [DEBUG] 跳过非 I18n.t() 调用: ${objectName}.${propertyName}`
-            );
-          }
-        }
-      }
-    });
-
-    Logger.debug(
-      `📊 [DEBUG] 完成扫描，共找到 ${references.length} 个 I18n.t() 引用`
-    );
-    return references;
+    return this.scanExistingI18nCalls(root, j, filePath);
   }
 
   /**
@@ -212,8 +99,12 @@ export class AstTransformer {
     const j = jscodeshift.withParser("tsx");
     const root = j(source);
 
-    // 收集现有的 I18n 引用
-    const existingReferences = this.collectExistingI18nCalls(source, filePath);
+    // 收集现有的 I18n 引用（直接基于已解析的 AST，避免重复解析导致的偶发解析冲突）
+    const existingReferences = this.collectExistingI18nCallsFromRoot(
+      root,
+      j,
+      filePath
+    );
 
     // 检查并修复导入路径不匹配的问题
     this.validateAndFixImportPaths(j, root, filePath);
@@ -250,6 +141,62 @@ export class AstTransformer {
       newTranslations,
       transformedCode,
     };
+  }
+
+  /**
+   * 基于已解析的 AST 收集现有的 I18n 引用，避免对源码进行二次解析
+   */
+  private collectExistingI18nCallsFromRoot(
+    root: JSCodeshiftCollection,
+    j: JSCodeshiftAPI,
+    filePath: string
+  ): ExistingReference[] {
+    return this.scanExistingI18nCalls(root, j, filePath);
+  }
+
+  /**
+   * 统一的扫描实现：在已有 AST 基础上收集 I18n.t 引用
+   */
+  private scanExistingI18nCalls(
+    root: JSCodeshiftCollection,
+    j: JSCodeshiftAPI,
+    filePath: string
+  ): ExistingReference[] {
+    const references: ExistingReference[] = [];
+    root.find(j.CallExpression).forEach((path: ASTPath<n.CallExpression>) => {
+      const callExpr = path.node;
+      if (!this.isI18nTCall(callExpr)) return;
+      const keyArg = callExpr.arguments[0];
+      if (n.Literal.check(keyArg) && typeof keyArg.value === "string") {
+        const key = keyArg.value;
+        const loc = callExpr.loc;
+        if (loc && loc.start) {
+          references.push({
+            key,
+            filePath,
+            lineNumber: loc.start.line,
+            columnNumber: loc.start.column,
+            callExpression: `I18n.t("${key}")`,
+          });
+        }
+      } else if (n.TemplateLiteral.check(keyArg)) {
+        if (keyArg.expressions.length === 0 && keyArg.quasis.length === 1) {
+          const key =
+            keyArg.quasis[0].value.cooked || keyArg.quasis[0].value.raw;
+          const loc = callExpr.loc;
+          if (loc && loc.start) {
+            references.push({
+              key,
+              filePath,
+              lineNumber: loc.start.line,
+              columnNumber: loc.start.column,
+              callExpression: `I18n.t(\`${key}\`)`,
+            });
+          }
+        }
+      }
+    });
+    return references;
   }
 
   /**
@@ -343,6 +290,33 @@ export class AstTransformer {
         AstUtils.isStringLiteral(path.node) &&
         StringUtils.isTranslatableString(path.node.value, this.config)
       ) {
+        // 跳过 import 源字符串，例如: import X from "react" / "@utils"
+        let parent = path.parent;
+        while (
+          parent &&
+          parent.node &&
+          (parent.node as any).type === "Literal"
+        ) {
+          parent = parent.parent;
+        }
+        if (
+          parent &&
+          parent.node &&
+          (parent.node as any).type === "ImportDeclaration"
+        ) {
+          return;
+        }
+        // 跳过已经位于 I18n.t(...) 调用中的字面量，避免重复包装
+        if (
+          parent &&
+          parent.node &&
+          (parent.node as any).type === "CallExpression" &&
+          n.CallExpression.check(parent.node) &&
+          this.isI18nTCall(parent.node as n.CallExpression)
+        ) {
+          return;
+        }
+
         const formattedText = StringUtils.formatString(
           path.node.value,
           this.config
@@ -817,20 +791,49 @@ export class AstTransformer {
       })
       .remove();
 
-    // 添加新的正确导入
-    root
-      .get()
-      .node.program.body.unshift(
-        j.importDeclaration(
-          [
+    // 添加新的正确导入（保持已有默认/命名导入稳定，避免重复声明）
+    // 如果已经从 @utils 或 @utils/i18n 有任何导入，则追加命名导入；否则新增一条导入声明
+    const existingUtilsImportColl = root
+      .find(j.ImportDeclaration)
+      .filter((p: ASTPath<n.ImportDeclaration>) => {
+        const src = p.node.source?.value;
+        return src === "@utils/i18n" || src === "@utils";
+      });
+
+    if (existingUtilsImportColl.length > 0) {
+      const first = existingUtilsImportColl.at(0);
+      if (first.length > 0) {
+        const decl = first.get().node as n.ImportDeclaration;
+        const specs = decl.specifiers || [];
+        // 仅当未包含 I18nUtil 时追加
+        const hasI18nUtil = specs.some(
+          (s) => n.ImportSpecifier.check(s) && s.imported.name === "I18nUtil"
+        );
+        if (!hasI18nUtil) {
+          specs.push(
             j.importSpecifier(
               j.identifier("I18nUtil"),
               j.identifier("I18nUtil")
-            ),
-          ],
-          j.literal("@utils/i18n")
-        )
-      );
+            )
+          );
+          decl.specifiers = specs as any;
+        }
+      }
+    } else {
+      root
+        .get()
+        .node.program.body.unshift(
+          j.importDeclaration(
+            [
+              j.importSpecifier(
+                j.identifier("I18nUtil"),
+                j.identifier("I18nUtil")
+              ),
+            ],
+            j.literal("@utils/i18n")
+          )
+        );
+    }
   }
 
   /**

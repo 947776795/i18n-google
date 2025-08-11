@@ -3,6 +3,7 @@ import * as path from "path";
 import type { I18nConfig } from "../types";
 import type { CompleteTranslationRecord } from "./TranslationManager";
 import { Logger } from "../utils/StringUtils";
+import { KeyFormat } from "../utils/KeyFormat";
 
 // 删除预览数据结构
 export interface DeletePreview {
@@ -129,41 +130,19 @@ export class PreviewFileService {
 
     // 解析每个格式化的key，提取模块路径和实际key
     formattedKeys.forEach((formattedKey) => {
-      // 更精确的解析方法：找到第一个][来分隔模块路径和key
-      if (!formattedKey.startsWith("[")) {
-        Logger.warn(`⚠️ 格式化Key格式错误，应以[开头: ${formattedKey}`);
+      const parts = KeyFormat.parse(formattedKey);
+      if (!parts) {
+        Logger.warn(`⚠️ 无法解析格式化Key: ${formattedKey}`);
         return;
       }
-
-      // 找到第一个][的位置来分隔模块路径和key
-      const separatorIndex = formattedKey.indexOf("][");
-      if (separatorIndex === -1) {
-        Logger.warn(`⚠️ 无法找到模块路径和Key的分隔符][: ${formattedKey}`);
-        return;
-      }
-
-      // 提取模块路径（去掉开头的[）
-      const modulePath = formattedKey.substring(1, separatorIndex);
-
-      // 提取key（去掉结尾的]）
-      const keyPart = formattedKey.substring(separatorIndex + 2);
-      if (!keyPart.endsWith("]")) {
-        Logger.warn(`⚠️ 格式化Key格式错误，应以]结尾: ${formattedKey}`);
-        return;
-      }
-      const key = keyPart.substring(0, keyPart.length - 1);
-
-      // 检查完整记录中是否存在该模块和key
+      const { modulePath, key } = parts;
       if (completeRecord[modulePath] && completeRecord[modulePath][key]) {
-        // 初始化预览记录中的模块
         if (!previewRecord[modulePath]) {
           previewRecord[modulePath] = {};
         }
-
-        // 复制该key的所有翻译数据
         previewRecord[modulePath][key] = completeRecord[modulePath][key];
       } else {
-        Logger.warn(`⚠️ 在完整记录中找不到: [${modulePath}][${key}]`);
+        Logger.warn(`⚠️ 在完整记录中找不到: ${formattedKey}`);
       }
     });
 

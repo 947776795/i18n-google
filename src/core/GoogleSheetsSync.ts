@@ -3,6 +3,7 @@ import type { I18nConfig } from "../types";
 import type { CompleteTranslationRecord } from "./TranslationManager";
 import { I18nError, I18nErrorType, ErrorHandler } from "../errors/I18nError";
 import { Logger } from "../utils/StringUtils";
+import { KeyFormat } from "../utils/KeyFormat";
 
 export class GoogleSheetsSync {
   private googleSheets: any;
@@ -249,30 +250,47 @@ export class GoogleSheetsSync {
   }
 
   /**
-   * 过滤被用户删除的翻译key
+   * 过滤被用户删除的翻译 key
+   * 支持两种删除标识格式：
+   *  - 组合键：[modulePath][key]
+   *  - 纯 key：key（仅用于旧格式，且仅在未提供组合键时才生效，避免误删其他模块同名 key）
    */
   private filterDeletedKeys(
     record: CompleteTranslationRecord,
     deletedKeys: string[]
   ): CompleteTranslationRecord {
     const filteredRecord: CompleteTranslationRecord = {};
-    const deletedKeySet = new Set(deletedKeys);
+
+    const formattedDeleteSet = new Set<string>();
+    const rawDeleteSet = new Set<string>();
+
+    deletedKeys.forEach((k) => {
+      const parsed = KeyFormat.parse(k);
+      if (parsed) formattedDeleteSet.add(k);
+      else rawDeleteSet.add(k);
+    });
+
+    const hasFormatted = formattedDeleteSet.size > 0;
 
     Object.entries(record).forEach(([modulePath, moduleKeys]) => {
-      filteredRecord[modulePath] = {};
-
       Object.entries(moduleKeys).forEach(([key, translations]) => {
-        if (!deletedKeySet.has(key)) {
-          filteredRecord[modulePath][key] = translations;
+        const combined = KeyFormat.format(modulePath, key);
+        const shouldDelete = hasFormatted
+          ? formattedDeleteSet.has(combined)
+          : rawDeleteSet.has(key);
+
+        if (!shouldDelete) {
+          if (!filteredRecord[modulePath]) filteredRecord[modulePath] = {};
+          filteredRecord[modulePath][key] = translations as any;
         } else {
-          Logger.debug(
-            `🚫 [DEBUG] 过滤用户删除的翻译: [${modulePath}][${key}]`
-          );
+          Logger.debug(`🚫 [DEBUG] 过滤用户删除的翻译: ${combined}`);
         }
       });
 
-      // 如果模块为空，删除该模块
-      if (Object.keys(filteredRecord[modulePath]).length === 0) {
+      if (
+        filteredRecord[modulePath] &&
+        Object.keys(filteredRecord[modulePath]).length === 0
+      ) {
         delete filteredRecord[modulePath];
       }
     });
@@ -289,13 +307,6 @@ export class GoogleSheetsSync {
     deletedKeys: string[] = []
   ): Promise<void> {
     await this.ensureInitialized(); // 确保初始化完成
-
-    // 调试日志
-    Logger.debug(
-      `🔍 [DEBUG] syncCompleteRecordToSheet 接收到的 deletedKeys: ${JSON.stringify(
-        deletedKeys
-      )}`
-    );
 
     if (!this.isInitialized) {
       Logger.info("🔄 Google Sheets 未初始化，跳过同步");
@@ -323,12 +334,11 @@ export class GoogleSheetsSync {
         remoteRecord
       );
 
-      // 3. 过滤被用户删除的翻译key
+      // 2.5 过滤用户删除的键（支持 [modulePath][key] 与旧格式 key）
       if (deletedKeys.length > 0) {
         mergedRecord = this.filterDeletedKeys(mergedRecord, deletedKeys);
         Logger.info(`🚫 已过滤 ${deletedKeys.length} 个用户删除的翻译key`);
       }
-
       Logger.info(
         `🔀 数据合并完成，最终包含 ${Object.keys(mergedRecord).length} 个模块`
       );
