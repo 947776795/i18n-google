@@ -16,19 +16,31 @@ export class PathUtils {
     filePath: string,
     config: I18nConfig
   ): string {
-    // 移除项目根目录路径
-    let modulePath = filePath.replace(process.cwd(), "").replace(/^\/+/, "");
+    // 统一为绝对路径
+    const pathAbs = path.isAbsolute(filePath)
+      ? filePath
+      : path.resolve(process.cwd(), filePath);
 
-    // 移除配置的根目录前缀（如 demo/src）
-    if (config.rootDir) {
-      const rootDir = config.rootDir.replace(/^\.\//, "");
-      modulePath = modulePath.replace(new RegExp(`^${rootDir}/`), "");
-    }
+    // 计算基准根目录（绝对路径）
+    const rootDirAbs = config.rootDir
+      ? path.resolve(process.cwd(), config.rootDir)
+      : process.cwd();
 
-    // 将文件扩展名从 .tsx/.ts/.jsx/.js 改为 .ts
-    modulePath = modulePath.replace(/\.(tsx?|jsx?)$/, ".ts");
+    // 优先相对 rootDir 截取，否则相对项目根目录
+    let relative = pathAbs.startsWith(rootDirAbs + path.sep)
+      ? path.relative(rootDirAbs, pathAbs)
+      : path.relative(process.cwd(), pathAbs);
 
-    return modulePath;
+    // 归一化分隔符
+    relative = relative.replace(/\\/g, "/");
+
+    // 去除前导的 src/（如果存在）
+    relative = relative.replace(/^src\//, "");
+
+    // 将扩展名统一为 .ts
+    relative = relative.replace(/\.(tsx?|jsx?)$/, ".ts");
+
+    return relative;
   }
 
   /**
@@ -56,13 +68,13 @@ export class PathUtils {
   ): string {
     // 计算 rootDir 的绝对路径
     const rootDirAbsolute = path.resolve(process.cwd(), config.rootDir);
-    
+
     // 计算文件相对于 rootDir 的路径
     const relativePath = path.relative(rootDirAbsolute, currentFilePath);
-    
+
     // 移除文件扩展名
-    const pathWithoutExt = relativePath.replace(/\.(tsx?|jsx?)$/, '');
-    
+    const pathWithoutExt = relativePath.replace(/\.(tsx?|jsx?)$/, "");
+
     // 生成 @translate 导入路径
     return `@translate/${pathWithoutExt}`;
   }

@@ -1,6 +1,6 @@
 import path from "path";
 import fs from "fs";
-import { readFile, writeFile, mkdir } from "fs/promises";
+// Prefer fs.promises so tests that mock "fs" intercept correctly
 import type { I18nConfig } from "../types";
 import type { TransformResult } from "./AstTransformer";
 import { GoogleSheetsSync } from "./GoogleSheetsSync";
@@ -75,7 +75,7 @@ export class TranslationManager {
     const dir = path.join(process.cwd(), this.config.outputDir);
     try {
       if (!fs.existsSync(dir)) {
-        await mkdir(dir, { recursive: true });
+        await fs.promises.mkdir(dir, { recursive: true });
       }
     } catch (error) {
       throw new I18nError(
@@ -113,15 +113,16 @@ export class TranslationManager {
     const completeRecord = await this.buildCompleteRecord(allReferences);
 
     // 确保输出目录存在
-    await mkdir(this.config.outputDir, { recursive: true });
+    await fs.promises.mkdir(this.config.outputDir, { recursive: true });
 
     const outputPath = path.join(
       this.config.outputDir,
       "i18n-complete-record.json"
     );
-    await writeFile(
+    const normalized = this.normalizeCompleteRecord(completeRecord);
+    await fs.promises.writeFile(
       outputPath,
-      JSON.stringify(completeRecord, null, 2),
+      JSON.stringify(normalized, null, 2),
       "utf-8"
     );
   }
@@ -130,11 +131,13 @@ export class TranslationManager {
    * 合并新引用与现有记录，保留用户选择不删除的无用Key
    */
   async mergeWithExistingRecord(
-    allReferences: Map<string, any[]>
-  ): Promise<void> {
+    allReferences: Map<string, any[]>,
+    existingRecordOverride?: CompleteTranslationRecord
+  ): Promise<CompleteTranslationRecord> {
     try {
-      // 1. 加载现有的完整记录
-      const existingRecord = await this.loadCompleteRecord();
+      // 1. 加载现有的完整记录（允许调用方提供内存覆盖，以避免测试环境下磁盘桩读取旧数据）
+      const existingRecord =
+        existingRecordOverride ?? (await this.loadCompleteRecord());
 
       // 2. 构建基于新引用的记录
       const newRecord = await this.buildCompleteRecord(allReferences);
@@ -164,12 +167,13 @@ export class TranslationManager {
         }
       });
 
-      // 4. 保存合并后的记录
+      // 4. 保存并返回合并后的记录
       await this.saveCompleteRecordDirect(mergedRecord);
 
       Logger.debug(
         "✅ [DEBUG] TranslationManager.mergeWithExistingRecord 完成"
       );
+      return mergedRecord;
     } catch (error) {
       Logger.error(
         "❌ [DEBUG] TranslationManager.mergeWithExistingRecord 失败:",
@@ -270,37 +274,44 @@ export class TranslationManager {
     // 第四步：构建新的完整记录，智能合并翻译数据
     const record: CompleteTranslationRecord = {};
 
-    for (const [modulePath, keys] of Object.entries(pathClassification)) {
+    for (const [classifiedModulePath, keys] of Object.entries(
+      pathClassification
+    )) {
       Logger.debug(
-        `📁 [DEBUG] 处理模块路径: "${modulePath}" (${keys.length} 个keys)`
+        `📁 [DEBUG] 处理模块路径: "${classifiedModulePath}" (${keys.length} 个keys)`
       );
 
-      // 初始化模块
-      record[modulePath] = {};
+      // 在保持“原始模块路径优先”的策略下，暂不预初始化 classifiedModulePath
 
       for (const key of keys) {
         Logger.debug(`🔑 [DEBUG] 处理key: "${key}"`);
 
         // 检查现有记录中是否有这个key的翻译数据
         let existingTranslations: any = null;
+        let originalModulePathForKey: string | null = null;
 
-        // 首先在当前模块路径中查找
-        if (existingRecord[modulePath] && existingRecord[modulePath][key]) {
-          existingTranslations = existingRecord[modulePath][key];
+        // 首先在与分类模块路径相同的模块中查找（若存在）
+        if (
+          existingRecord[classifiedModulePath] &&
+          existingRecord[classifiedModulePath][key]
+        ) {
+          existingTranslations = existingRecord[classifiedModulePath][key];
+          originalModulePathForKey = classifiedModulePath;
           Logger.debug(
-            `✅ [DEBUG] 在当前模块 "${modulePath}" 中找到key "${key}" 的现有翻译`
+            `✅ [DEBUG] 在分类模块 "${classifiedModulePath}" 中找到key "${key}" 的现有翻译`
           );
         } else {
           // 检查是否有迁移映射
-          const oldModulePath = migrationMap.get(modulePath);
+          const oldModulePath = migrationMap.get(classifiedModulePath);
           if (
             oldModulePath &&
             existingRecord[oldModulePath] &&
             existingRecord[oldModulePath][key]
           ) {
             existingTranslations = existingRecord[oldModulePath][key];
+            originalModulePathForKey = oldModulePath;
             Logger.info(
-              `🔄 [MIGRATION] 从旧路径 "${oldModulePath}" 迁移key "${key}" 到新路径 "${modulePath}"`
+              `🔄 [MIGRATION] 发现旧路径 "${oldModulePath}" 中存在 key "${key}"`
             );
           } else {
             // 在现有记录的所有模块中查找这个key（兼容旧逻辑）
@@ -310,6 +321,7 @@ export class TranslationManager {
             ] of Object.entries(existingRecord)) {
               if (existingModuleKeys[key]) {
                 existingTranslations = existingModuleKeys[key];
+                originalModulePathForKey = existingModulePath;
                 Logger.debug(
                   `✅ [DEBUG] 在模块 "${existingModulePath}" 中找到key "${key}" 的现有翻译`
                 );
@@ -319,15 +331,28 @@ export class TranslationManager {
           }
         }
 
-        if (existingTranslations) {
-          // 现有key：直接复制所有数据（包括mark字段）
-          record[modulePath][key] = { ...existingTranslations };
+        if (existingTranslations && originalModulePathForKey) {
+          // 如果检测到该模块发生迁移，则将旧数据归并到新路径（classifiedModulePath）
+          const migratedFrom = migrationMap.get(classifiedModulePath);
+          const targetModulePath =
+            migratedFrom && migratedFrom === originalModulePathForKey
+              ? classifiedModulePath
+              : originalModulePathForKey;
+
+          if (!record[targetModulePath]) {
+            record[targetModulePath] = {};
+          }
+          record[targetModulePath][key] = { ...existingTranslations };
         } else {
-          record[modulePath][key] = {};
+          // 新 key：落在“分类模块路径”下
+          if (!record[classifiedModulePath]) {
+            record[classifiedModulePath] = {};
+          }
+          record[classifiedModulePath][key] = {} as any;
           // 为每种语言设置默认翻译值（集成大模型翻译）
           for (const lang of this.config.languages) {
             if (lang === "en") {
-              record[modulePath][key][lang] = key;
+              (record[classifiedModulePath][key] as any)[lang] = key;
             } else {
               try {
                 const translated = await llmTranslate(
@@ -336,13 +361,14 @@ export class TranslationManager {
                   lang,
                   this.config.apiKey
                 );
-                record[modulePath][key][lang] = translated || key;
+                (record[classifiedModulePath][key] as any)[lang] =
+                  translated || key;
               } catch (e) {
-                record[modulePath][key][lang] = key; // 降级
+                (record[classifiedModulePath][key] as any)[lang] = key; // 降级
               }
             }
           }
-          record[modulePath][key].mark = 0;
+          (record[classifiedModulePath][key] as any).mark = 0;
         }
       }
     }
@@ -379,15 +405,26 @@ export class TranslationManager {
             // 旧路径不在当前引用中，可能是被移动的路径
             const existingKeys = Object.keys(existingRecord[existingPath]);
 
-            // 检查key的重叠度
+            // 检查 key 的重叠度：以“旧路径的键集合”为分母更合理
             const overlappingKeys = keys.filter((key) =>
               existingKeys.includes(key)
             );
 
-            // 如果重叠度超过阈值（比如80%），认为是文件移动
+            // 判断条件：
+            // - 重叠键数量占旧路径键总数的比例 >= 0.8（大部分旧键都在新路径中出现）
+            // - 或者旧路径键数量较少（<= 2）且全部出现在新路径中（便于小集合迁移）
+            const overlapByOld =
+              existingKeys.length > 0
+                ? overlappingKeys.length / existingKeys.length
+                : 0;
+
+            const isSmallSetFullyCovered =
+              existingKeys.length <= 2 &&
+              overlappingKeys.length === existingKeys.length;
+
             if (
               overlappingKeys.length > 0 &&
-              overlappingKeys.length / keys.length >= 0.8
+              (overlapByOld >= 0.8 || isSmallSetFullyCovered)
             ) {
               migrationMap.set(currentPath, existingPath);
               Logger.info(
@@ -490,7 +527,7 @@ export class TranslationManager {
     );
 
     try {
-      const content = await readFile(filePath, "utf-8");
+      const content = await fs.promises.readFile(filePath, "utf-8");
       return JSON.parse(content);
     } catch (error) {
       Logger.warn("完整记录文件不存在或读取失败，返回空记录");
@@ -528,7 +565,7 @@ export class TranslationManager {
       const content = this.generateModuleFileContent(moduleTranslations);
 
       // 写入文件
-      await writeFile(filePath, content, "utf-8");
+      await fs.promises.writeFile(filePath, content, "utf-8");
     }
   }
 
@@ -553,7 +590,7 @@ export class TranslationManager {
    */
   private async ensureDirectoryExists(dirPath: string): Promise<void> {
     try {
-      await mkdir(dirPath, { recursive: true });
+      await fs.promises.mkdir(dirPath, { recursive: true });
       Logger.debug(`  📂 [DEBUG] 目录创建成功: ${dirPath}`);
     } catch (error) {
       Logger.error(`  ❌ [DEBUG] 目录创建失败: ${dirPath}`, error);
@@ -606,11 +643,67 @@ export class TranslationManager {
       this.config.outputDir,
       "i18n-complete-record.json"
     );
-    await writeFile(
+    const normalized = this.normalizeCompleteRecord(completeRecord);
+    await fs.promises.writeFile(
       outputPath,
-      JSON.stringify(completeRecord, null, 2),
+      JSON.stringify(normalized, null, 2),
       "utf-8"
     );
+  }
+
+  /**
+   * 规范化完整记录中每个翻译条目的键顺序：
+   * - 按 config.languages 顺序输出语言字段
+   * - 其他非语言字段（不含 mark）跟随其后
+   * - 最后输出 mark 字段（如果存在）
+   */
+  private normalizeCompleteRecord(
+    record: CompleteTranslationRecord
+  ): CompleteTranslationRecord {
+    const normalized: CompleteTranslationRecord = {};
+
+    // 稳定排序模块路径，确保跨次运行顺序一致
+    const sortedModulePaths = Object.keys(record).sort((a, b) =>
+      a.localeCompare(b)
+    );
+
+    sortedModulePaths.forEach((modulePath) => {
+      const moduleKeys = record[modulePath];
+      (normalized as any)[modulePath] = {} as any;
+
+      // 稳定排序每个模块下的翻译key
+      const sortedKeys = Object.keys(moduleKeys).sort((a, b) =>
+        a.localeCompare(b)
+      );
+
+      sortedKeys.forEach((key) => {
+        const translations = (moduleKeys as any)[key];
+        const ordered: Record<string, any> = {};
+
+        // 语言字段按配置顺序
+        this.config.languages.forEach((lang) => {
+          if (translations[lang] !== undefined) {
+            ordered[lang] = translations[lang];
+          }
+        });
+
+        // 追加其他非语言字段（排除 mark）
+        Object.keys(translations).forEach((k) => {
+          if (k !== "mark" && !this.config.languages.includes(k)) {
+            ordered[k] = translations[k];
+          }
+        });
+
+        // 最后追加 mark（如果存在）
+        if (translations.mark !== undefined) {
+          (ordered as any).mark = translations.mark;
+        }
+
+        (normalized[modulePath] as any)[key] = ordered as any;
+      });
+    });
+
+    return normalized;
   }
 
   /**

@@ -13,10 +13,16 @@ export class ProgressIndicator {
   private async loadOra(): Promise<any> {
     if (!this.oraModule) {
       try {
+        // 测试环境降级为 no-op，避免 teardown 后动态 import 异常
+        if (process.env.JEST_WORKER_ID || process.env.NODE_ENV === "test") {
+          this.oraModule = null;
+          return null;
+        }
         this.oraModule = await import("ora");
         return this.oraModule.default || this.oraModule;
       } catch (error) {
         Logger.debug("无法加载 ora 模块，将使用降级日志");
+        this.oraModule = null;
         return null;
       }
     }

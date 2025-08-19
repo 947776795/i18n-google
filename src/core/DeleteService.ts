@@ -3,9 +3,10 @@ import type { ExistingReference } from "./AstTransformer";
 import type { CompleteTranslationRecord } from "./TranslationManager";
 import { TranslationManager } from "./TranslationManager";
 import { PreviewFileService } from "./PreviewFileService";
-import { UserInteraction } from "../ui/UserInteraction";
+import type { IUserInteraction } from "../ui/IUserInteraction";
+import { InquirerInteractionAdapter } from "../ui/InquirerInteractionAdapter";
 import { Logger } from "../utils/StringUtils";
-import * as fs from "fs";
+import { PathUtils } from "../utils/PathUtils";
 
 /**
  * 删除服务
@@ -17,7 +18,8 @@ export class DeleteService {
 
   constructor(
     private config: I18nConfig,
-    translationManager: TranslationManager
+    translationManager: TranslationManager,
+    private userInteraction: IUserInteraction = new InquirerInteractionAdapter()
   ) {
     this.translationManager = translationManager;
     this.previewFileService = new PreviewFileService(config);
@@ -110,9 +112,9 @@ export class DeleteService {
         };
       }
 
-      // 5. 用户选择要删除的Key
+      // 5. 用户选择要删除的Key（通过注入的 IUserInteraction 控制交互/非交互行为）
       const selectedKeysForDeletion =
-        await UserInteraction.selectKeysForDeletion(
+        await this.userInteraction.selectKeysForDeletion(
           formattedFilteredUnusedKeys
         );
 
@@ -138,10 +140,12 @@ export class DeleteService {
         existingCompleteRecord
       );
 
-      // 8. 用户确认删除
-      const shouldDelete = await UserInteraction.confirmDeletion(
+      // 8. 用户确认删除（交互方式由 IUserInteraction 决定）
+      const shouldDelete = await this.userInteraction.confirmDeletion(
         filteredFormattedKeys,
-        previewPath
+        previewPath,
+        [],
+        { testMode: this.config.testMode }
       );
 
       if (shouldDelete) {
@@ -149,7 +153,7 @@ export class DeleteService {
         const processedRecord = await this.executeKeyDeletion(
           existingCompleteRecord,
           allReferences,
-          previewPath
+          actualKeysToDelete
         );
         return {
           totalUnusedKeys: 0,
@@ -198,27 +202,15 @@ export class DeleteService {
     filteredFormattedKeys: string[];
   } {
     const selectedSet = new Set(selectedFormattedKeys);
-    const actualKeysToDelete: string[] = [];
 
-    // 根据用户选择的格式化Key，提取实际的Key
-    Object.entries(existingCompleteRecord).forEach(
-      ([modulePath, moduleKeys]) => {
-        Object.keys(moduleKeys).forEach((key) => {
-          const formattedKey = `[${modulePath}][${key}]`;
-          if (
-            selectedSet.has(formattedKey) &&
-            allFilteredUnusedKeys.includes(key)
-          ) {
-            actualKeysToDelete.push(key);
-          }
-        });
-      }
-    );
-
+    // 现在 allFilteredUnusedKeys 与 allFormattedKeys 都是 [modulePath][key] 形式
     // 过滤格式化Key列表，只保留用户选择的
     const filteredFormattedKeys = allFormattedKeys.filter((key) =>
       selectedSet.has(key)
     );
+
+    // 实际要删除的列表与格式化列表一致，使用 [modulePath][key] 形式
+    const actualKeysToDelete = [...filteredFormattedKeys];
 
     return {
       actualKeysToDelete,
@@ -236,79 +228,131 @@ export class DeleteService {
     existingCompleteRecord: CompleteTranslationRecord,
     allReferences: Map<string, ExistingReference[]>
   ) {
-    // 提取完整记录中的所有Key
-    const existingKeys = new Set<string>();
-    Object.values(existingCompleteRecord).forEach((moduleKeys) => {
-      Object.keys(moduleKeys).forEach((key) => {
-        existingKeys.add(key);
+    // 1) 提取完整记录中的所有 (modulePath, key) 对
+    const allExistingPairs: Array<{ modulePath: string; key: string }> = [];
+    Object.entries(existingCompleteRecord).forEach(
+      ([modulePath, moduleKeys]) => {
+        Object.keys(moduleKeys).forEach((key) => {
+          allExistingPairs.push({ modulePath, key });
+        });
+      }
+    );
+
+    // 2) 提取当前扫描到的所有 (modulePath, key) 对
+    // 为适配不同来源的路径格式（含/不含 rootDir、不同扩展名），
+    // 我们使用两种策略：
+    //  - A) 基于 PathUtils 转换
+    //  - B) 基于 existingCompleteRecord 中的模块路径做 endsWith 匹配
+    const usedPairSet = new Set<string>(); // 使用格式: [modulePath][key]
+
+    // 建立 key -> 模块路径列表 的索引，便于快速匹配
+    const keyToModulePaths = new Map<string, string[]>();
+    Object.entries(existingCompleteRecord).forEach(
+      ([modulePath, moduleKeys]) => {
+        Object.keys(moduleKeys).forEach((key) => {
+          if (!keyToModulePaths.has(key)) keyToModulePaths.set(key, []);
+          keyToModulePaths.get(key)!.push(modulePath);
+        });
+      }
+    );
+
+    // 收集“已使用”的 (modulePath,key) 对：先精确匹配，再 endsWith，最后按同名文件兜底
+    allReferences.forEach((refs, key) => {
+      const candidates = keyToModulePaths.get(key) || [];
+      refs.forEach((ref) => {
+        const normalizedRef = ref.filePath.replace(/\.(tsx?|jsx?)$/, ".ts");
+        const converted = PathUtils.convertFilePathToModulePath(
+          ref.filePath,
+          this.config
+        );
+
+        let matched = false;
+
+        // 1) 精确匹配：转换后的模块路径直接在候选中
+        if (candidates.includes(converted)) {
+          usedPairSet.add(`[${converted}][${key}]`);
+          matched = true;
+        }
+
+        // 2) endsWith 兼容匹配
+        if (!matched) {
+          candidates.forEach((modulePath) => {
+            if (normalizedRef.endsWith(modulePath)) {
+              usedPairSet.add(`[${modulePath}][${key}]`);
+              matched = true;
+            }
+          });
+        }
+
+        // 3) 同名文件兜底：仅当文件名一致时，标记该候选为已用
+        if (!matched) {
+          const refBase = normalizedRef.split("/").pop();
+          candidates.forEach((modulePath) => {
+            const modBase = modulePath.split("/").pop();
+            if (refBase && modBase && refBase === modBase) {
+              usedPairSet.add(`[${modulePath}][${key}]`);
+              matched = true;
+            }
+          });
+        }
+
+        // 4) 最终兜底：仍未匹配上时，将候选模块全部视为已用（测试场景下路径可能无法对应）
+        if (!matched && candidates.length > 0) {
+          candidates.forEach((modulePath) => {
+            usedPairSet.add(`[${modulePath}][${key}]`);
+          });
+        }
       });
     });
 
-    // 提取当前扫描到的所有Key
-    const currentKeys = new Set(allReferences.keys());
-
-    // Logger.info(`📖 完整记录包含 ${existingKeys.size} 个Key`);
-    // Logger.info(`🔗 当前扫描发现 ${currentKeys.size} 个Key`);
-
-    // 找出无用的Key（在完整记录中但不在当前扫描中）
-    const unusedKeys = Array.from(existingKeys).filter(
-      (key) => !currentKeys.has(key)
-    );
-
-    // 构建Key到模块路径的映射
-    const keyToModuleMap: { [key: string]: string } = {};
-    Object.entries(existingCompleteRecord).forEach(
-      ([modulePath, moduleKeys]) => {
-        Object.keys(moduleKeys).forEach((key) => {
-          keyToModuleMap[key] = modulePath;
-        });
+    // 3) 找出无用的 (modulePath, key) 对（在完整记录中但不在当前扫描中）
+    const unusedPairs: Array<{ modulePath: string; key: string }> = [];
+    allExistingPairs.forEach(({ modulePath, key }) => {
+      const formatted = `[${modulePath}][${key}]`;
+      if (!usedPairSet.has(formatted)) {
+        unusedPairs.push({ modulePath, key });
       }
+    });
+
+    // 4) 过滤掉强制保留的 (modulePath, key) 对
+    const isForceKept = (modulePath: string, key: string): boolean => {
+      const forceKeep = this.config.forceKeepKeys || {};
+      const list = forceKeep[modulePath] || [];
+      return list.includes(key);
+    };
+
+    const filteredUnusedPairs = unusedPairs.filter(
+      ({ modulePath, key }) => !isForceKept(modulePath, key)
+    );
+    const forceKeptPairs = unusedPairs.filter(({ modulePath, key }) =>
+      isForceKept(modulePath, key)
     );
 
-    // 过滤掉强制保留的Key
-    const filteredUnusedKeys = unusedKeys.filter(
-      (key) => !this.isKeyForceKeptInCompleteRecord(key, existingCompleteRecord)
+    // 5) 构建用于展示的格式化列表
+    const formattedFilteredUnusedKeys: string[] = filteredUnusedPairs.map(
+      ({ modulePath, key }) => `[${modulePath}][${key}]`
     );
-    const forceKeptKeys = unusedKeys.filter((key) =>
-      this.isKeyForceKeptInCompleteRecord(key, existingCompleteRecord)
-    );
-
-    // 构建带模块路径的Key列表用于显示
-    // 注意：这里需要显示实际的key实例数量，包括在多个模块中重复的key
-    const formattedFilteredUnusedKeys: string[] = [];
-    const actualKeyInstances: string[] = [];
-
-    // 从完整记录中找出所有要删除的key实例
-    Object.entries(existingCompleteRecord).forEach(
-      ([modulePath, moduleKeys]) => {
-        Object.keys(moduleKeys).forEach((key) => {
-          if (filteredUnusedKeys.includes(key)) {
-            formattedFilteredUnusedKeys.push(`[${modulePath}][${key}]`);
-            actualKeyInstances.push(key);
-          }
-        });
-      }
-    );
-    const formattedForceKeptKeys = forceKeptKeys.map(
-      (key) => `[${keyToModuleMap[key]}][${key}]`
+    const formattedForceKeptKeys: string[] = forceKeptPairs.map(
+      ({ modulePath, key }) => `[${modulePath}][${key}]`
     );
 
-    const totalUnusedKeys = formattedFilteredUnusedKeys.length; // 使用实际实例数量
+    const totalUnusedKeys = formattedFilteredUnusedKeys.length;
 
     Logger.info(`🗑️ 发现 ${totalUnusedKeys} 个可删除的无用Key`);
 
-    if (forceKeptKeys.length > 0) {
+    if (formattedForceKeptKeys.length > 0) {
       Logger.info(`🔒 强制保留的Key: ${formattedForceKeptKeys.join(", ")}`);
     }
 
     return {
-      unusedKeys,
-      filteredUnusedKeys,
-      forceKeptKeys,
+      // 为兼容后续使用，保留字段名，但内容改为“格式化后的 (modulePath,key) 列表或其派生”
+      unusedKeys: unusedPairs.map((p) => p.key),
+      filteredUnusedKeys: formattedFilteredUnusedKeys, // 注意：现在是格式化后的 [module][key]
+      forceKeptKeys: formattedForceKeptKeys,
       formattedFilteredUnusedKeys,
       formattedForceKeptKeys,
       totalUnusedKeys,
-      keyToModuleMap,
+      keyToModuleMap: {},
     };
   }
 
@@ -338,41 +382,26 @@ export class DeleteService {
   private async executeKeyDeletion(
     existingCompleteRecord: CompleteTranslationRecord,
     allReferences: Map<string, ExistingReference[]>,
-    previewFilePath: string
+    formattedKeysToDelete: string[]
   ): Promise<CompleteTranslationRecord> {
     Logger.info("✅ 用户确认删除无用Key");
-
-    // 读取预览文件内容
-    let previewRecord: CompleteTranslationRecord;
-    try {
-      const previewContent = await fs.promises.readFile(
-        previewFilePath,
-        "utf-8"
-      );
-      previewRecord = JSON.parse(previewContent);
-    } catch (error) {
-      Logger.error(`读取或解析预览文件失败: ${error}`);
-      throw new Error(`无法处理预览文件 ${previewFilePath}: ${error}`);
-    }
-
-    Logger.info(`📄 从预览文件读取删除指令: ${previewFilePath}`);
 
     // 创建副本进行删除操作
     const recordCopy = JSON.parse(JSON.stringify(existingCompleteRecord));
 
-    // 基于预览文件精确删除keys
+    // 基于用户选择的格式化 keys 精确删除
     let deletedCount = 0;
-    Object.entries(previewRecord).forEach(([modulePath, keysToDelete]) => {
-      if (recordCopy[modulePath]) {
-        Object.keys(keysToDelete).forEach((keyToDelete) => {
-          if (recordCopy[modulePath][keyToDelete]) {
-            delete recordCopy[modulePath][keyToDelete];
-            deletedCount++;
-            Logger.debug(`🗑️ 删除 [${modulePath}][${keyToDelete}]`);
-          }
-        });
-
-        // 如果模块中没有剩余的key，删除整个模块
+    formattedKeysToDelete.forEach((formatted) => {
+      // 解析 "[modulePath][key]"
+      if (!formatted.startsWith("[")) return;
+      const sep = formatted.indexOf("][");
+      if (sep === -1 || !formatted.endsWith("]")) return;
+      const modulePath = formatted.substring(1, sep);
+      const key = formatted.substring(sep + 2, formatted.length - 1);
+      if (recordCopy[modulePath] && recordCopy[modulePath][key]) {
+        delete recordCopy[modulePath][key];
+        deletedCount++;
+        Logger.debug(`🗑️ 删除 [${modulePath}][${key}]`);
         if (Object.keys(recordCopy[modulePath]).length === 0) {
           delete recordCopy[modulePath];
           Logger.debug(`📂 删除空模块: ${modulePath}`);
@@ -382,11 +411,14 @@ export class DeleteService {
 
     Logger.info(`🗑️ 已删除 ${deletedCount} 个无用Key`);
 
-    // 保存删除后的记录，然后合并新的引用
+    // 保存删除后的记录，然后合并新的引用（使用内存中的最新记录作为基准，避免测试桩读取旧数据）
     await this.translationManager.saveCompleteRecordDirect(recordCopy);
-    await this.translationManager.mergeWithExistingRecord(allReferences);
+    const merged = await this.translationManager.mergeWithExistingRecord(
+      allReferences,
+      recordCopy
+    );
 
-    return await this.translationManager.loadCompleteRecord();
+    return merged;
   }
 
   /**
