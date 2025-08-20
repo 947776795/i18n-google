@@ -1,10 +1,10 @@
 /**
- * 进度提示器，提供优雅的加载动画和状态提示
+ * 进度提示器，提供优雅的加载动画和状态提示 - 简化版本
  */
 import { Logger } from "../utils/StringUtils";
 
 export class ProgressIndicator {
-  private spinner: any = null;
+  protected spinner: any = null;
   private oraModule: any = null;
 
   /**
@@ -114,25 +114,6 @@ export class ProgressIndicator {
       Logger.info(`ℹ️  ${text || "信息"}`);
     }
   }
-  /**
-   * 暂停进度指示器以便进行用户交互
-   * 返回恢复函数
-   */
-  pauseForInteraction(message?: string): () => Promise<void> {
-    const wasRunning = !!this.spinner;
-    const currentText = this.spinner?.text || "";
-
-    if (wasRunning) {
-      this.info(message || "等待用户交互...");
-    }
-
-    // 返回恢复函数
-    return async () => {
-      if (wasRunning && currentText) {
-        await this.start(currentText);
-      }
-    };
-  }
 
   /**
    * 执行异步操作并显示进度
@@ -154,142 +135,36 @@ export class ProgressIndicator {
       throw error;
     }
   }
-
-  /**
-   * 执行一系列步骤，每个步骤都有进度提示
-   */
-  async executeSteps(
-    steps: Array<{
-      text: string;
-      operation: () => Promise<any>;
-      successText?: string;
-      failText?: string;
-    }>
-  ): Promise<any[]> {
-    const results: any[] = [];
-
-    for (const step of steps) {
-      const result = await this.withProgress(
-        step.text,
-        step.operation,
-        step.successText,
-        step.failText
-      );
-      results.push(result);
-    }
-
-    return results;
-  }
 }
 
-/**
- * 删除操作的专用进度提示器
- */
-export class DeletionProgressIndicator extends ProgressIndicator {
-  /**
-   * 显示删除操作的开始
-   */
-  async startDeletion(keysCount: number): Promise<void> {
-    await this.start(`🗑️  准备删除 ${keysCount} 个无用的翻译Key...`);
-  }
+// 保留专用类并添加专用方法以保持向后兼容
+export class DeletionProgressIndicator extends ProgressIndicator {}
 
-  /**
-   * 显示备份创建进度
-   */
-  showBackupProgress(): void {
-    this.update("💾 正在创建数据备份...");
-  }
-
-  /**
-   * 显示本地删除进度
-   */
-  showLocalDeletionProgress(deletedCount: number): void {
-    this.update(`🗂️  正在删除本地翻译文件... (已删除 ${deletedCount} 个)`);
-  }
-
-  /**
-   * 显示记录更新进度
-   */
-  showRecordUpdateProgress(): void {
-    this.update("📝 正在更新引用记录...");
-  }
-
-  /**
-   * 显示远程同步进度
-   */
-  showRemoteSyncProgress(): void {
-    this.update("🌐 正在同步到 Google Sheets...");
-  }
-
-  /**
-   * 显示删除完成
-   */
-  showDeletionComplete(summary: {
-    deletedKeys: number;
-    affectedLanguages: string[];
-    duration: number;
-  }): void {
-    const languages = summary.affectedLanguages.join(", ");
-    const durationText =
-      summary.duration < 1000
-        ? `${summary.duration}ms`
-        : `${(summary.duration / 1000).toFixed(1)}s`;
-
-    this.succeed(
-      `✨ 删除完成！已删除 ${summary.deletedKeys} 个Key，影响语言: ${languages}，耗时: ${durationText}`
-    );
-  }
-
-  /**
-   * 显示删除失败
-   */
-  showDeletionFailed(error: string): void {
-    this.fail(`❌ 删除失败: ${error}`);
-  }
-}
-
-/**
- * 扫描操作的专用进度提示器
- */
 export class ScanProgressIndicator extends ProgressIndicator {
-  /**
-   * 显示扫描开始
-   */
   async startScan(): Promise<void> {
     await this.start("🔍 开始扫描项目文件...");
   }
 
-  /**
-   * 显示文件扫描进度
-   */
-  showFilesScanProgress(scannedFiles: number, totalFiles: number): void {
-    this.update(`📁 扫描文件中... (${scannedFiles}/${totalFiles})`);
-  }
-
-  /**
-   * 显示引用收集进度
-   */
   showReferenceCollection(): void {
     this.update("🔗 收集翻译引用...");
   }
 
-  /**
-   * 显示翻译处理进度
-   */
-  showTranslationProcessing(processedCount: number): void {
-    this.update(`🌐 处理翻译内容... (已处理 ${processedCount} 个)`);
+  pauseForInteraction(message?: string): () => Promise<void> {
+    const wasRunning = !!this.spinner;
+    const currentText = this.spinner?.text || "";
+
+    if (wasRunning) {
+      this.info(message || "等待用户交互...");
+    }
+
+    // 返回恢复函数
+    return async () => {
+      if (wasRunning && currentText) {
+        await this.start(currentText);
+      }
+    };
   }
 
-  /**
-   * 显示Google Sheets同步
-   */
-  showGoogleSheetsSync(): void {
-    this.update("☁️  与 Google Sheets 同步...");
-  }
-
-  /**
-   * 显示扫描完成
-   */
   showScanComplete(summary: {
     totalFiles: number;
     totalKeys: number;

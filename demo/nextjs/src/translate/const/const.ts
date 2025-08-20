@@ -1,35 +1,35 @@
 const translations = {
   "en": {
-    "sadasdad": "sadasdad",
-    "bbb": "bbb"
+    "bbb": "bbb",
+    "sadasdad": "sadasdad"
   },
   "ko": {
-    "sadasdad": "sadasdad",
-    "bbb": "bbb"
+    "bbb": "bbb",
+    "sadasdad": "sadasdad"
   },
   "zh-Hans": {
-    "sadasdad": "sadasdad",
-    "bbb": "bbb"
+    "bbb": "bbb",
+    "sadasdad": "sadasdad"
   },
   "zh-Hant": {
-    "sadasdad": "sadasdad",
-    "bbb": "bbb"
+    "bbb": "bbb",
+    "sadasdad": "sadasdad"
   },
   "vi": {
-    "sadasdad": "sadasdad",
-    "bbb": "bbb"
+    "bbb": "bbb",
+    "sadasdad": "sadasdad"
   },
   "es": {
-    "sadasdad": "sadasdad",
-    "bbb": "bbb"
+    "bbb": "bbb",
+    "sadasdad": "sadasdad"
   },
   "tr": {
-    "sadasdad": "sadasdad",
-    "bbb": "bbb"
+    "bbb": "bbb",
+    "sadasdad": "sadasdad"
   },
   "fr": {
-    "sadasdad": "sadasdad",
-    "bbb": "bbb"
+    "bbb": "bbb",
+    "sadasdad": "sadasdad"
   }
 };
 

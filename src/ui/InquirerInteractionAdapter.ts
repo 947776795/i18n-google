@@ -17,12 +17,11 @@ export class InquirerInteractionAdapter implements IUserInteraction {
     return UserInteraction.confirmDeletion(
       filteredFormattedKeys,
       previewPath ?? "",
-      forceKeptKeys ?? [],
-      options ?? {}
+      forceKeptKeys ?? []
     );
   }
 
   async confirmRemoteSync(): Promise<boolean> {
-    return UserInteraction.confirmRemoteSync({});
+    return UserInteraction.confirmRemoteSync();
   }
 }

@@ -9,7 +9,7 @@ export interface DeletionSummary {
 }
 
 /**
- * 增强的用户交互工具类
+ * 用户交互工具类 - 简化版本，仅保留核心功能
  */
 export class UserInteraction {
   /**
@@ -40,8 +40,6 @@ export class UserInteraction {
         `📝 找到 ${formattedUnusedKeys.length} 个无用Key，请在下面的选择界面中选择要删除的Key\n`
       );
     }
-
-    // 移除环境变量快捷通道，统一走交互或由上层注入的 IUserInteraction 控制
 
     // 提供选择选项
     const choices = [
@@ -128,53 +126,42 @@ export class UserInteraction {
   }
 
   /**
-   * 显示删除确认对话框（增强版）
+   * 显示删除确认对话框
    */
   static async confirmDeletion(
     unusedKeys: string[],
-    previewFilePath: string,
-    forceKeptKeys: string[] = [],
-    options: { testMode?: boolean } = {}
+    _previewFilePath: string,
+    forceKeptKeys: string[] = []
   ): Promise<boolean> {
-    const summary: DeletionSummary = {
-      keysToDelete: unusedKeys,
-      totalKeys: unusedKeys.length,
-      affectedLanguages: [], // 在实际使用时填充
-      previewFilePath,
-    };
-
     // 显示强制保留信息
     if (forceKeptKeys.length > 0) {
       Logger.info(
-        `🔒 已配置强制保留 ${forceKeptKeys.length} 个Key，将跳过删除:`,
-        forceKeptKeys
+        `🔒 已配置强制保留 ${forceKeptKeys.length} 个Key，将跳过删除:`
       );
       forceKeptKeys.forEach((key) => Logger.info(`   - ${key}`));
       Logger.info("");
     }
 
-    Logger.info(`\n⚠️  发现 ${summary.totalKeys} 个可删除的无用翻译Key\n`);
-
-    // 统一交互确认，由上层策略控制是否使用非交互实现
+    Logger.info(`\n⚠️  发现 ${unusedKeys.length} 个可删除的无用翻译Key\n`);
 
     // 最终确认
     const { confirmDeletion } = await inquirer.prompt([
       {
         type: "confirm",
         name: "confirmDeletion",
-        message: `⚠️  确认删除这 ${summary.totalKeys} 个无用的翻译Key吗？此操作不可撤销！`,
+        message: `⚠️  确认删除这 ${unusedKeys.length} 个无用的翻译Key吗？此操作不可撤销！`,
         default: false,
       },
     ]);
 
     if (confirmDeletion) {
       // 二次确认（对于大量删除）
-      if (summary.totalKeys > 20) {
+      if (unusedKeys.length > 20) {
         const { finalConfirm } = await inquirer.prompt([
           {
             type: "confirm",
             name: "finalConfirm",
-            message: `🚨 最终确认：您即将删除 ${summary.totalKeys} 个翻译Key，确定继续吗？`,
+            message: `🚨 最终确认：您即将删除 ${unusedKeys.length} 个翻译Key，确定继续吗？`,
             default: false,
           },
         ]);
@@ -186,93 +173,12 @@ export class UserInteraction {
   }
 
   /**
-   * 确认模块级别的Key删除
-   */
-  static async confirmModuleLevelDeletion(moduleLevelUnusedKeys: {
-    [modulePath: string]: string[];
-  }): Promise<boolean> {
-    const totalKeys = Object.values(moduleLevelUnusedKeys).reduce(
-      (total, keys) => total + keys.length,
-      0
-    );
-    const moduleCount = Object.keys(moduleLevelUnusedKeys).length;
-
-    Logger.info(
-      `\n🧹 发现 ${totalKeys} 个模块级无用Key，分布在 ${moduleCount} 个模块中\n`
-    );
-
-    // 显示详细信息
-    Logger.info("📁 模块级无用Key详情:");
-    Object.entries(moduleLevelUnusedKeys).forEach(
-      ([modulePath, keys], index) => {
-        Logger.info(`   ${index + 1}. ${modulePath} (${keys.length} 个key)`);
-        if (keys.length <= 5) {
-          keys.forEach((key) => Logger.info(`      - ${key}`));
-        } else {
-          keys.slice(0, 3).forEach((key) => Logger.info(`      - ${key}`));
-          Logger.info(`      ... 还有 ${keys.length - 3} 个`);
-        }
-      }
-    );
-    Logger.info("");
-
-    // 确认删除
-    const { confirmDeletion } = await inquirer.prompt([
-      {
-        type: "confirm",
-        name: "confirmDeletion",
-        message: `⚠️  确认从这些模块中删除无用的Key吗？此操作不可撤销！`,
-        default: false,
-      },
-    ]);
-
-    return confirmDeletion;
-  }
-
-  /**
-   * 显示操作选项菜单
-   */
-  static async showActionMenu(
-    unusedKeys: string[]
-  ): Promise<"delete" | "preview" | "cancel"> {
-    const choices = [
-      {
-        name: `🗑️  删除所有无用Key (${unusedKeys.length}个)`,
-        value: "delete",
-      },
-      {
-        name: "📄 生成详细预览文件",
-        value: "preview",
-      },
-      {
-        name: "❌ 取消操作",
-        value: "cancel",
-      },
-    ];
-
-    const { action } = await inquirer.prompt([
-      {
-        type: "list",
-        name: "action",
-        message: "请选择要执行的操作:",
-        choices,
-      },
-    ]);
-
-    return action;
-  }
-
-  /**
    * 确认是否上传到远端
    */
-  static async confirmRemoteSync(
-    options: { testMode?: boolean } = {}
-  ): Promise<boolean> {
+  static async confirmRemoteSync(): Promise<boolean> {
     Logger.info("\n" + "=".repeat(60));
     Logger.info("☁️  准备同步到远端 (Google Sheets)");
     Logger.info("=".repeat(60));
-
-    // 统一交互确认，由上层策略控制是否使用非交互实现
 
     const { confirmSync } = await inquirer.prompt([
       {
@@ -290,158 +196,5 @@ export class UserInteraction {
     }
 
     return confirmSync;
-  }
-
-  /**
-   * 显示删除进度和结果
-   */
-  static displayDeletionResult(result: {
-    deletedKeys: string[];
-    affectedLanguages: string[];
-    duration: number;
-    success: boolean;
-    error?: string;
-  }): void {
-    Logger.info("\n" + "=".repeat(60));
-
-    if (result.success) {
-      Logger.info("🎉 删除操作完成！");
-      Logger.info(`\n📊 删除统计:`);
-      Logger.info(`   ✅ 成功删除: ${result.deletedKeys.length} 个Key`);
-      Logger.info(`   🌐 影响语言: ${result.affectedLanguages.join(", ")}`);
-      Logger.info(`   ⏱️  执行时间: ${this.formatDuration(result.duration)}`);
-
-      if (result.deletedKeys.length <= 10) {
-        Logger.info(`\n📝 已删除的Key:`);
-        result.deletedKeys.forEach((key, index) => {
-          Logger.info(`   ${index + 1}. ${key}`);
-        });
-      } else {
-        Logger.info(`\n📝 已删除的Key (前10个):`);
-        result.deletedKeys.slice(0, 10).forEach((key, index) => {
-          Logger.info(`   ${index + 1}. ${key}`);
-        });
-        Logger.info(`   ... 还有 ${result.deletedKeys.length - 10} 个`);
-      }
-    } else {
-      Logger.error("❌ 删除操作失败！");
-      Logger.error(`\n💥 错误信息: ${result.error}`);
-      Logger.info(`\n🔄 建议:`);
-      Logger.info("   1. 检查文件权限");
-      Logger.info("   2. 确认磁盘空间充足");
-      Logger.info("   3. 稍后重试操作");
-    }
-
-    Logger.info("=".repeat(60) + "\n");
-  }
-
-  /**
-   * 显示扫描结果摘要
-   */
-  static displayScanSummary(summary: {
-    totalFiles: number;
-    totalKeys: number;
-    newKeys: number;
-    unusedKeys: number;
-    duration: number;
-  }): void {
-    Logger.info("\n" + "=".repeat(50));
-    Logger.info("📊 扫描结果摘要");
-    Logger.info("=".repeat(50));
-    Logger.info(`📁 处理文件数: ${summary.totalFiles}`);
-    Logger.info(`🔑 总翻译Key数: ${summary.totalKeys}`);
-    Logger.info(`✨ 新增Key数: ${summary.newKeys}`);
-    Logger.info(`🗑️  无用Key数: ${summary.unusedKeys}`);
-    Logger.info(`⏱️  执行时间: ${this.formatDuration(summary.duration)}`);
-    Logger.info("=".repeat(50));
-
-    if (summary.unusedKeys > 0) {
-      Logger.warn(
-        `\n⚠️  发现 ${summary.unusedKeys} 个无用的翻译Key，建议进行清理`
-      );
-    } else {
-      Logger.info("\n✅ 所有翻译Key都在使用中，无需清理");
-    }
-  }
-
-  /**
-   * 等待用户操作
-   */
-  static async waitForUser(
-    message: string = "按 Enter 继续..."
-  ): Promise<void> {
-    await inquirer.prompt([
-      {
-        type: "input",
-        name: "continue",
-        message,
-      },
-    ]);
-  }
-
-  /**
-   * 显示文件路径并询问是否打开
-   */
-  static async offerToOpenFile(
-    filePath: string,
-    description: string
-  ): Promise<boolean> {
-    Logger.info(`\n📄 ${description}: ${filePath}`);
-
-    const { shouldOpen } = await inquirer.prompt([
-      {
-        type: "confirm",
-        name: "shouldOpen",
-        message: "是否使用系统默认程序打开文件？",
-        default: false,
-      },
-    ]);
-
-    if (shouldOpen) {
-      try {
-        const { exec } = require("child_process");
-        const command =
-          process.platform === "darwin"
-            ? "open"
-            : process.platform === "win32"
-            ? "start"
-            : "xdg-open";
-        exec(`${command} "${filePath}"`);
-        Logger.info("✅ 文件已打开");
-      } catch (error) {
-        Logger.warn("⚠️  无法打开文件，请手动查看");
-      }
-    }
-
-    return shouldOpen;
-  }
-
-  /**
-   * 格式化持续时间
-   */
-  private static formatDuration(ms: number): string {
-    if (ms < 1000) {
-      return `${ms}ms`;
-    } else if (ms < 60000) {
-      return `${(ms / 1000).toFixed(1)}s`;
-    } else {
-      const minutes = Math.floor(ms / 60000);
-      const seconds = ((ms % 60000) / 1000).toFixed(1);
-      return `${minutes}m ${seconds}s`;
-    }
-  }
-
-  /**
-   * 清理屏幕（可选）
-   */
-  static clearScreen(): void {
-    console.clear();
-  }
-
-  /**
-   * 显示分隔线
-   */
-  static showSeparator(char: string = "-", length: number = 50): void {
-    console.log(char.repeat(length));
   }
 }

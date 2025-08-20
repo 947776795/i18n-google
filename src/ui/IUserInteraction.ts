@@ -3,7 +3,6 @@ export type SelectionMode = "all" | "manual" | "skip";
 export interface InteractionPolicy {
   selectionMode?: SelectionMode;
   autoConfirmDelete?: boolean;
-  autoFinalConfirm?: boolean;
 }
 
 export interface IUserInteraction {

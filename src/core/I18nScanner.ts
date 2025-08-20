@@ -45,7 +45,6 @@ export class I18nScanner {
       ? new AutoInteraction({
           selectionMode: "skip",
           autoConfirmDelete: true,
-          autoFinalConfirm: true,
         })
       : new InquirerInteractionAdapter();
 
@@ -126,9 +125,7 @@ export class I18nScanner {
         this.scanProgress.pauseForInteraction("🤔 等待用户确认远端同步...");
       const shouldSyncToRemote = this.userInteraction.confirmRemoteSync
         ? await this.userInteraction.confirmRemoteSync()
-        : await UserInteraction.confirmRemoteSync({
-            testMode: this.config.testMode,
-          });
+        : await UserInteraction.confirmRemoteSync();
       await resumeProgress();
 
       if (shouldSyncToRemote) {

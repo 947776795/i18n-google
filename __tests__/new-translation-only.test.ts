@@ -196,7 +196,7 @@ export default function Simple() {
     // 验证结果
     // 1. 检查转换后的文件
     const transformedContent = fs.readFileSync(
-      "test-src/components/Simple/index.tsx",
+      path.join(process.cwd(), "test-src/components/Simple/index.tsx"),
       "utf-8"
     );
     console.log("=== 转换后的文件内容 ===");
