@@ -281,10 +281,12 @@ export class TranslationManager {
         `📁 [DEBUG] 处理模块路径: "${classifiedModulePath}" (${keys.length} 个keys)`
       );
 
+
       // 在保持“原始模块路径优先”的策略下，暂不预初始化 classifiedModulePath
 
       for (const key of keys) {
         Logger.debug(`🔑 [DEBUG] 处理key: "${key}"`);
+
 
         // 检查现有记录中是否有这个key的翻译数据
         let existingTranslations: any = null;
@@ -332,17 +334,28 @@ export class TranslationManager {
         }
 
         if (existingTranslations && originalModulePathForKey) {
+          // 修复：共享key应该在所有使用它的模块中都创建记录
+          // 不再只分配给原始模块，而是分配给当前分类模块
+          
           // 如果检测到该模块发生迁移，则将旧数据归并到新路径（classifiedModulePath）
           const migratedFrom = migrationMap.get(classifiedModulePath);
           const targetModulePath =
             migratedFrom && migratedFrom === originalModulePathForKey
               ? classifiedModulePath
-              : originalModulePathForKey;
+              : classifiedModulePath; // 修复：总是使用当前分类模块路径
 
           if (!record[targetModulePath]) {
             record[targetModulePath] = {};
           }
           record[targetModulePath][key] = { ...existingTranslations };
+          
+          // 可选：同时在原始模块中保留一份（如果不是同一个模块）
+          if (originalModulePathForKey !== classifiedModulePath && !migratedFrom) {
+            if (!record[originalModulePathForKey]) {
+              record[originalModulePathForKey] = {};
+            }
+            record[originalModulePathForKey][key] = { ...existingTranslations };
+          }
         } else {
           // 新 key：落在“分类模块路径”下
           if (!record[classifiedModulePath]) {
@@ -375,6 +388,7 @@ export class TranslationManager {
 
     // 第五步：清理迁移后的旧数据
     await this.cleanupMigratedData(record, existingRecord, migrationMap);
+
 
     return record;
   }
@@ -649,6 +663,7 @@ export class TranslationManager {
       JSON.stringify(normalized, null, 2),
       "utf-8"
     );
+
   }
 
   /**
