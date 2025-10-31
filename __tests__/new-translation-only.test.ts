@@ -74,6 +74,19 @@ jest.mock("../src/utils/llmTranslate", () => ({
       // 直接返回原文，不做翻译
       return Promise.resolve(text);
     }),
+  batchTranslateKeys: jest
+    .fn()
+    .mockImplementation((keysToTranslate: Record<string, string>, targetLanguages: string[]) => {
+      // 返回模拟的批量翻译结果：所有语言都返回原文
+      const result: Record<string, Record<string, string>> = {};
+      Object.keys(keysToTranslate).forEach((key) => {
+        result[key] = {};
+        targetLanguages.forEach((lang) => {
+          result[key][lang] = key;  // 使用原key作为翻译结果
+        });
+      });
+      return Promise.resolve(result);
+    }),
 }));
 
 // Mock prompts

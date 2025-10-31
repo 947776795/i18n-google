@@ -6,7 +6,7 @@ import type { TransformResult } from "./AstTransformer";
 import { GoogleSheetsSync } from "./GoogleSheetsSync";
 import { I18nError, I18nErrorType } from "../errors/I18nError";
 import { PathUtils } from "../utils/PathUtils";
-import { translateWithGlossary } from "../utils/llmTranslate";
+import { translateWithGlossary, batchTranslateKeys } from "../utils/llmTranslate";
 import { GlossaryManager } from "../utils/GlossaryManager";
 import { Logger } from "../utils/StringUtils";
 import { TranslationOptions, GlossaryMap } from "../types";
@@ -127,9 +127,13 @@ export class TranslationManager {
    * 保存新格式的完整记录
    */
   async saveCompleteRecord(allReferences: Map<string, any[]>): Promise<void> {
+    // 1. 构建初始记录（新key仅初始化英文，标记为待翻译）
     const completeRecord = await this.buildCompleteRecord(allReferences);
 
-    // 确保输出目录存在
+    // 2. 执行批量翻译所有待翻译的key
+    await this.performBatchTranslation(completeRecord);
+
+    // 3. 保存文件
     await fs.promises.mkdir(this.config.outputDir, { recursive: true });
 
     const outputPath = path.join(
@@ -142,6 +146,69 @@ export class TranslationManager {
       JSON.stringify(normalized, null, 2),
       "utf-8"
     );
+  }
+
+  /**
+   * 批量翻译所有待翻译的key，然后应用到记录中
+   */
+  private async performBatchTranslation(
+    record: CompleteTranslationRecord
+  ): Promise<void> {
+    // 1. 收集所有待翻译的key
+    const keysToTranslate: Record<string, string> = {};
+    const keyModulePaths: Map<string, Set<string>> = new Map();
+
+    Object.entries(record).forEach(([modulePath, moduleKeys]) => {
+      Object.entries(moduleKeys).forEach(([key, translations]) => {
+        if ((translations as any)._pending === true) {
+          keysToTranslate[key] = "en";
+
+          if (!keyModulePaths.has(key)) {
+            keyModulePaths.set(key, new Set());
+          }
+          keyModulePaths.get(key)!.add(modulePath);
+        }
+      });
+    });
+
+    if (Object.keys(keysToTranslate).length === 0) {
+      Logger.info("✅ 无需翻译的内容");
+      return;
+    }
+
+    // 2. 获取目标语言（排除en）
+    const targetLanguages = this.config.languages.filter(lang => lang !== "en");
+
+    // 3. 调用批量翻译方法
+    Logger.info(
+      `📝 执行批量翻译: ${Object.keys(keysToTranslate).length} 个key × ${targetLanguages.length} 种语言`
+    );
+
+    const translationResults = await batchTranslateKeys(
+      keysToTranslate,
+      targetLanguages,
+      this.config.apiKey,
+      this.config.llmRetries || 3,
+      this.config.llmTimeout || 30000,
+      this.config.llmModel || "qwen-turbo"
+    );
+
+    // 4. 应用翻译结果到记录中
+    Object.entries(translationResults).forEach(([key, translations]) => {
+      const modulePaths = keyModulePaths.get(key) || new Set();
+      modulePaths.forEach((modulePath) => {
+        if (record[modulePath]?.[key]) {
+          // 添加翻译结果
+          Object.entries(translations).forEach(([lang, translation]) => {
+            (record[modulePath][key] as any)[lang] = translation;
+          });
+          // 清除待翻译标记
+          delete (record[modulePath][key] as any)._pending;
+        }
+      });
+    });
+
+    Logger.info(`✅ 批量翻译完成`);
   }
 
   /**
@@ -158,6 +225,9 @@ export class TranslationManager {
 
       // 2. 构建基于新引用的记录（传递existingRecord以避免重新加载）
       const newRecord = await this.buildCompleteRecord(allReferences, existingRecord);
+
+      // 2.5. 执行批量翻译所有待翻译的key
+      await this.performBatchTranslation(newRecord);
 
       // 3. 合并记录：现有记录优先（保留无用Key），新记录补充
       const mergedRecord: CompleteTranslationRecord = { ...existingRecord };
@@ -379,38 +449,11 @@ export class TranslationManager {
           if (!record[classifiedModulePath]) {
             record[classifiedModulePath] = {};
           }
-          record[classifiedModulePath][key] = {} as any;
-          // 为每种语言设置默认翻译值（集成大模型翻译）
-          for (const lang of this.config.languages) {
-            if (lang === "en") {
-              (record[classifiedModulePath][key] as any)[lang] = key;
-            } else {
-              try {
-                const translationOptions: TranslationOptions = {
-                  retries: this.config.llmRetries || 3,
-                  timeout: this.config.llmTimeout || 30000,
-                  temperature: this.config.llmTemperature || 0.2,
-                  model: this.config.llmModel || "qwen-turbo",
-                  enableGlossary: this.config.enableGlossary || false,
-                };
-
-                const translated = await translateWithGlossary(
-                  key,
-                  "en",
-                  lang,
-                  this.config.apiKey,
-                  translationOptions,
-                  this.glossaryCache
-                );
-                (record[classifiedModulePath][key] as any)[lang] =
-                  translated || key;
-              } catch (e) {
-                Logger.warn(`⚠️ [翻译] ${lang} 语言翻译失败，使用原文: ${key}`);
-                (record[classifiedModulePath][key] as any)[lang] = key; // 降级
-              }
-            }
-          }
-          (record[classifiedModulePath][key] as any).mark = 0;
+          record[classifiedModulePath][key] = {
+            en: key,
+            mark: 0,
+            _pending: true,  // 标记为待翻译
+          } as any;
         }
       }
     }
