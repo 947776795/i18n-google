@@ -10,7 +10,8 @@
       "Bash(npm run scan:*)",
       "Bash(tee:*)",
       "Bash(cat:*)",
-      "Bash(git ls-tree:*)"
+      "Bash(git ls-tree:*)",
+      "Bash(tree:*)"
     ],
     "deny": []
   }

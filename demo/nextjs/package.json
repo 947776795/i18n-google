@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "scan": "node ../../dist/scan.js",
+    "scan": "node ../../dist/bin/scan.js",
     "sync": "node ../../dist/sync.js"
   },
   "dependencies": {

@@ -8,10 +8,10 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "./src-v2",
     "declaration": false,
     "resolveJsonModule": true
   },
-  "include": ["*.ts", "src/**/*.ts"],
+  "include": ["*.ts", "src-v2/**/*.ts"],
   "exclude": ["node_modules", "dist", "**/__tests__/**"]
 }
