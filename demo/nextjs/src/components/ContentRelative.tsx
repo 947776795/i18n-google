@@ -1,4 +1,3 @@
-import { I18nUtil as I18n } from "@utils";
 
 /**
  * ContentRelative Component
@@ -7,8 +6,8 @@ import { I18nUtil as I18n } from "@utils";
 export default function ContentRelative() {
   return (
     <div className="content-relative">
-      <h2>{I18n.t("Deep Content")}</h2>
-      <p>{I18n.t("This is deep level content")}</p>
+      <h2>Deep Content</h2>
+      <p>This is deep level content</p>
     </div>
   );
 }
