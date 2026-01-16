@@ -8,6 +8,8 @@ import * as path from 'path';
 import { FileScanner } from '../domain/scan/FileScanner';
 import { PathMapper } from '../domain/scan/PathMapper';
 import { MarkExtractor } from '../domain/collect/MarkExtractor';
+import { JSXTextExtractor } from '../domain/collect/JSXTextExtractor';
+import { TemplateExtractor } from '../domain/collect/TemplateExtractor';
 import { ConfigLoader } from '../domain/collect/ConfigLoader';
 import { DependencyAnalyzer } from '../domain/collect/DependencyAnalyzer';
 import { CodeTransformer } from '../infra/ast/CodeTransformer';
@@ -52,6 +54,9 @@ export interface ScanResult {
  * 2️⃣ 🔧 加载配置
  * 3️⃣ 📁 扫描文件
  * 4️⃣ 🔍 收集翻译 + 代码转换（含递归依赖分析）
+ *    - MarkExtractor: 提取带标记的字符串字面量
+ *    - JSXTextExtractor: 提取纯 JSX 文本节点
+ *    - TemplateExtractor: 提取带标记的模板字符串
  * 6️⃣ 🔧 生成记录
  * 7️⃣ 🔧 生成翻译文件
  */
@@ -60,6 +65,8 @@ export class Scanner {
   private fileScanner: FileScanner;
   private pathMapper: PathMapper;
   private markExtractor: MarkExtractor;
+  private jsxTextExtractor: JSXTextExtractor;
+  private templateExtractor: TemplateExtractor;
   private dependencyAnalyzer: DependencyAnalyzer;
   private codeTransformer: CodeTransformer;
   private recordGenerator: RecordGenerator;
@@ -70,6 +77,8 @@ export class Scanner {
     this.fileScanner = new FileScanner();
     this.pathMapper = new PathMapper();
     this.markExtractor = new MarkExtractor();
+    this.jsxTextExtractor = null as any; // 延迟初始化，需要 config
+    this.templateExtractor = null as any; // 延迟初始化，需要 config
     this.dependencyAnalyzer = new DependencyAnalyzer();
     this.codeTransformer = new CodeTransformer();
     this.recordGenerator = new RecordGenerator();
@@ -126,6 +135,11 @@ export class Scanner {
 
     // 4️⃣ 🔍 收集翻译 + 代码转换（含递归依赖分析）
     console.log('\n🔍 收集翻译并转换代码...');
+
+    // 初始化需要 config 的提取器
+    this.jsxTextExtractor = new JSXTextExtractor(config);
+    this.templateExtractor = new TemplateExtractor(config);
+
     for (const entryFile of entryFiles) {
       // 计算入口文件的 folderName
       const folderName = this.pathMapper.toFolderName(entryFile.filePath, appDir);
@@ -143,31 +157,47 @@ export class Scanner {
         processedFiles.add(filePath);
 
         const source = fs.readFileSync(filePath, 'utf-8');
-        const keys = this.markExtractor.extract(source, config);
 
-        if (keys.length === 0) {
+        // 收集所有需要翻译的 key
+        const allKeys = new Set<string>();
+
+        // 1. 从 MarkExtractor 收集带标记的字符串字面量
+        const markKeys = this.markExtractor.extract(source, config);
+        markKeys.forEach(key => allKeys.add(key));
+
+        // 2. 从 JSXTextExtractor 收集纯 JSX 文本
+        const jsxTextContents = this.jsxTextExtractor.extract(source, filePath);
+        jsxTextContents.forEach(content => allKeys.add(content.cleanedText));
+
+        // 3. 从 TemplateExtractor 收集带标记的模板字符串
+        const templateContents = this.templateExtractor.extract(source, filePath);
+        templateContents.forEach(content => allKeys.add(content.cleanedText));
+
+        const keysArray = Array.from(allKeys);
+
+        if (keysArray.length === 0) {
           console.log(`      ⏭️  ${path.relative(appDir, filePath)} (无标记)`);
           continue;
         }
 
         // 判断是否为入口文件
         const isEntry = entryFile.filePath === filePath;
-        const transformResult = this.codeTransformer.transform(source, keys, isEntry, folderName);
+        const transformResult = this.codeTransformer.transform(source, keysArray, isEntry, folderName);
 
         // 写回文件
         fs.writeFileSync(filePath, transformResult.code, 'utf-8');
 
         // 添加到记录
         for (const locale of locales) {
-          for (const key of keys) {
+          for (const key of keysArray) {
             this.recordGenerator.add(folderName, locale, key, key);
           }
         }
 
-        result.totalKeys += keys.length;
+        result.totalKeys += keysArray.length;
         result.transformedFiles++;
 
-        console.log(`      ✅ ${path.relative(appDir, filePath)} (${keys.length} 个标记)`);
+        console.log(`      ✅ ${path.relative(appDir, filePath)} (${keysArray.length} 个标记)`);
       }
     }
 

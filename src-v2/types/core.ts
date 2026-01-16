@@ -2,7 +2,7 @@
  * Core operation type definitions
  */
 
-import { ExtractedMarkedContent, ExtractionResult } from './extraction';
+import { ExtractionResult } from './extraction';
 import { TransformFailure } from './transformation';
 
 /**

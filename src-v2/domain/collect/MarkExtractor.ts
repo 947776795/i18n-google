@@ -9,8 +9,10 @@ import { I18nConfig } from '../../types/config';
  * 标记信息
  */
 export interface MarkInfo {
-  /** 标记文本内容 */
+  /** 标记文本内容（包含 ~ 符号） */
   text: string;
+  /** 清理后的文本（不包含 ~ 符号） */
+  cleanedText: string;
   /** 在源码中的位置 */
   index: number;
 }
@@ -30,7 +32,7 @@ export class MarkExtractor {
    */
   extract(source: string, config: I18nConfig): string[] {
     const marks = this.extractWithInfo(source, config.startMarker, config.endMarker);
-    // 返回去重的文本列表
+    // 返回去重的完整标记列表（带 ~ 符号）
     const uniqueTexts = new Set(marks.map(m => m.text));
     return Array.from(uniqueTexts);
   }
@@ -50,18 +52,49 @@ export class MarkExtractor {
     const escapedStart = this.escapeRegExp(startMarker);
     const escapedEnd = this.escapeRegExp(endMarker);
 
-    // 构建正则：匹配 ~text~ 格式
+    // 构建正则：匹配 ~text~ 格式，捕获整个标记
     const regex = new RegExp(`${escapedStart}([^${escapedEnd}]+)${escapedEnd}`, 'g');
 
     let match: RegExpExecArray | null;
     while ((match = regex.exec(source)) !== null) {
+      const cleanedText = match[1]; // 去掉标记符号的文本
+
+      // 跳过包含 JSX 标签的内容（简化版不支持混合内容）
+      if (this.containsJSXTags(cleanedText)) {
+        continue;
+      }
+
+      // 跳过包含变量表达式的标记（如 ${1}）
+      if (this.containsVariableExpression(cleanedText)) {
+        continue;
+      }
+
+      const fullMark = match[0]; // 完整标记（带 ~ 符号）
       results.push({
-        text: match[1],
+        text: fullMark,
+        cleanedText,
         index: match.index,
       });
     }
 
     return results;
+  }
+
+  /**
+   * 检查文本是否包含变量表达式（如 ${1}）
+   * 这种情况不应该被提取
+   */
+  private containsVariableExpression(text: string): boolean {
+    return /\$\{.+\}/.test(text);
+  }
+
+  /**
+   * 检查文本是否包含 JSX 标签
+   * 简化版不支持混合内容，需要跳过
+   */
+  private containsJSXTags(text: string): boolean {
+    // 检测是否包含 HTML/JSX 标签
+    return /<\/?[a-zA-Z][a-zA-Z0-9]*/.test(text);
   }
 
   /**
