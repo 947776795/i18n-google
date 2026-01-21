@@ -177,7 +177,7 @@ describe('Feature 3: 纯 JSX 文本提取', () => {
       const result = transformer.transform(source, keys, true, 'app_page');
 
       expect(result.code).toContain('import { I18nUtil } from "@utils"');
-      expect(result.code).toContain("const I18n = I18nUtil.createScoped('app_page')");
+      expect(result.code).toContain('const I18n = I18nUtil.createScoped("app_page")');
     });
 
     test('应该保持原有代码格式（换行、缩进）', () => {

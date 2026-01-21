@@ -65,8 +65,8 @@ export class Scanner {
   private fileScanner: FileScanner;
   private pathMapper: PathMapper;
   private markExtractor: MarkExtractor;
-  private jsxTextExtractor: JSXTextExtractor;
-  private templateExtractor: TemplateExtractor;
+  private jsxTextExtractor?: JSXTextExtractor;
+  private templateExtractor?: TemplateExtractor;
   private dependencyAnalyzer: DependencyAnalyzer;
   private codeTransformer: CodeTransformer;
   private recordGenerator: RecordGenerator;
@@ -77,8 +77,7 @@ export class Scanner {
     this.fileScanner = new FileScanner();
     this.pathMapper = new PathMapper();
     this.markExtractor = new MarkExtractor();
-    this.jsxTextExtractor = null as any; // 延迟初始化，需要 config
-    this.templateExtractor = null as any; // 延迟初始化，需要 config
+    // jsxTextExtractor 和 templateExtractor 延迟初始化，需要 config
     this.dependencyAnalyzer = new DependencyAnalyzer();
     this.codeTransformer = new CodeTransformer();
     this.recordGenerator = new RecordGenerator();

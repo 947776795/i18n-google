@@ -8,18 +8,6 @@ import * as path from 'path';
 import { I18nConfig } from '../../types/config';
 
 /**
- * Import 信息
- */
-interface ImportInfo {
-  /** 导入路径 */
-  path: string;
-  /** 是否为默认导入 */
-  isDefault: boolean;
-  /** 导入的名称 */
-  names: string[];
-}
-
-/**
  * 配置加载器
  *
  * 职责：从项目根目录加载 i18n.config.js
@@ -53,21 +41,12 @@ export class ConfigLoader {
    * @returns 配置对象
    */
   private parseConfig(configPath: string): I18nConfig {
-    // 读取配置文件内容
-    const content = fs.readFileSync(configPath, 'utf-8');
+    // 使用 require 加载 CommonJS 配置文件
+    // 先清除 require 缓存，确保获取最新配置
+    delete require.cache[require.resolve(configPath)];
 
-    // 使用 eval 解析 CommonJS module.exports（生产环境应使用更安全的方式）
-    // 注意：这里假设配置文件是纯对象，不包含复杂逻辑
-    const exports: { [key: string]: any } = {};
-    const module = { exports };
-
-    // 创建一个安全的执行环境来解析配置
-    const configContent = content
-      .replace(/module\.exports\s*=/, 'return')
-      .replace(/export\s/, '');
-
-    const configFn = new Function(configContent);
-    const config = configFn();
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const config = require(configPath);
 
     return this.normalizeConfig(config);
   }

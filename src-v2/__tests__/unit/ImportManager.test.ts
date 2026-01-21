@@ -4,7 +4,7 @@
  *
  * 规则：
  * - 入口文件（page.tsx/layout.tsx）：import { I18nUtil } from "@utils" + createScoped 初始化
- * - 非�口文件：import { I18nUtil as I18n } from "@utils"
+ * - 非入口文件：import { I18nUtil as I18n } from "@utils"
  */
 
 import { ImportManager } from '../../domain/transform/ImportManager';

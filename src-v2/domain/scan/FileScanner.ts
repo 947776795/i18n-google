@@ -7,6 +7,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { I18nConfig } from '../../types/config';
 import { ScanResult } from './PathMapper';
+import { GlobUtils } from '../../utils/GlobUtils';
 
 /**
  * 文件扫描器
@@ -77,28 +78,11 @@ export class FileScanner {
   private shouldIgnore(filePath: string, config: I18nConfig): boolean {
     // 检查 ignore 规则
     for (const pattern of config.ignore) {
-      if (this.matchPattern(filePath, pattern)) {
+      if (GlobUtils.matchPattern(filePath, pattern)) {
         return true;
       }
     }
     return false;
-  }
-
-  /**
-   * 匹配 glob 模式
-   *
-   * @param filePath 文件路径
-   * @param pattern glob 模式
-   * @returns 是否匹配
-   */
-  private matchPattern(filePath: string, pattern: string): boolean {
-    // 简单实现
-    const regex = new RegExp(
-      pattern
-        .replace(/\*\*/g, '.*')
-        .replace(/\*/g, '[^/]*')
-    );
-    return regex.test(filePath);
   }
 
   /**

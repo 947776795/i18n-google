@@ -6,6 +6,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { I18nConfig } from '../../types/config';
+import { GlobUtils } from '../../utils/GlobUtils';
 
 /**
  * Import 信息
@@ -230,7 +231,7 @@ export class DependencyAnalyzer {
   shouldIgnore(filePath: string, config: I18nConfig): boolean {
     // 检查 ignore 规则
     for (const pattern of config.ignore) {
-      if (this.matchPattern(filePath, pattern)) {
+      if (GlobUtils.matchPattern(filePath, pattern)) {
         return true;
       }
     }
@@ -239,24 +240,6 @@ export class DependencyAnalyzer {
     const ext = path.extname(filePath);
     const extWithoutDot = ext.slice(1);
     return !config.include.includes(extWithoutDot);
-  }
-
-  /**
-   * 匹配 glob 模式
-   *
-   * @param filePath 文件路径
-   * @param pattern glob 模式
-   * @returns 是否匹配
-   */
-  private matchPattern(filePath: string, pattern: string): boolean {
-    // 简单实现，生产环境应使用 minimatch
-    const regex = new RegExp(
-      pattern
-        .replace(/\*\*/g, '.*')
-        .replace(/\*/g, '[^/]*')
-        .replace(/\?/g, '[^/]')
-    );
-    return regex.test(filePath);
   }
 
   /**

@@ -160,8 +160,13 @@ export class CodeTransformer {
       }
     });
 
+    // 添加导入语句到 AST（在生成代码前）
+    if (hasChanges || marks.length > 0) {
+      this.addImportToAST(root, j, isEntry, folderName);
+    }
+
     // 使用 recast 生成代码
-    let code = root.toSource({
+    const code = root.toSource({
       lineTerminator: '\n',
       trailingComma: true,
       tabWidth: 2,
@@ -169,12 +174,6 @@ export class CodeTransformer {
       quote: 'double',
       objectCurlySpacing: true,
     });
-
-    // 添加导入语句
-    if (hasChanges || marks.length > 0) {
-      const importStatement = this.generateImport(isEntry, folderName);
-      code = this.insertImport(code, importStatement);
-    }
 
     return {
       code,
@@ -280,7 +279,7 @@ export class CodeTransformer {
   }
 
   /**
-   * 生成导入语句
+   * 添加导入语句到 AST
    *
    * 入口文件 (page.tsx/layout.tsx):
    * ```typescript
@@ -293,44 +292,79 @@ export class CodeTransformer {
    * import { I18nUtil as I18n } from "@utils";
    * ```
    *
+   * @param root AST 根节点
+   * @param j jscodeshift API
    * @param isEntry 是否为入口文件
    * @param folderName 文件夹名称
-   * @returns 导入语句字符串
    */
-  private generateImport(isEntry: boolean, folderName: string): string {
-    if (isEntry) {
-      return `import { I18nUtil } from "@utils";\nconst I18n = I18nUtil.createScoped('${folderName}');`;
-    } else {
-      return `import { I18nUtil as I18n } from "@utils";`;
-    }
-  }
-
-  /**
-   * 在源码开头插入导入语句
-   *
-   * @param source 源码字符串
-   * @param importStatement 导入语句
-   * @returns 插入导入后的源码
-   */
-  private insertImport(source: string, importStatement: string): string {
+  private addImportToAST(
+    root: JSCodeshiftCollection,
+    j: JSCodeshiftAPI,
+    isEntry: boolean,
+    folderName: string
+  ): void {
     // 检查是否已有 I18n 相关导入
-    const hasI18nImport = /import\s+.*I18nUtil.*from\s+['"]/.test(source);
+    const hasI18nImport = root.find(j.ImportDeclaration).some((path) => {
+      const source = path.node.source?.value as string;
+      return source === '@utils' || source === '@utils/i18n';
+    });
 
     if (hasI18nImport) {
       // 已有导入，不做修改
-      return source;
+      return;
     }
 
-    // 直接在原始代码前添加导入语句，保持原始代码完全不变
-    // 只添加一个换行符分隔导入和原始代码
-    return `${importStatement}\n${source}`;
-  }
+    // 获取 AST 的 program 节点
+    const program = root.get().node.program as any;
 
-  /**
-   * 转义正则表达式特殊字符
-   */
-  private escapeRegExp(str: string): string {
-    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // 创建导入声明
+    const importDeclaration = b.importDeclaration(
+      isEntry
+        ? [b.importSpecifier(b.identifier('I18nUtil'))]
+        : [b.importSpecifier(b.identifier('I18nUtil'), b.identifier('I18n'))],
+      b.literal('@utils')
+    );
+
+    // 找到第一个非 import 语句的位置
+    let insertIndex = 0;
+    for (let i = 0; i < program.body.length; i++) {
+      if (!n.ImportDeclaration.check(program.body[i])) {
+        insertIndex = i;
+        break;
+      }
+      insertIndex = i + 1;
+    }
+
+    // 插入导入语句
+    program.body.splice(insertIndex, 0, importDeclaration);
+
+    // 如果是入口文件，添加 Scoped 初始化
+    if (isEntry) {
+      const scopedInit = b.variableDeclaration('const', [
+        b.variableDeclarator(
+          b.identifier('I18n'),
+          b.callExpression(
+            b.memberExpression(
+              b.identifier('I18nUtil'),
+              b.identifier('createScoped')
+            ),
+            [b.literal(folderName)]
+          )
+        ),
+      ]);
+
+      // 找到插入位置（导入语句之后）
+      insertIndex = 0;
+      for (let i = 0; i < program.body.length; i++) {
+        if (n.ImportDeclaration.check(program.body[i])) {
+          insertIndex = i + 1;
+        } else {
+          break;
+        }
+      }
+
+      program.body.splice(insertIndex, 0, scopedInit);
+    }
   }
 
   // ========== Feature 3: JSX 文本节点转换 ==========
