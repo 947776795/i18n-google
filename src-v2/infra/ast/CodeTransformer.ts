@@ -60,9 +60,13 @@ export class CodeTransformer {
         return; // 跳过空白文本
       }
 
+      // 清理文本：规范化内部空白字符（将换行符、多个空格替换为单个空格）
+      // 这与提取时的 StringUtils.cleanExtractedText 逻辑保持一致
+      const cleanedText = trimmedText.replace(/\s+/g, ' ');
+
       // 检查是否在 keys 中（keys 是不带 ~ 的清理后文本）
       for (const key of marks) {
-        if (key === trimmedText) {
+        if (key === cleanedText) {
           this.convertJSXTextToI18nCall(path, key);
           hasChanges = true;
           keyCount++;
@@ -166,7 +170,7 @@ export class CodeTransformer {
       objectCurlySpacing: true,
     });
 
-    // 2. 添加导入语句
+    // 添加导入语句
     if (hasChanges || marks.length > 0) {
       const importStatement = this.generateImport(isEntry, folderName);
       code = this.insertImport(code, importStatement);
@@ -333,13 +337,12 @@ export class CodeTransformer {
 
   /**
    * 将 JSX 文本节点转换为 {I18n.t("key")}
-   * 例如: <div>Welcome</div> → <div>{I18n.t("Welcome")}</div>
    */
   private convertJSXTextToI18nCall(path: ASTPath<n.JSXText>, key: string): void {
     const i18nCall = this.createI18nCall(key);
     const expressionContainer = b.jsxExpressionContainer(i18nCall);
 
-    // 替换 JSX 文本节点为 JSX 表达式容器
+    // 直接替换 JSX 文本节点
     path.replace(expressionContainer as any);
   }
 
