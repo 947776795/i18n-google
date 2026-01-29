@@ -109,10 +109,21 @@ export class RecordGenerator {
       fs.mkdirSync(dir, { recursive: true });
     }
 
+    // 转换键名：将 "en.json" 转换为 "en"
+    const convertedRecord: TranslationRecord = {};
+    for (const [folderName, localeMap] of Object.entries(this.record)) {
+      convertedRecord[folderName] = {};
+      for (const [localeFile, translations] of Object.entries(localeMap)) {
+        // 移除 .json 后缀
+        const localeKey = localeFile.endsWith('.json') ? localeFile.slice(0, -5) : localeFile;
+        convertedRecord[folderName][localeKey] = translations;
+      }
+    }
+
     // 写入 JSON 文件
     await fs.promises.writeFile(
       filePath,
-      JSON.stringify(this.record, null, 2),
+      JSON.stringify(convertedRecord, null, 2),
       'utf-8'
     );
   }

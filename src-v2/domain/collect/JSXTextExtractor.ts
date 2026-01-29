@@ -76,8 +76,8 @@ export class JSXTextExtractor {
       return null;
     }
 
-    // 如果带标记符号，去除标记
-    if (StringUtils.isTranslatableString(cleanedText, this.config)) {
+    // 始终尝试去除开头或结尾的标记符号（处理不完整标记的情况）
+    if (cleanedText.startsWith(this.config.startMarker) || cleanedText.endsWith(this.config.endMarker)) {
       cleanedText = StringUtils.formatString(cleanedText, this.config);
       cleanedText = StringUtils.cleanExtractedText(cleanedText);
     }

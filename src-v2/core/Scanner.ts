@@ -161,8 +161,8 @@ export class Scanner {
         const allKeys = new Set<string>();
 
         // 1. 从 MarkExtractor 收集带标记的字符串字面量
-        const markKeys = this.markExtractor.extract(source, config);
-        markKeys.forEach(key => allKeys.add(key));
+        const markInfos = this.markExtractor.extractWithInfo(source, config.startMarker, config.endMarker);
+        markInfos.forEach(info => allKeys.add(info.cleanedText));
 
         // 2. 从 JSXTextExtractor 收集纯 JSX 文本
         const jsxTextContents = this.jsxTextExtractor.extract(source, filePath);
