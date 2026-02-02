@@ -33,6 +33,7 @@
     "scan": "node dist/scan.js",
     "dev": "ts-node scan.ts",
     "test": "jest",
+    "reset": "node scripts/reset-translations.js",
     "prepublishOnly": "npm run build",
     "publish:release": "./publish.sh"
   },

@@ -8,31 +8,55 @@
  */
 
 /**
- * 语言翻译 Key-Value 对
+ * 键值对翻译
  * @example { "Welcome": "Welcome", "Login": "Login" }
+ */
+export interface KeyTranslations {
+  [key: string]: string;
+}
+
+/**
+ * 语言翻译映射
+ * key 是语言文件名，如 "en.json", "es.json"
+ * @example { "Welcome": "Welcome", "Login": "Login" }
+ */
+export interface LocaleTranslations {
+  [localeFile: string]: KeyTranslations;
+}
+
+/**
+ * 翻译记录
+ * key 是文件夹名称，如 "app", "app_sub1"
+ * @example {
+ *   "app": {
+ *     "en.json": { "Welcome": "Welcome" },
+ *     "ko.json": { "Welcome": "환영" }
+ *   }
+ * }
+ */
+export interface TranslationRecord {
+  [folderName: string]: LocaleTranslations;
+}
+
+/**
+ * 语言翻译 Key-Value 对（别名，向后兼容）
+ * @deprecated 使用 KeyTranslations
  */
 export interface LanguageTranslations {
   [key: string]: string;
 }
 
 /**
- * 文件夹翻译集合
- * key 是语言文件名，如 "en.json", "es.json"
- * @example { "en.json": { "Welcome": "Welcome" }, "es.json": { "Welcome": "Bienvenido" } }
+ * 文件夹翻译集合（别名，向后兼容）
+ * @deprecated 使用 LocaleTranslations
  */
 export interface FolderTranslations {
   [languageFile: string]: LanguageTranslations;
 }
 
 /**
- * 完整翻译记录
- * key 是文件夹名称（路由路径_拼接），如 "pages_login", "components_header"
- * @example {
- *   "pages_login": {
- *     "en.json": { "Welcome": "Welcome" },
- *     "es.json": { "Welcome": "Bienvenido" }
- *   }
- * }
+ * 完整翻译记录（别名，向后兼容）
+ * @deprecated 使用 TranslationRecord
  */
 export interface CompleteTranslationRecord {
   [folderName: string]: FolderTranslations;

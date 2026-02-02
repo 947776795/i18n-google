@@ -11,6 +11,7 @@ import { Scanner, RunOptions } from '../core/Scanner';
  */
 const DEFAULT_OPTIONS: RunOptions = {
   projectRoot: process.cwd(),  // 默认为当前工作目录
+  skipConfirm: undefined,      // 默认需要确认删除
 };
 
 /**
@@ -43,6 +44,14 @@ async function main(): Promise<void> {
       case '--locales':
       case '-l':
         options.locales = args[++i].split(',');
+        break;
+      case '--yes':
+      case '-y':
+        options.skipConfirm = true;
+        break;
+      case '--no':
+      case '-n':
+        options.skipConfirm = false;
         break;
       case '--help':
       case '-h':
@@ -81,6 +90,8 @@ function printHelp(): void {
   -a, --app-dir <path>        扫描的源码目录 (可选，覆盖配置文件)
   -t, --translate-dir <path>  输出的翻译目录 (可选，覆盖配置文件)
   -l, --locales <list>        支持的语言列表，逗号分隔 (可选，覆盖配置文件)
+  -y, --yes                   自动确认删除无用 keys
+  -n, --no                    自动保留无用 keys（不删除）
   -h, --help                  显示帮助信息
 
 说明:
@@ -88,9 +99,11 @@ function printHelp(): void {
   命令行参数可覆盖配置文件中的对应设置。
 
 示例:
-  i18n-scan                                    # 使用当前目录的配置
+  i18n-scan                                    # 使用当前目录的配置（交互式确认）
   i18n-scan -p /path/to/project               # 指定项目目录
   i18n-scan -a src/app -l en,es,fr            # 覆盖扫描目录和语言
+  i18n-scan -y                                 # 自动删除无用 keys
+  i18n-scan -n                                 # 自动保留无用 keys
 
 在项目中运行:
   npx ts-node src-v2/bin/scan.ts

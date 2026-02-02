@@ -12,10 +12,16 @@ import { JSXTextExtractor } from '../domain/collect/JSXTextExtractor';
 import { TemplateExtractor } from '../domain/collect/TemplateExtractor';
 import { ConfigLoader } from '../domain/collect/ConfigLoader';
 import { DependencyAnalyzer } from '../domain/collect/DependencyAnalyzer';
+import { ReferenceCollector } from '../domain/collect/ReferenceCollector';
 import { CodeTransformer } from '../infra/ast/CodeTransformer';
 import { RecordGenerator } from '../domain/record/RecordGenerator';
 import { LangFileGenerator } from '../domain/record/LangFileGenerator';
-import { I18nConfig } from '../types/config';
+import { GoogleSheetsSync } from '../infra/sync/GoogleSheetsSync';
+import { RecordMerger } from '../domain/record/RecordMerger';
+import { UnusedKeyAnalyzer } from '../domain/cleanup/UnusedKeyAnalyzer';
+import { UserPrompt } from '../ui/UserPrompt';
+import { TranslationRecord } from '../types/record';
+import { CodeReference } from '../types/sync';
 
 /**
  * 运行配置选项
@@ -29,6 +35,8 @@ export interface RunOptions {
   translateDir?: string;
   /** 支持的语言列表 (如 ["en", "ko", "zh-CN"]) */
   locales?: string[];
+  /** 跳过确认：true=自动删除, false=自动保留, undefined=交互式询问 */
+  skipConfirm?: boolean | null;
 }
 
 /**
@@ -43,6 +51,15 @@ export interface ScanResult {
   transformedFiles: number;
   /** 生成的语言文件数量 */
   generatedFiles: number;
+  /** 删除的无用 keys 数量 */
+  deletedKeys?: number;
+  /** 同步状态 */
+  syncStatus?: {
+    /** 是否成功拉取远端数据 */
+    pulled: boolean;
+    /** 是否成功推送远端数据 */
+    pushed: boolean;
+  };
 }
 
 /**
@@ -50,15 +67,17 @@ export interface ScanResult {
  *
  * 职责：编排所有模块，完成完整流程
  *
- * 流程步骤:
- * 2️⃣ 🔧 加载配置
- * 3️⃣ 📁 扫描文件
- * 4️⃣ 🔍 收集翻译 + 代码转换（含递归依赖分析）
- *    - MarkExtractor: 提取带标记的字符串字面量
- *    - JSXTextExtractor: 提取纯 JSX 文本节点
- *    - TemplateExtractor: 提取带标记的模板字符串
- * 6️⃣ 🔧 生成记录
- * 7️⃣ 🔧 生成翻译文件
+ * 完整流程步骤:
+ * 1️⃣ 加载配置
+ * 2️⃣ 从 Google Sheets 拉取远端翻译
+ * 3️⃣ 读取本地现有翻译记录
+ * 4️⃣ 扫描文件
+ * 5️⃣ 收集翻译 keys（新 keys + I18n.t 引用）
+ * 6️⃣ 三方合并翻译数据（远端优先）
+ * 7️⃣ 代码转换 + 写入
+ * 8️⃣ 生成翻译文件
+ * 9️⃣ 检测无用翻译 keys（提示用户确认删除）
+ * 🔟 推送到 Google Sheets
  */
 export class Scanner {
   private configLoader: ConfigLoader;
@@ -68,20 +87,28 @@ export class Scanner {
   private jsxTextExtractor?: JSXTextExtractor;
   private templateExtractor?: TemplateExtractor;
   private dependencyAnalyzer: DependencyAnalyzer;
+  private referenceCollector?: ReferenceCollector;
   private codeTransformer: CodeTransformer;
   private recordGenerator: RecordGenerator;
   private langFileGenerator: LangFileGenerator;
+  private googleSheetsSync?: GoogleSheetsSync;
+  private recordMerger: RecordMerger;
+  private unusedKeyAnalyzer: UnusedKeyAnalyzer;
+  private userPrompt: UserPrompt;
 
   constructor() {
     this.configLoader = new ConfigLoader();
     this.fileScanner = new FileScanner();
     this.pathMapper = new PathMapper();
     this.markExtractor = new MarkExtractor();
-    // jsxTextExtractor 和 templateExtractor 延迟初始化，需要 config
+    // jsxTextExtractor、templateExtractor 和 referenceCollector 延迟初始化，需要 config
     this.dependencyAnalyzer = new DependencyAnalyzer();
     this.codeTransformer = new CodeTransformer();
     this.recordGenerator = new RecordGenerator();
     this.langFileGenerator = new LangFileGenerator();
+    this.recordMerger = new RecordMerger();
+    this.unusedKeyAnalyzer = new UnusedKeyAnalyzer();
+    this.userPrompt = new UserPrompt();
   }
 
   /**
@@ -96,10 +123,21 @@ export class Scanner {
       totalKeys: 0,
       transformedFiles: 0,
       generatedFiles: 0,
+      deletedKeys: 0,
+      syncStatus: {
+        pulled: false,
+        pushed: false,
+      },
     };
 
+    // 如果指定了 skipConfirm，设置自动确认
+    if (options.skipConfirm !== undefined) {
+      this.userPrompt.setAutoConfirm(options.skipConfirm);
+    }
+
     // ============ 主流程 ============
-    // 2️⃣ 🔧 加载配置
+
+    // 1️⃣ 🔧 加载配置
     console.log(`\n🔧 加载配置...`);
     const config = await this.configLoader.load(options.projectRoot);
     console.log(`   配置文件: i18n.config.js`);
@@ -117,8 +155,53 @@ export class Scanner {
       : path.resolve(options.projectRoot, config.outputDir);
 
     const locales = options.locales || config.languages;
+    const recordPath = path.join(translateDir, 'i18n-complete-record.json');
 
-    // 3️⃣ 📁 扫描文件
+    // 初始化 Google Sheets 同步器（如果配置了）
+    if (config.spreadsheetId && config.keyFile) {
+      this.googleSheetsSync = new GoogleSheetsSync(config);
+    }
+
+    // 2️⃣ 📥 从 Google Sheets 拉取远端翻译
+    let remoteRecord: TranslationRecord = {};
+    if (this.googleSheetsSync) {
+      console.log('\n📥 从 Google Sheets 拉取远端翻译...');
+      try {
+        remoteRecord = await this.googleSheetsSync.pull();
+        result.syncStatus!.pulled = true;
+        console.log(`   ✅ 拉取了 ${Object.keys(remoteRecord).length} 个模块的远端翻译`);
+      } catch (error) {
+        console.log(`   ⚠️  拉取远端翻译失败: ${error}`);
+      }
+    }
+
+    // 3️⃣ 💾 读取本地现有翻译记录
+    let localRecord: TranslationRecord = {};
+    console.log('\n💾 读取本地现有翻译记录...');
+    try {
+      if (fs.existsSync(recordPath)) {
+        const content = fs.readFileSync(recordPath, 'utf-8');
+        const loadedRecord: TranslationRecord = JSON.parse(content);
+
+        // 转换格式：将 "en" 转换回 "en.json"（RecordGenerator 保存时移除了 .json 后缀）
+        for (const [folderName, localeMap] of Object.entries(loadedRecord)) {
+          localRecord[folderName] = {};
+          for (const [locale, translations] of Object.entries(localeMap)) {
+            // 如果 locale 没有 .json 后缀，添加它
+            const localeFile = locale.endsWith('.json') ? locale : `${locale}.json`;
+            localRecord[folderName][localeFile] = translations;
+          }
+        }
+
+        console.log(`   ✅ 读取了 ${Object.keys(localRecord).length} 个模块的本地翻译`);
+      } else {
+        console.log(`   ℹ️  本地记录不存在，将创建新记录`);
+      }
+    } catch (error) {
+      console.log(`   ⚠️  读取本地记录失败: ${error}`);
+    }
+
+    // 4️⃣ 📁 扫描文件
     console.log(`\n📁 扫描文件: ${appDir}`);
     const entryFiles = this.fileScanner.scan(appDir, config);
     result.totalFiles = entryFiles.length;
@@ -132,12 +215,19 @@ export class Scanner {
     // 用于追踪已处理的文件（避免重复转换）
     const processedFiles = new Set<string>();
 
-    // 4️⃣ 🔍 收集翻译 + 代码转换（含递归依赖分析）
+    // 用于收集新扫描的 keys（按 folderName 分组）
+    const newKeysByFolder = new Map<string, Set<string>>();
+
+    // 用于收集代码引用（用于无用 key 检测）
+    const codeReferences = new Set<CodeReference>();
+
+    // 5️⃣ 🔍 收集翻译 keys + 代码转换（含递归依赖分析）
     console.log('\n🔍 收集翻译并转换代码...');
 
     // 初始化需要 config 的提取器
     this.jsxTextExtractor = new JSXTextExtractor(config);
     this.templateExtractor = new TemplateExtractor(config);
+    this.referenceCollector = new ReferenceCollector(config);
 
     for (const entryFile of entryFiles) {
       // 计算入口文件的 folderName
@@ -172,12 +262,59 @@ export class Scanner {
         const templateContents = this.templateExtractor.extract(source, filePath);
         templateContents.forEach(content => allKeys.add(content.cleanedText));
 
+        // 4. 收集 I18n.t() 引用（用于无用 key 检测）
+        const existingRefs = this.referenceCollector.collect(source, filePath);
+        for (const ref of existingRefs) {
+          // 使用入口文件的 folderName，而不是从 ref.filePath 计算
+          // 这样可以确保被依赖的组件文件的引用与记录中的 folderName 匹配
+          codeReferences.add({ folderName, key: ref.key });
+        }
+
         const keysArray = Array.from(allKeys);
 
         if (keysArray.length === 0) {
           console.log(`      ⏭️  ${path.relative(appDir, filePath)} (无标记)`);
+
+          // 即使没有新标记，也要合并本地记录以保留现有翻译（用于无用 key 检测）
+          const mergeResult = this.recordMerger.merge(
+            remoteRecord,
+            localRecord,
+            new Set<string>(),
+            folderName,
+            locales  // 传入配置的语言列表
+          );
+
+          // 将合并后的翻译添加到记录生成器
+          const mergedTranslations = mergeResult.mergedRecord[folderName];
+          if (mergedTranslations) {
+            for (const locale of locales) {
+              const localeFile = `${locale}.json`;
+              if (mergedTranslations[localeFile]) {
+                for (const [key, value] of Object.entries(mergedTranslations[localeFile])) {
+                  this.recordGenerator.add(folderName, locale, key, value);
+                }
+              }
+            }
+          }
+
           continue;
         }
+
+        // 6️⃣ 🔀 三方合并翻译数据
+        // 为每个 folderName 收集新 keys
+        if (!newKeysByFolder.has(folderName)) {
+          newKeysByFolder.set(folderName, new Set<string>());
+        }
+        keysArray.forEach(key => newKeysByFolder.get(folderName)!.add(key));
+
+        // 合并远端、本地和新的翻译
+        const mergeResult = this.recordMerger.merge(
+          remoteRecord,
+          localRecord,
+          newKeysByFolder.get(folderName)!,
+          folderName,
+          locales  // 传入配置的语言列表
+        );
 
         // 判断是否为入口文件
         const isEntry = entryFile.filePath === filePath;
@@ -186,10 +323,23 @@ export class Scanner {
         // 写回文件
         fs.writeFileSync(filePath, transformResult.code, 'utf-8');
 
-        // 添加到记录
-        for (const locale of locales) {
-          for (const key of keysArray) {
-            this.recordGenerator.add(folderName, locale, key, key);
+        // 收集转换后新增的 I18n.t() 引用（用于无用 key 检测）
+        const newRefs = this.referenceCollector!.collect(transformResult.code, filePath);
+        for (const ref of newRefs) {
+          // 使用入口文件的 folderName，而不是从 ref.filePath 计算
+          codeReferences.add({ folderName, key: ref.key });
+        }
+
+        // 使用合并后的翻译更新记录
+        const mergedTranslations = mergeResult.mergedRecord[folderName];
+        if (mergedTranslations) {
+          for (const locale of locales) {
+            const localeFile = `${locale}.json`;
+            if (mergedTranslations[localeFile]) {
+              for (const [key, value] of Object.entries(mergedTranslations[localeFile])) {
+                this.recordGenerator.add(folderName, locale, key, value);
+              }
+            }
           }
         }
 
@@ -200,17 +350,14 @@ export class Scanner {
       }
     }
 
-    // 6️⃣ 🔧 生成记录
-    const recordPath = path.join(translateDir, 'i18n-complete-record.json');
-    console.log(`\n🔧 生成记录: ${recordPath}`);
+    // 7️⃣ 🔧 生成翻译文件
+    console.log('\n🔧 生成翻译文件...');
     await this.recordGenerator.saveCompleteRecord(recordPath);
 
     const stats = this.recordGenerator.getStats();
     console.log(`   总文件夹数: ${stats.totalFolders}`);
     console.log(`   总 Key 数: ${stats.totalKeys}`);
 
-    // 7️⃣ 🔧 生成翻译文件
-    console.log('\n🔧 生成翻译文件...');
     const record = this.recordGenerator.generate();
     await this.langFileGenerator.generate(record, translateDir, locales);
 
@@ -224,6 +371,74 @@ export class Scanner {
     for (const file of generatedFiles) {
       console.log(`   ✅ ${file}`);
     }
+
+    // 8️⃣ 🧹 检测无用翻译 keys
+    console.log('\n🧹 检测无用翻译 keys...');
+    const analysisResult = this.unusedKeyAnalyzer.analyze(record, codeReferences);
+
+    // 收集已删除的 keys（用于推送到远端）
+    const deletedKeysFormatted: string[] = [];
+
+    if (analysisResult.total > 0) {
+      const shouldDelete = await this.userPrompt.confirmDeleteUnusedKeys(analysisResult.formattedUnusedKeys);
+      if (shouldDelete) {
+        // 从记录中删除这些 keys
+        for (const formattedKey of analysisResult.formattedUnusedKeys) {
+          // 解析格式: [folderName][key]
+          const match = formattedKey.match(/^\[(.+)\]\[([^\]]+)\]$/);
+          if (match) {
+            const [, folderName, key] = match;
+            if (record[folderName]) {
+              for (const localeFile of Object.keys(record[folderName])) {
+                if (record[folderName][localeFile][key]) {
+                  delete record[folderName][localeFile][key];
+                  deletedKeysFormatted.push(formattedKey);
+                }
+              }
+              // 如果该文件夹下没有翻译了，删除文件夹
+              let hasTranslations = false;
+              for (const localeFile of Object.keys(record[folderName])) {
+                if (Object.keys(record[folderName][localeFile]).length > 0) {
+                  hasTranslations = true;
+                  break;
+                }
+              }
+              if (!hasTranslations) {
+                delete record[folderName];
+              }
+            }
+          }
+        }
+
+        result.deletedKeys = analysisResult.total;
+        console.log(`   ✅ 已删除 ${analysisResult.total} 个无用 keys`);
+
+        // 重新保存记录
+        await this.recordGenerator.saveCompleteRecord(recordPath);
+        // 重新生成翻译文件
+        await this.langFileGenerator.generate(record, translateDir, locales);
+      } else {
+        console.log(`   ℹ️  保留所有 keys`);
+      }
+    } else {
+      console.log(`   ✅ 所有翻译 keys 都在使用中，无需清理`);
+    }
+
+    // 9️⃣ 📤 推送到 Google Sheets（使用增量合并避免并发冲突）
+    if (this.googleSheetsSync) {
+      console.log('\n📤 推送翻译到 Google Sheets...');
+      try {
+        // 使用带合并的推送，避免覆盖远端的最新更新
+        await this.googleSheetsSync.pushWithMerge(record, deletedKeysFormatted);
+        result.syncStatus!.pushed = true;
+        console.log(`   ✅ 推送成功`);
+      } catch (error) {
+        console.log(`   ⚠️  推送失败: ${error}`);
+      }
+    }
+
+    // 关闭用户提示器
+    this.userPrompt.close();
 
     return result;
   }
@@ -242,6 +457,14 @@ export class Scanner {
     console.log(`   提取标记数: ${result.totalKeys}`);
     console.log(`   转换文件数: ${result.transformedFiles}`);
     console.log(`   生成文件数: ${result.generatedFiles}`);
+    if (result.deletedKeys !== undefined) {
+      console.log(`   删除 keys 数: ${result.deletedKeys}`);
+    }
+    if (result.syncStatus) {
+      console.log(`\n🔄 同步状态:`);
+      console.log(`   远端拉取: ${result.syncStatus.pulled ? '✅' : '❌'}`);
+      console.log(`   远端推送: ${result.syncStatus.pushed ? '✅' : '❌'}`);
+    }
     console.log('='.repeat(50));
   }
 }

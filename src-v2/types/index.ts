@@ -16,3 +16,6 @@ export * from "./transformation";
 
 // 核心操作类型
 export * from "./core";
+
+// 同步类型
+export * from "./sync";
