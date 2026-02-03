@@ -84,51 +84,68 @@ export class CodeTransformer {
         }
         const value = path.node.value;
 
-        // 检查是否包含标记
+        // 检查是否精确匹配标记（使用精确匹配避免 "sdsd~".includes("d") 的问题）
         for (const mark of marks) {
-          if (value.includes(mark)) {
-            // 获取清理后的 key（去掉 ~ 符号）
-            const key = mark.replace(/^~|~$/g, '');
+          // 精确匹配：value 必须完全等于 mark，或者是完整标记的格式
+          // 完整标记格式：~mark~（其中 mark 是去掉 ~ 后的 mark）
+          const isExactMatch = value === mark ||
+                               value === `~${mark}~` ||
+                               (mark.startsWith('~') && value === mark) ||
+                               (mark.endsWith('~') && value === mark);
 
-            // 如果在 JSX 属性中，需要转换为表达式
-            if (this.isInJSXAttribute(path)) {
-              // 将整个属性值转换为 {I18n.t("key")}
-              this.convertToJSXExpression(path, key);
-              hasChanges = true;
-              keyCount++;
-              break;
+          if (!isExactMatch) {
+            continue;
+          }
+
+          // 🔧 关键修复：不完整标记保留 ~ 符号作为 key 的一部分
+          // 只有完整的标记（~text~）才去掉 ~ 符号
+          let key: string;
+          if (mark.startsWith('~') && mark.endsWith('~')) {
+            // 完整标记，去掉 ~ 符号
+            key = mark.slice(1, -1);
+          } else {
+            // 不完整标记（如 sdsd~ 或 ~asd），保留原样
+            key = mark;
+          }
+
+          // 如果在 JSX 属性中，需要转换为表达式
+          if (this.isInJSXAttribute(path)) {
+            // 将整个属性值转换为 {I18n.t("key")}
+            this.convertToJSXExpression(path, key);
+            hasChanges = true;
+            keyCount++;
+            break;
+          }
+          // 如果在 JSX 元素的直接子节点中（但不在 JSX 属性中），需要在文本周围添加花括号
+          else if (this.isInJSXElementChildren(path)) {
+            // 将字符串字面量替换为 {I18n.t("key")}
+            this.convertToJSXExpression(path, key);
+            hasChanges = true;
+            keyCount++;
+            break;
+          }
+          // 如果在 JSX 表达式容器中，替换整个容器内容
+          else if (this.isInJSXExpressionContainer(path)) {
+            // 替换整个容器为 I18n.t() 调用
+            const i18nCall = this.createI18nCall(key);
+            // 找到 JSXExpressionContainer 父节点并替换其表达式
+            let parent = path.parent;
+            while (parent && parent.node?.type !== 'JSXExpressionContainer') {
+              parent = parent.parent;
             }
-            // 如果在 JSX 元素的直接子节点中（但不在 JSX 属性中），需要在文本周围添加花括号
-            else if (this.isInJSXElementChildren(path)) {
-              // 将字符串字面量替换为 {I18n.t("key")}
-              this.convertToJSXExpression(path, key);
-              hasChanges = true;
-              keyCount++;
-              break;
+            if (parent) {
+              parent.node.expression = i18nCall;
             }
-            // 如果在 JSX 表达式容器中，替换整个容器内容
-            else if (this.isInJSXExpressionContainer(path)) {
-              // 替换整个容器为 I18n.t() 调用
-              const i18nCall = this.createI18nCall(key);
-              // 找到 JSXExpressionContainer 父节点并替换其表达式
-              let parent = path.parent;
-              while (parent && parent.node?.type !== 'JSXExpressionContainer') {
-                parent = parent.parent;
-              }
-              if (parent) {
-                parent.node.expression = i18nCall;
-              }
-              hasChanges = true;
-              keyCount++;
-              break;
-            }
-            // 其他情况（如变量声明），替换为 I18n.t() 调用
-            else {
-              this.convertToI18nCall(path, key);
-              hasChanges = true;
-              keyCount++;
-              break;
-            }
+            hasChanges = true;
+            keyCount++;
+            break;
+          }
+          // 其他情况（如变量声明），替换为 I18n.t() 调用
+          else {
+            this.convertToI18nCall(path, key);
+            hasChanges = true;
+            keyCount++;
+            break;
           }
         }
       }
@@ -141,9 +158,17 @@ export class CodeTransformer {
       const cleanedText = this.buildCleanedTemplateText(path.node);
 
       // 检查是否在标记列表中
-      // marks 可能包含: 1) 带标记的原始文本 (~text~) 或 2) 清理后的文本
+      // marks 可能包含: 1) 带标记的原始文本 (~text~) 或 2) 清理后的文本或不完整标记（sdsd~）
       for (const mark of marks) {
-        const keyToUse = mark.replace(/^~|~$/g, '');
+        // 🔧 关键修复：不完整标记保留 ~ 符号作为 key 的一部分
+        let keyToUse: string;
+        if (mark.startsWith('~') && mark.endsWith('~')) {
+          // 完整标记，去掉 ~ 符号
+          keyToUse = mark.slice(1, -1);
+        } else {
+          // 不完整标记（如 sdsd~ 或 ~asd），保留原样
+          keyToUse = mark;
+        }
 
         // 如果清理后的文本在 marks 中（或去掉 ~ 后匹配）
         if (cleanedText === keyToUse || cleanedText === mark) {
@@ -152,7 +177,10 @@ export class CodeTransformer {
             break;
           }
 
-          this.convertTemplateToI18nCall(path, cleanedText);
+          // 对于不完整标记，使用 mark 本身作为 key（保留 ~）
+          // 对于完整标记，使用 cleanedText
+          const finalKey = (mark.startsWith('~') && mark.endsWith('~')) ? cleanedText : mark;
+          this.convertTemplateToI18nCall(path, finalKey);
           hasChanges = true;
           keyCount++;
           break;

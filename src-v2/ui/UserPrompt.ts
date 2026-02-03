@@ -85,7 +85,7 @@ export class UserPrompt {
   /**
    * 格式化无用 keys 消息
    *
-   * @param unusedKeys 无用的 keys
+   * @param unusedKeys 无用的 keys（格式化后的 [folderName][key]）
    * @returns 格式化后的消息
    */
   formatUnusedKeysMessage(unusedKeys: string[]): string {
@@ -93,7 +93,20 @@ export class UserPrompt {
       return '\n✅ 所有翻译 keys 都在使用中，无需清理';
     }
 
-    return `\n🗑️ 检测到 ${unusedKeys.length} 个无用的翻译 keys`;
+    let message = `\n🗑️ 检测到 ${unusedKeys.length} 个无用的翻译 keys:\n`;
+
+    for (const unusedKey of unusedKeys) {
+      // 解析格式: [folderName][key]
+      const match = unusedKey.match(/^\[(.+)\]\[([^\]]+)\]$/);
+      if (match) {
+        const [, folderName, key] = match;
+        message += `   📁 ${folderName}\n      🔑 ${key}\n`;
+      } else {
+        message += `   ${unusedKey}\n`;
+      }
+    }
+
+    return message;
   }
 
   /**

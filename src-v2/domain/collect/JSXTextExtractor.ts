@@ -76,11 +76,18 @@ export class JSXTextExtractor {
       return null;
     }
 
-    // 始终尝试去除开头或结尾的标记符号（处理不完整标记的情况）
-    if (cleanedText.startsWith(this.config.startMarker) || cleanedText.endsWith(this.config.endMarker)) {
+    // 🔧 关键修复：保留不完整标记的符号作为 key 的一部分
+    // 检查是否有标记符号
+    const hasStartMarker = cleanedText.startsWith(this.config.startMarker);
+    const hasEndMarker = cleanedText.endsWith(this.config.endMarker);
+
+    if (hasStartMarker && hasEndMarker) {
+      // 完整的标记（如 ~text~），去掉标记符号
       cleanedText = StringUtils.formatString(cleanedText, this.config);
       cleanedText = StringUtils.cleanExtractedText(cleanedText);
     }
+    // 注意：不完整的标记（如 "sdsd~" 或 "~asd"）保留原样，不处理
+    // 这样 key 会是 "sdsd~" 或 "~asd"，在翻译文件中会有这些 keys
 
     // 如果去除标记后为空，跳过
     if (!cleanedText) {
