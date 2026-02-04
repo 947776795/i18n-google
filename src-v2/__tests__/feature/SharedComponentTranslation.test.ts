@@ -6,6 +6,7 @@
 
 import { Scanner } from '../../core/Scanner';
 import { I18nConfig } from '../../types/config';
+import { setTestMode } from '../../ui/UserPrompt';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -126,8 +127,8 @@ describe('共享组件翻译副本生成', () => {
       // 验证：两个入口都应该有 BannerWildcard 的翻译
       console.log('\n=== 验证结果 ===');
 
-      const deepPageTranslations = record['app_sub1_deep_page']?.['en.json'] || {};
-      const layoutTranslations = record['app_sub1_layout']?.['en.json'] || {};
+      const deepPageTranslations = record['app_sub1_deep_page']?.['en'] || {};
+      const layoutTranslations = record['app_sub1_layout']?.['en'] || {};
 
       console.log('  app_sub1_deep_page 翻译:', Object.keys(deepPageTranslations));
       console.log('  app_sub1_layout 翻译:', Object.keys(layoutTranslations));
@@ -154,7 +155,7 @@ describe('共享组件翻译副本生成', () => {
       // 模拟 localRecord（从之前的扫描中获得）
       const localRecord = {
         'app_sub1_deep_page': {
-          'en.json': {
+          'en': {
             'Deep Page': 'Deep Page',
             'Special Offer': 'Special Offer',  // ← BannerWildcard 的翻译在这里
             'Get 50% off today': 'Get 50% off today',
@@ -197,7 +198,7 @@ describe('共享组件翻译副本生成', () => {
       }
 
       const record = recordGenerator.generate();
-      const layoutTranslations = record['app_sub1_layout']?.['en.json'] || {};
+      const layoutTranslations = record['app_sub1_layout']?.['en'] || {};
 
       console.log('\n=== 验证结果 ===');
       console.log('  app_sub1_layout 翻译:', Object.keys(layoutTranslations));
@@ -208,5 +209,186 @@ describe('共享组件翻译副本生成', () => {
 
       console.log('\n✅ 第二个入口也获得了共享组件的翻译副本！');
     });
+  });
+
+  describe('场景：组件迁移 + 组件新增翻译', () => {
+    it('二次扫描：组件从 page_a 迁移到 page_b，同时组件有新增翻译',
+      async () => {
+      // 场景描述：
+      // 1. 首次扫描：SharedComponent 被 page_a 使用，有 2 个翻译
+      // 2. 修改：SharedComponent 移动到 page_b，同时新增 1 个翻译
+      // 3. 二次扫描：page_a 应删除旧翻译，page_b 应有全部 3 个翻译
+
+      const tempDir = fs.mkdtempSync(path.join(__dirname, 'test-migration-'));
+      const srcDir = path.join(tempDir, 'src');
+      const componentsDir = path.join(srcDir, 'components');
+      const appDir = path.join(srcDir, 'app');
+      const pageADir = path.join(appDir, 'page_a');
+      const pageBDir = path.join(appDir, 'page_b');
+      const translateDir = path.join(srcDir, 'translate');
+
+      // 创建目录
+      fs.mkdirSync(componentsDir, { recursive: true });
+      fs.mkdirSync(pageADir, { recursive: true });
+      fs.mkdirSync(pageBDir, { recursive: true });  // 🔑 添加 pageB 目录创建
+      fs.mkdirSync(translateDir, { recursive: true });
+
+      // ===== 首次扫描：组件在 page_a 中 =====
+      // 使用 ~markers~ 语法，让扫描器识别并转换
+      const sharedComponentV1 = `
+export default function SharedComponent() {
+  return (
+    <div className="shared">
+      <h2>~Shared Title~</h2>
+      <p>~Shared Description~</p>
+    </div>
+  );
+}
+`;
+
+      const pageAV1 = `
+import SharedComponent from "../../components/SharedComponent";
+
+export default function PageA() {
+  return (
+    <div>
+      <h1>~Page A~</h1>
+      <SharedComponent />
+    </div>
+  );
+}
+`;
+
+      const pageBV1 = `
+export default function PageB() {
+  return <h1>~Page B~</h1>;
+}
+`;
+
+      // 写入首次扫描的文件
+      fs.writeFileSync(path.join(componentsDir, 'SharedComponent.tsx'), sharedComponentV1, 'utf-8');
+      fs.writeFileSync(path.join(pageADir, 'page.tsx'), pageAV1, 'utf-8');
+      fs.writeFileSync(path.join(pageBDir, 'page.tsx'), pageBV1, 'utf-8');
+
+      // 创建配置文件
+      const configPath = path.join(tempDir, 'i18n.config.js');
+      const configContent = `module.exports = ${JSON.stringify(mockConfig, null, 2)};`;
+      fs.writeFileSync(configPath, configContent, 'utf-8');
+
+      console.log('\n========== 首次扫描 ==========');
+      console.log('SharedComponent 被 page_a 使用');
+      console.log('翻译: Shared Title, Shared Description');
+
+      // 启用测试模式（自动确认所有交互）
+      setTestMode(true);
+
+      // 首次扫描
+      const scanner1 = new Scanner();
+
+      await scanner1.run({ projectRoot: tempDir });
+
+      // 验证首次扫描结果
+      const recordPath1 = path.join(translateDir, 'i18n-complete-record.json');
+      const record1 = JSON.parse(fs.readFileSync(recordPath1, 'utf-8'));
+
+      const pageATranslationsV1 = (record1['app_page_a_page'] as Record<string, any>)?.['en'] || {};
+      const pageBTranslationsV1 = (record1['app_page_b_page'] as Record<string, any>)?.['en'] || {};
+
+      console.log('\n首次扫描结果:');
+      console.log('  app_page_a 翻译:', Object.keys(pageATranslationsV1));
+      console.log('  app_page_b 翻译:', Object.keys(pageBTranslationsV1));
+
+      // 验证：page_a 有共享组件的翻译
+      expect(pageATranslationsV1['Shared Title']).toBeTruthy();
+      expect(pageATranslationsV1['Shared Description']).toBeTruthy();
+      expect(pageATranslationsV1['Page A']).toBeTruthy();
+
+      // page_b 此时没有共享组件的翻译
+      expect(pageBTranslationsV1['Shared Title']).toBeUndefined();
+      expect(pageBTranslationsV1['Page B']).toBeTruthy();
+
+      // ===== 修改：组件迁移到 page_b + 新增翻译 =====
+      // 使用 ~markers~ 语法，让扫描器识别并转换
+      const sharedComponentV2 = `
+export default function SharedComponent() {
+  return (
+    <div className="shared">
+      <h2>~Shared Title~</h2>
+      <p>~Shared Description~</p>
+      <button>~New Shared Button~</button>  // 🔑 新增翻译
+    </div>
+  );
+}
+`;
+
+      const pageAV2 = `
+export default function PageA() {
+  return <h1>~Page A~</h1>;  // 🔑 不再引用 SharedComponent
+}
+`;
+
+      const pageBV2 = `
+import SharedComponent from "../../components/SharedComponent";
+
+export default function PageB() {
+  return (
+    <div>
+      <h1>~Page B~</h1>
+      <SharedComponent />  // 🔑 现在引用 SharedComponent
+    </div>
+  );
+}
+`;
+
+      // 修改文件内容
+      fs.writeFileSync(path.join(componentsDir, 'SharedComponent.tsx'), sharedComponentV2, 'utf-8');
+      fs.writeFileSync(path.join(pageADir, 'page.tsx'), pageAV2, 'utf-8');
+      fs.writeFileSync(path.join(pageBDir, 'page.tsx'), pageBV2, 'utf-8');
+
+      console.log('\n========== 修改后 ==========');
+      console.log('SharedComponent 移动到 page_b，新增翻译: New Shared Button');
+
+      // ===== 二次扫描 =====
+      console.log('\n========== 二次扫描 ==========');
+
+      const scanner2 = new Scanner();
+      const result = await scanner2.run({ projectRoot: tempDir });
+
+      // 验证二次扫描结果
+      const recordPath2 = path.join(translateDir, 'i18n-complete-record.json');
+      const record2 = JSON.parse(fs.readFileSync(recordPath2, 'utf-8'));
+
+      const pageATranslationsV2 = (record2['app_page_a_page'] as Record<string, any>)?.['en'] || {};
+      const pageBTranslationsV2 = (record2['app_page_b_page'] as Record<string, any>)?.['en'] || {};
+
+      console.log('\n二次扫描结果:');
+      console.log('  app_page_a_page 翻译:', Object.keys(pageATranslationsV2));
+      console.log('  app_page_b_page 翻译:', Object.keys(pageBTranslationsV2));
+      console.log('  删除的 keys:', result.deletedKeys);
+
+      // ✅ 验证：page_a 不再有共享组件的翻译
+      expect(pageATranslationsV2['Shared Title']).toBeUndefined();
+      expect(pageATranslationsV2['Shared Description']).toBeUndefined();
+      expect(pageATranslationsV2['Page A']).toBeTruthy();  // page_a 自己的翻译保留
+
+      // ✅ 验证：page_b 有全部 3 个共享组件翻译（旧 2 个 + 新 1 个）
+      expect(pageBTranslationsV2['Shared Title']).toBeTruthy();
+      expect(pageBTranslationsV2['Shared Description']).toBeTruthy();
+      expect(pageBTranslationsV2['New Shared Button']).toBeTruthy();  // 新增的翻译
+      expect(pageBTranslationsV2['Page B']).toBeTruthy();  // page_b 自己的翻译
+
+      // ✅ 验证：应该删除了 2 个无用 key（page_a 中的共享组件翻译）
+      expect(result.deletedKeys).toBeGreaterThanOrEqual(2);
+
+      console.log('\n✅ 测试通过！');
+      console.log('  - page_a 正确删除了共享组件的翻译');
+      console.log('  - page_b 正确获得了全部共享组件翻译（包括新增的）');
+
+      // 清理临时目录
+      fs.rmSync(tempDir, { recursive: true, force: true });
+
+      // 关闭测试模式
+      setTestMode(false);
+    }, 60000);  // 增加超时时间到 60 秒
   });
 });

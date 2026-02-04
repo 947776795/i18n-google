@@ -71,7 +71,7 @@ describe('Feature 5: 完整主流程测试', () => {
       // 远端数据
       const remote: TranslationRecord = {
         app: {
-          'en.json': {
+          'en': {
             Welcome: 'Welcome (Remote)',
             Login: 'Login (Remote)',
           },
@@ -81,7 +81,7 @@ describe('Feature 5: 完整主流程测试', () => {
       // 本地数据
       const local: TranslationRecord = {
         app: {
-          'en.json': {
+          'en': {
             Welcome: 'Welcome (Local)',
             Settings: 'Settings (Local)',
           },
@@ -94,17 +94,17 @@ describe('Feature 5: 完整主流程测试', () => {
       const result = merger.merge(remote, local, newKeys, 'app');
 
       // 验证：远端优先
-      expect(result.mergedRecord['app']['en.json']['Welcome']).toBe('Welcome (Remote)');
+      expect(result.mergedRecord['app']['en']['Welcome']).toBe('Welcome (Remote)');
 
       // 验证：远端有就采用远端
-      expect(result.mergedRecord['app']['en.json']['Login']).toBe('Login (Remote)');
+      expect(result.mergedRecord['app']['en']['Login']).toBe('Login (Remote)');
 
       // 验证：远端没有，本地有
-      expect(result.mergedRecord['app']['en.json']['Settings']).toBe('Settings (Local)');
+      expect(result.mergedRecord['app']['en']['Settings']).toBe('Settings (Local)');
 
       // 验证：新 key 添加
-      expect(result.mergedRecord['app']['en.json']['Logout']).toBe('Logout');
-      expect(result.mergedRecord['app']['en.json']['Profile']).toBe('Profile');
+      expect(result.mergedRecord['app']['en']['Logout']).toBe('Logout');
+      expect(result.mergedRecord['app']['en']['Profile']).toBe('Profile');
 
       // 验证：统计
       expect(result.stats.fromRemote).toBe(2);
@@ -119,7 +119,7 @@ describe('Feature 5: 完整主流程测试', () => {
 
       const record: TranslationRecord = {
         app: {
-          'en.json': {
+          'en': {
             Welcome: 'Welcome',
             Login: 'Login',
             OldKey: 'Old Key',
@@ -143,7 +143,7 @@ describe('Feature 5: 完整主流程测试', () => {
 
       const record: TranslationRecord = {
         app: {
-          'en.json': {
+          'en': {
             Welcome: 'Welcome',
           },
         },
@@ -175,11 +175,11 @@ describe('Feature 5: 完整主流程测试', () => {
 
       const record: TranslationRecord = {
         app: {
-          'en.json': {
+          'en': {
             Welcome: 'Welcome',
             Login: 'Login',
           },
-          'ko.json': {
+          'ko': {
             Welcome: '환영',
             Login: '로그인',
           },
@@ -348,7 +348,7 @@ export default function Page() {
       // 远端有更新的翻译
       const remote: TranslationRecord = {
         app: {
-          'en.json': {
+          'en': {
             Welcome: 'Welcome (Updated)',
           },
         },
@@ -356,7 +356,7 @@ export default function Page() {
 
       const local: TranslationRecord = {
         app: {
-          'en.json': {
+          'en': {
             Welcome: 'Welcome (Old)',
           },
         },
@@ -366,7 +366,7 @@ export default function Page() {
 
       const result = merger.merge(remote, local, newKeys, 'app');
 
-      expect(result.mergedRecord['app']['en.json']['Welcome']).toBe('Welcome (Updated)');
+      expect(result.mergedRecord['app']['en']['Welcome']).toBe('Welcome (Updated)');
       expect(result.stats.fromRemote).toBe(1);
     });
 
@@ -376,7 +376,7 @@ export default function Page() {
       const remote: TranslationRecord = {};
       const local: TranslationRecord = {
         app: {
-          'en.json': {
+          'en': {
             Welcome: 'Welcome',
           },
         },
@@ -386,7 +386,7 @@ export default function Page() {
 
       const result = merger.merge(remote, local, newKeys, 'app');
 
-      expect(result.mergedRecord['app']['en.json']['Welcome']).toBe('Welcome');
+      expect(result.mergedRecord['app']['en']['Welcome']).toBe('Welcome');
       expect(result.stats.fromLocal).toBe(1);
     });
 
@@ -399,7 +399,7 @@ export default function Page() {
 
       const result = merger.merge(remote, local, newKeys, 'app');
 
-      expect(result.mergedRecord['app']['en.json']['NewFeature']).toBe('NewFeature');
+      expect(result.mergedRecord['app']['en']['NewFeature']).toBe('NewFeature');
       expect(result.stats.newKeys).toBe(1);
     });
   });
@@ -410,7 +410,7 @@ export default function Page() {
 
       const record: TranslationRecord = {
         app: {
-          'en.json': {
+          'en': {
             ActiveKey: 'Active',
             UnusedKey: 'Unused',
           },
@@ -432,7 +432,7 @@ export default function Page() {
 
       const record: TranslationRecord = {
         app: {
-          'en.json': {
+          'en': {
             ActiveKey: 'Active',
             UnusedKey1: 'Unused 1',
             UnusedKey2: 'Unused 2',
@@ -456,7 +456,7 @@ export default function Page() {
 
       const record: TranslationRecord = {
         app: {
-          'en.json': {
+          'en': {
             ActiveKey: 'Active',
           },
         },

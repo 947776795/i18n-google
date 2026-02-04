@@ -50,11 +50,11 @@ describe('Feature 5: 并发场景测试 - 推送前远端有更新', () => {
   // 远端数据版本
   const remoteV1: TranslationRecord = {
     app_page: {
-      'en.json': {
+      'en': {
         Welcome: 'Welcome Remote V1',
         NewRemote: 'New Remote V1',
       },
-      'ko.json': {
+      'ko': {
         Welcome: '환영 V1',
         NewRemote: '새로운 V1',
       },
@@ -63,12 +63,12 @@ describe('Feature 5: 并发场景测试 - 推送前远端有更新', () => {
 
   const remoteV2: TranslationRecord = {
     app_page: {
-      'en.json': {
+      'en': {
         Welcome: 'Welcome Remote V2', // 远端更新了
         NewRemote: 'New Remote V2', // 远端更新了
         AnotherKey: 'Another Key', // 远端新增
       },
-      'ko.json': {
+      'ko': {
         Welcome: '환영 V2',
         NewRemote: '새로운 V2',
         AnotherKey: '또 다른 키',
@@ -133,11 +133,11 @@ describe('Feature 5: 并发场景测试 - 推送前远端有更新', () => {
       const recordPath = path.join(translateDir, 'i18n-complete-record.json');
       const localRecord: TranslationRecord = {
         app_page: {
-          'en.json': {
+          'en': {
             Welcome: 'Welcome Local',
             OldKey: 'Old Key', // 将被删除
           },
-          'ko.json': {
+          'ko': {
             Welcome: '환영',
             OldKey: '구 키',
           },
@@ -181,8 +181,8 @@ export default function Page() {
       expect(pushData).not.toBeNull(); // 应该推送数据
 
       // 验证推送的数据
-      const pushedEn = pushData!.app_page!['en.json'];
-      const pushedKo = pushData!.app_page!['ko.json'];
+      const pushedEn = pushData!.app_page!['en'];
+      const pushedKo = pushData!.app_page!['ko'];
 
       // ✅ 远端 V2 的更新应该保留
       expect(pushedEn['Welcome']).toBe('Welcome Remote V2');
@@ -207,10 +207,10 @@ export default function Page() {
       const recordPath = path.join(translateDir, 'i18n-complete-record.json');
       const localRecord: TranslationRecord = {
         app_page: {
-          'en.json': {
+          'en': {
             Welcome: 'Welcome Local',
           },
-          'ko.json': {
+          'ko': {
             Welcome: '환영',
           },
         },
@@ -242,7 +242,7 @@ export default function Page() {
       expect(pullSpy).toHaveBeenCalledTimes(2);
       expect(pushData).not.toBeNull();
 
-      const pushedEn = pushData!.app_page!['en.json'];
+      const pushedEn = pushData!.app_page!['en'];
 
       // 远端优先
       expect(pushedEn['Welcome']).toBe('Welcome Remote V1');
@@ -259,7 +259,7 @@ export default function Page() {
 
       const remote: TranslationRecord = {
         app_page: {
-          'en.json': {
+          'en': {
             Key1: 'Remote V1',
             Key2: 'Remote V2',
             Key3: 'Remote V3',
@@ -269,7 +269,7 @@ export default function Page() {
 
       const local: TranslationRecord = {
         app_page: {
-          'en.json': {
+          'en': {
             Key1: 'Local V1', // 远端有，应被覆盖
             Key2: 'Local V2', // 远端有，应被覆盖
             Key4: 'Local V4', // 本地新增，应保留
@@ -280,12 +280,12 @@ export default function Page() {
       const result = sync['mergeForPush'](remote, local);
 
       // 远端优先
-      expect(result.app_page!['en.json']['Key1']).toBe('Remote V1');
-      expect(result.app_page!['en.json']['Key2']).toBe('Remote V2');
-      expect(result.app_page!['en.json']['Key3']).toBe('Remote V3');
+      expect(result.app_page!['en']['Key1']).toBe('Remote V1');
+      expect(result.app_page!['en']['Key2']).toBe('Remote V2');
+      expect(result.app_page!['en']['Key3']).toBe('Remote V3');
 
       // 本地新增
-      expect(result.app_page!['en.json']['Key4']).toBe('Local V4');
+      expect(result.app_page!['en']['Key4']).toBe('Local V4');
     });
 
     it('应该处理多个文件夹和语言', () => {
@@ -293,35 +293,35 @@ export default function Page() {
 
       const remote: TranslationRecord = {
         app_page: {
-          'en.json': { Key1: 'Remote EN' },
-          'ko.json': { Key1: 'Remote KO' },
+          'en': { Key1: 'Remote EN' },
+          'ko': { Key1: 'Remote KO' },
         },
         components: {
-          'en.json': { Key2: 'Remote EN' },
+          'en': { Key2: 'Remote EN' },
         },
       };
 
       const local: TranslationRecord = {
         app_page: {
-          'en.json': { Key1: 'Local EN', Key3: 'Local EN New' },
-          'ko.json': { Key1: 'Local KO' },
+          'en': { Key1: 'Local EN', Key3: 'Local EN New' },
+          'ko': { Key1: 'Local KO' },
         },
         components: {
-          'en.json': { Key2: 'Local EN' },
+          'en': { Key2: 'Local EN' },
         },
         utils: {
-          'en.json': { Key4: 'Local EN' },
+          'en': { Key4: 'Local EN' },
         },
       };
 
       const result = sync['mergeForPush'](remote, local);
 
       // 验证所有数据都被正确合并
-      expect(result.app_page!['en.json']['Key1']).toBe('Remote EN');
-      expect(result.app_page!['ko.json']['Key1']).toBe('Remote KO');
-      expect(result.app_page!['en.json']['Key3']).toBe('Local EN New');
-      expect(result.components!['en.json']['Key2']).toBe('Remote EN');
-      expect(result.utils!['en.json']['Key4']).toBe('Local EN');
+      expect(result.app_page!['en']['Key1']).toBe('Remote EN');
+      expect(result.app_page!['ko']['Key1']).toBe('Remote KO');
+      expect(result.app_page!['en']['Key3']).toBe('Local EN New');
+      expect(result.components!['en']['Key2']).toBe('Remote EN');
+      expect(result.utils!['en']['Key4']).toBe('Local EN');
     });
 
     it('应该处理空数据', () => {
@@ -330,18 +330,18 @@ export default function Page() {
       // 远端空，本地有数据
       let result = sync['mergeForPush']({}, {
         app_page: {
-          'en.json': { Key1: 'Local' },
+          'en': { Key1: 'Local' },
         },
       });
-      expect(result.app_page!['en.json']['Key1']).toBe('Local');
+      expect(result.app_page!['en']['Key1']).toBe('Local');
 
       // 远端有数据，本地空
       result = sync['mergeForPush']({
         app_page: {
-          'en.json': { Key1: 'Remote' },
+          'en': { Key1: 'Remote' },
         },
       }, {});
-      expect(result.app_page!['en.json']['Key1']).toBe('Remote');
+      expect(result.app_page!['en']['Key1']).toBe('Remote');
 
       // 都为空
       result = sync['mergeForPush']({}, {});

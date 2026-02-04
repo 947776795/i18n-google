@@ -13,7 +13,7 @@ describe('RecordMerger', () => {
       // 远端数据
       const remote: TranslationRecord = {
         'app': {
-          'en.json': {
+          'en': {
             'Welcome': 'Welcome (Remote)',
             'Login': 'Login (Remote)',
           },
@@ -23,7 +23,7 @@ describe('RecordMerger', () => {
       // 本地数据
       const local: TranslationRecord = {
         'app': {
-          'en.json': {
+          'en': {
             'Welcome': 'Welcome (Local)',
             'Settings': 'Settings (Local)',
           },
@@ -36,16 +36,16 @@ describe('RecordMerger', () => {
       const result = merger.merge(remote, local, newKeys, 'app');
 
       // 验证：远端优先
-      expect(result.mergedRecord['app']['en.json']['Welcome']).toBe('Welcome (Remote)');
+      expect(result.mergedRecord['app']['en']['Welcome']).toBe('Welcome (Remote)');
 
       // 验证：远端有就采用远端
-      expect(result.mergedRecord['app']['en.json']['Login']).toBe('Login (Remote)');
+      expect(result.mergedRecord['app']['en']['Login']).toBe('Login (Remote)');
 
       // 验证：远端没有，本地有，采用本地
-      expect(result.mergedRecord['app']['en.json']['Settings']).toBe('Settings (Local)');
+      expect(result.mergedRecord['app']['en']['Settings']).toBe('Settings (Local)');
 
       // 验证：新 key 直接添加
-      expect(result.mergedRecord['app']['en.json']['Logout']).toBe('Logout');
+      expect(result.mergedRecord['app']['en']['Logout']).toBe('Logout');
 
       // 验证：统计数据
       expect(result.stats.fromRemote).toBe(2);
@@ -59,7 +59,7 @@ describe('RecordMerger', () => {
       const remote: TranslationRecord = {};
       const local: TranslationRecord = {
         'app': {
-          'en.json': {
+          'en': {
             'Welcome': 'Welcome',
           },
         },
@@ -68,8 +68,8 @@ describe('RecordMerger', () => {
 
       const result = merger.merge(remote, local, newKeys, 'app');
 
-      expect(result.mergedRecord['app']['en.json']['Welcome']).toBe('Welcome');
-      expect(result.mergedRecord['app']['en.json']['Login']).toBe('Login');
+      expect(result.mergedRecord['app']['en']['Welcome']).toBe('Welcome');
+      expect(result.mergedRecord['app']['en']['Login']).toBe('Login');
       expect(result.stats.fromRemote).toBe(0);
       expect(result.stats.fromLocal).toBe(1);
       expect(result.stats.newKeys).toBe(1);
@@ -80,7 +80,7 @@ describe('RecordMerger', () => {
 
       const remote: TranslationRecord = {
         'app': {
-          'en.json': {
+          'en': {
             'Welcome': 'Welcome (Remote)',
           },
         },
@@ -90,8 +90,8 @@ describe('RecordMerger', () => {
 
       const result = merger.merge(remote, local, newKeys, 'app');
 
-      expect(result.mergedRecord['app']['en.json']['Welcome']).toBe('Welcome (Remote)');
-      expect(result.mergedRecord['app']['en.json']['Login']).toBe('Login');
+      expect(result.mergedRecord['app']['en']['Welcome']).toBe('Welcome (Remote)');
+      expect(result.mergedRecord['app']['en']['Login']).toBe('Login');
       expect(result.stats.fromRemote).toBe(1);
       expect(result.stats.fromLocal).toBe(0);
       expect(result.stats.newKeys).toBe(1);
@@ -106,8 +106,8 @@ describe('RecordMerger', () => {
 
       const result = merger.merge(remote, local, newKeys, 'app');
 
-      expect(result.mergedRecord['app']['en.json']['Welcome']).toBe('Welcome');
-      expect(result.mergedRecord['app']['en.json']['Login']).toBe('Login');
+      expect(result.mergedRecord['app']['en']['Welcome']).toBe('Welcome');
+      expect(result.mergedRecord['app']['en']['Login']).toBe('Login');
       expect(result.stats.fromRemote).toBe(0);
       expect(result.stats.fromLocal).toBe(0);
       expect(result.stats.newKeys).toBe(2);
@@ -120,18 +120,18 @@ describe('RecordMerger', () => {
 
       const remote: TranslationRecord = {
         'app': {
-          'en.json': { 'Welcome': 'Welcome (Remote)' },
+          'en': { 'Welcome': 'Welcome (Remote)' },
         },
       };
       const local: TranslationRecord = {
         'app': {
-          'en.json': { 'Welcome': 'Welcome (Local)' },
+          'en': { 'Welcome': 'Welcome (Local)' },
         },
       };
 
       const result = merger.merge(remote, local, new Set(), 'app');
 
-      expect(result.mergedRecord['app']['en.json']['Welcome']).toBe('Welcome (Remote)');
+      expect(result.mergedRecord['app']['en']['Welcome']).toBe('Welcome (Remote)');
     });
 
     it('本地次之：当远端没有时，采用本地', () => {
@@ -140,13 +140,13 @@ describe('RecordMerger', () => {
       const remote: TranslationRecord = {};
       const local: TranslationRecord = {
         'app': {
-          'en.json': { 'Welcome': 'Welcome (Local)' },
+          'en': { 'Welcome': 'Welcome (Local)' },
         },
       };
 
       const result = merger.merge(remote, local, new Set(), 'app');
 
-      expect(result.mergedRecord['app']['en.json']['Welcome']).toBe('Welcome (Local)');
+      expect(result.mergedRecord['app']['en']['Welcome']).toBe('Welcome (Local)');
     });
   });
 });

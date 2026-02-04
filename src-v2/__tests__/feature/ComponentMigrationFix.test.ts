@@ -178,7 +178,7 @@ describe('组件迁移修复验证', () => {
       // 模拟翻译记录
       const record = {
         'app_sub1_layout': {
-          'en.json': {
+          'en': {
             'Sub1 Layout Header': { en: 'Sub1 Layout Header' },
             'Widget': { en: 'Widget' },  // 这个 key 现在无用了！
             'This is a widget component': { en: 'This is a widget component' },
@@ -186,7 +186,7 @@ describe('组件迁移修复验证', () => {
           }
         },
         'app_sub1_page': {
-          'en.json': {
+          'en': {
             'Sub1 Page': { en: 'Sub1 Page' },
             'This is the sub1 page content': { en: 'This is the sub1 page content' },
             // Widget 相关的翻译应该在这里
