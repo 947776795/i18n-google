@@ -111,6 +111,9 @@ export class DependencyAnalyzer {
   extractImports(content: string): ImportInfo[] {
     const imports: ImportInfo[] = [];
 
+    // 先移除注释，避免匹配到注释中的 import 语句
+    const contentWithoutComments = this.removeComments(content);
+
     // 匹配 import 语句的正则
     // 支持:
     // - import Xxx from 'path'
@@ -120,7 +123,7 @@ export class DependencyAnalyzer {
     const importRegex = /import\s+(?:(?:(\w+)|(?:\*\s+as\s+(\w+))|(?:\{([^}]+)\}))\s+from\s+)?['"`]([^'"`]+)['"`]/g;
 
     let match: RegExpExecArray | null;
-    while ((match = importRegex.exec(content)) !== null) {
+    while ((match = importRegex.exec(contentWithoutComments)) !== null) {
       const fullPath = match[4];
       const defaultImport = match[1];
       const starImport = match[2];
@@ -142,6 +145,20 @@ export class DependencyAnalyzer {
     }
 
     return imports;
+  }
+
+  /**
+   * 移除代码中的注释
+   *
+   * @param content 源码内容
+   * @returns 移除注释后的代码
+   */
+  private removeComments(content: string): string {
+    // 先移除多行注释 /* */
+    let result = content.replace(/\/\*[\s\S]*?\*\//g, '');
+    // 再移除单行注释 //
+    result = result.replace(/\/\/.*/g, '');
+    return result;
   }
 
   /**
@@ -182,14 +199,16 @@ export class DependencyAnalyzer {
    * 解析路径别名
    *
    * @param importPath 导入路径
-   * @param rootDir 根目录
-   * @returns 解析后的路径
+   * @param rootDir 根目录（支持相对路径和绝对路径）
+   * @returns 解析后的绝对路径
    */
   private resolveAlias(importPath: string, rootDir: string): string | null {
-    // 简单处理 @/ 别名
+    // 处理 @/ 别名
     if (importPath.startsWith('@/')) {
       const relativePath = importPath.slice(2);
-      let fullPath = path.join(rootDir, relativePath);
+      // 使用 path.resolve 确保返回绝对路径
+      // rootDir 可以是相对路径（如 './src'）或绝对路径
+      let fullPath = path.resolve(rootDir, relativePath);
       fullPath = this.resolveExtension(fullPath);
       return fullPath;
     }

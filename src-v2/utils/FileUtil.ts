@@ -16,7 +16,6 @@ export class FileUtil {
   static async ensureDir(dirPath: string): Promise<void> {
     try {
       await fs.promises.mkdir(dirPath, { recursive: true });
-      Logger.debug(`目录已创建: ${dirPath}`);
     } catch (error) {
       Logger.error(`创建目录失败: ${dirPath}`, error);
       throw error;
@@ -76,7 +75,6 @@ export class FileUtil {
       await this.ensureDir(dir);
 
       await fs.promises.writeFile(filePath, content, "utf-8");
-      Logger.debug(`文件已写入: ${filePath}`);
     } catch (error) {
       Logger.error(`写入文件失败: ${filePath}`, error);
       throw error;
@@ -115,7 +113,6 @@ export class FileUtil {
   static async deleteFile(filePath: string): Promise<void> {
     try {
       await fs.promises.unlink(filePath);
-      Logger.debug(`文件已删除: ${filePath}`);
     } catch (error) {
       Logger.error(`删除文件失败: ${filePath}`, error);
       throw error;
@@ -128,7 +125,6 @@ export class FileUtil {
   static async deleteDir(dirPath: string): Promise<void> {
     try {
       await fs.promises.rm(dirPath, { recursive: true, force: true });
-      Logger.debug(`目录已删除: ${dirPath}`);
     } catch (error) {
       Logger.error(`删除目录失败: ${dirPath}`, error);
       throw error;
@@ -145,7 +141,6 @@ export class FileUtil {
       await this.ensureDir(dir);
 
       await fs.promises.copyFile(srcPath, destPath);
-      Logger.debug(`文件已复制: ${srcPath} -> ${destPath}`);
     } catch (error) {
       Logger.error(`复制文件失败: ${srcPath} -> ${destPath}`, error);
       throw error;

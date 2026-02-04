@@ -138,7 +138,7 @@ describe('Feature 5: 完整主流程测试', () => {
       expect(result.formattedUnusedKeys).toContain('[app][OldKey]');
     });
 
-    it('应该使用后缀匹配规则', () => {
+    it('不应该使用后缀匹配（避免误匹配）', () => {
       const analyzer = new UnusedKeyAnalyzer();
 
       const record: TranslationRecord = {
@@ -149,15 +149,15 @@ describe('Feature 5: 完整主流程测试', () => {
         },
       };
 
-      // 代码引用路径后缀匹配
+      // 代码引用路径后缀不匹配（src_app 不以 app_ 开头）
       const references = new Set<{ folderName: string; key: string }>([
         { folderName: 'src_app', key: 'Welcome' },
       ]);
 
       const result = analyzer.analyze(record, references);
 
-      // 应该匹配上（src_app 后缀是 app）
-      expect(result.total).toBe(0);
+      // 不应该匹配（src_app 不是 app 的直接子路径）
+      expect(result.total).toBe(1);
     });
   });
 
@@ -215,11 +215,17 @@ export default function Page() {
       const configContent = `module.exports = ${JSON.stringify(mockConfig, null, 2)};`;
       fs.writeFileSync(configPath, configContent, 'utf-8');
 
-      // 3. 运行扫描
+      // 3. 启用测试模式（自动确认）
+      setTestMode(true);
+
+      // 4. 运行扫描
       const scanner = new Scanner();
       const result = await scanner.run({
         projectRoot: tempDir,
       });
+
+      // 5. 清理：关闭测试模式
+      setTestMode(false);
 
       // 4. 验证结果
       expect(result.totalFiles).toBeGreaterThan(0);
@@ -252,6 +258,9 @@ export default function Page() {
       const configContent = `module.exports = ${JSON.stringify(mockConfig, null, 2)};`;
       fs.writeFileSync(configPath, configContent, 'utf-8');
 
+      // 启用测试模式
+      setTestMode(true);
+
       // 第一次扫描：转换代码并生成记录
       const scanner1 = new Scanner();
       await scanner1.run({ projectRoot: tempDir });
@@ -281,6 +290,7 @@ export default function Page() {
       expect(calls[0][0]).toContain('OldDeprecatedKey');
 
       mockConfirmDelete.mockRestore();
+      setTestMode(false);
     });
 
     it('应该删除无用的 keys（用户确认删除）', async () => {
@@ -296,6 +306,9 @@ export default function Page() {
       const configContent = `module.exports = ${JSON.stringify(mockConfig, null, 2)};`;
       fs.writeFileSync(configPath, configContent, 'utf-8');
 
+      // 启用测试模式（自动确认）
+      setTestMode(true);
+
       // 第一次扫描：转换代码并生成记录
       const scanner1 = new Scanner();
       await scanner1.run({ projectRoot: tempDir });
@@ -308,14 +321,11 @@ export default function Page() {
       record['app_page']['en']['OldKey3'] = 'Old Key 3';
       fs.writeFileSync(recordPath, JSON.stringify(record, null, 2), 'utf-8');
 
-      // 3. 启用测试模式（自动确认删除）
-      setTestMode(true);
-
-      // 4. 第二次扫描：应该检测到并删除无用 keys
+      // 3. 第二次扫描：应该检测到并删除无用 keys
       const scanner2 = new Scanner();
       const result = await scanner2.run({ projectRoot: tempDir });
 
-      // 5. 验证无用 key 被删除
+      // 4. 验证无用 key 被删除
       expect(result.deletedKeys).toBe(3);
 
       // 验证记录文件中不再包含无用 keys
@@ -496,17 +506,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       const configContent = `module.exports = ${JSON.stringify(mockConfig, null, 2)};`;
       fs.writeFileSync(configPath, configContent, 'utf-8');
 
-      // 3. 运行扫描
+      // 3. 启用测试模式
+      setTestMode(true);
+
+      // 4. 运行扫描
       const scanner = new Scanner();
       const result = await scanner.run({
         projectRoot: tempDir,
       });
 
-      // 4. 验证统计
+      // 5. 清理：关闭测试模式
+      setTestMode(false);
+
+      // 6. 验证统计
       expect(result.totalFiles).toBe(2);
       expect(result.transformedFiles).toBe(2);
 
-      // 5. 验证记录文件
+      // 7. 验证记录文件
       const recordPath = path.join(translateDir, 'i18n-complete-record.json');
       const record = JSON.parse(fs.readFileSync(recordPath, 'utf-8'));
 

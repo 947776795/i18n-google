@@ -9,6 +9,9 @@ import * as path from 'path';
 /**
  * 翻译记录数据结构
  * 三层结构：folderName -> locale -> key-value
+ *
+ * 🔑 设计原则：内存中统一使用语言代码（如 "en", "ko"），
+ *   文件名扩展名（.json）仅在生成文件时添加
  */
 export interface TranslationRecord {
   [folderName: string]: LocaleTranslations;
@@ -16,9 +19,10 @@ export interface TranslationRecord {
 
 /**
  * 语言翻译映射
+ * key 为语言代码（如 "en", "ko"），而非 "en.json"
  */
 export interface LocaleTranslations {
-  [localeFile: string]: KeyTranslations;
+  [locale: string]: KeyTranslations;
 }
 
 /**
@@ -41,10 +45,14 @@ export interface RecordStats {
  * 记录生成器
  *
  * 职责：收集所有翻译，生成 i18n-complete-record.json
+ *
+ * 🔑 设计变更：内存中统一使用语言代码（如 "en"），
+ *   文件名扩展名（.json）仅在生成文件时添加
  */
 export class RecordGenerator {
   /**
    * 内部记录存储
+   * key: 语言代码（如 "en", "ko"），而非 "en.json"
    */
   private record: TranslationRecord = {};
 
@@ -52,7 +60,7 @@ export class RecordGenerator {
    * 添加一条翻译
    *
    * @param folderName 文件夹名称 (如 "app", "app_sub1")
-   * @param locale 语言代码 (如 "en", "ko")
+   * @param locale 语言代码 (如 "en", "ko")，会自动移除 .json 后缀
    * @param key 翻译键
    * @param value 翻译值
    */
@@ -62,16 +70,16 @@ export class RecordGenerator {
       this.record[folderName] = {};
     }
 
-    // 转换 locale 为文件名 (如 "en" -> "en.json")
-    const localeFile = locale.endsWith('.json') ? locale : `${locale}.json`;
+    // 🔑 移除 .json 后缀，确保内存中统一使用语言代码
+    const localeCode = locale.endsWith('.json') ? locale.slice(0, -5) : locale;
 
-    // 确保 localeFile 存在
-    if (!this.record[folderName][localeFile]) {
-      this.record[folderName][localeFile] = {};
+    // 确保 localeCode 存在
+    if (!this.record[folderName][localeCode]) {
+      this.record[folderName][localeCode] = {};
     }
 
     // 添加翻译（已存在则覆盖）
-    this.record[folderName][localeFile][key] = value;
+    this.record[folderName][localeCode][key] = value;
   }
 
   /**
@@ -90,7 +98,7 @@ export class RecordGenerator {
   /**
    * 获取记录对象
    *
-   * @returns 完整翻译记录
+   * @returns 完整翻译记录（内存格式，locale 为 "en" 等）
    */
   generate(): TranslationRecord {
     return this.record;
@@ -98,6 +106,8 @@ export class RecordGenerator {
 
   /**
    * 保存完整记录到文件
+   *
+   * 🔑 保存时保持内存格式（locale 为 "en" 等），不再转换
    *
    * @param filePath 文件路径 (如 "./src/translate/i18n-complete-record.json")
    */
@@ -109,21 +119,10 @@ export class RecordGenerator {
       fs.mkdirSync(dir, { recursive: true });
     }
 
-    // 转换键名：将 "en.json" 转换为 "en"
-    const convertedRecord: TranslationRecord = {};
-    for (const [folderName, localeMap] of Object.entries(this.record)) {
-      convertedRecord[folderName] = {};
-      for (const [localeFile, translations] of Object.entries(localeMap)) {
-        // 移除 .json 后缀
-        const localeKey = localeFile.endsWith('.json') ? localeFile.slice(0, -5) : localeFile;
-        convertedRecord[folderName][localeKey] = translations;
-      }
-    }
-
-    // 写入 JSON 文件
+    // 🔑 不再转换键名，直接保存内存格式（locale 为 "en" 等）
     await fs.promises.writeFile(
       filePath,
-      JSON.stringify(convertedRecord, null, 2),
+      JSON.stringify(this.record, null, 2),
       'utf-8'
     );
   }
@@ -142,8 +141,8 @@ export class RecordGenerator {
 
       // 合并所有 locale 的 key 数量（去重）
       const allKeys = new Set<string>();
-      for (const localeFile of Object.keys(localeMap)) {
-        const keys = Object.keys(localeMap[localeFile]);
+      for (const locale of Object.keys(localeMap)) {
+        const keys = Object.keys(localeMap[locale]);
         keys.forEach(k => allKeys.add(k));
       }
 

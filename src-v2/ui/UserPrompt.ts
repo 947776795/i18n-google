@@ -59,13 +59,7 @@ export class UserPrompt {
 
     // 自动确认模式
     if (this.autoConfirm !== null) {
-      if (this.autoConfirm) {
-        console.log('   [自动确认删除]');
-        return true;
-      } else {
-        console.log('   [自动保留，跳过删除]');
-        return false;
-      }
+      return this.autoConfirm;
     }
 
     // 询问用户
@@ -80,6 +74,30 @@ export class UserPrompt {
   showUnusedKeys(unusedKeys: string[]): void {
     const message = this.formatUnusedKeysMessage(unusedKeys);
     console.log(message);
+  }
+
+  /**
+   * 确认是否推送到 Google Sheets
+   *
+   * @param totalKeys 总翻译 key 数量
+   * @param deletedKeys 删除的 keys 数量
+   * @returns 用户是否确认推送
+   */
+  async confirmPushToSheet(totalKeys: number, deletedKeys: number): Promise<boolean> {
+    // 显示推送预览
+    console.log('\n📤 准备推送到 Google Sheets:');
+    console.log(`   📊 总翻译 keys: ${totalKeys}`);
+    if (deletedKeys > 0) {
+      console.log(`   🗑️  删除 keys: ${deletedKeys}`);
+    }
+
+    // 自动确认模式
+    if (this.autoConfirm !== null) {
+      return this.autoConfirm;
+    }
+
+    // 询问用户
+    return this.askYesNo('\n是否确认推送到 Google Sheets? (Y/n): ');
   }
 
   /**

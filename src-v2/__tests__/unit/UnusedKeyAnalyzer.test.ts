@@ -78,7 +78,7 @@ describe('UnusedKeyAnalyzer', () => {
       expect(result.formattedUnusedKeys).toHaveLength(0);
     });
 
-    it('应该使用后缀匹配规则', () => {
+    it('应该使用直接子路径匹配规则', () => {
       const analyzer = new UnusedKeyAnalyzer();
 
       const record: TranslationRecord = {
@@ -89,14 +89,14 @@ describe('UnusedKeyAnalyzer', () => {
         },
       };
 
-      // 代码引用的路径可能不完全匹配，但后缀匹配
+      // 代码引用的路径是直接子路径（app_sub）
       const references = new Set<CodeReference>([
-        { folderName: 'src_app', key: 'Welcome' },
+        { folderName: 'app_sub', key: 'Welcome' },
       ]);
 
       const result = analyzer.analyze(record, references);
 
-      // 应该匹配上（src_app 后缀是 app）
+      // 应该匹配上（app 是 app_sub 的父路径前缀）
       expect(result.total).toBe(0);
     });
   });
@@ -119,26 +119,37 @@ describe('UnusedKeyAnalyzer', () => {
       expect(analyzer.isKeyUsed('app', 'Login', references)).toBe(false);
     });
 
-    it('应该使用后缀匹配', () => {
+    it('应该使用直接子路径匹配', () => {
+      const analyzer = new UnusedKeyAnalyzer();
+
+      const references = new Set<CodeReference>([
+        { folderName: 'app_sub_page', key: 'Welcome' },
+      ]);
+
+      // 直接子路径匹配：app 匹配 app_sub_page
+      expect(analyzer.isKeyUsed('app', 'Welcome', references)).toBe(true);
+    });
+
+    it('不应该使用后缀匹配（避免误匹配）', () => {
       const analyzer = new UnusedKeyAnalyzer();
 
       const references = new Set<CodeReference>([
         { folderName: 'src_app', key: 'Welcome' },
       ]);
 
-      // 后缀匹配：app 匹配 src_app
-      expect(analyzer.isKeyUsed('app', 'Welcome', references)).toBe(true);
+      // src_app 不应该匹配 app（因为 src_app 不是以 app_ 开头的子路径）
+      expect(analyzer.isKeyUsed('app', 'Welcome', references)).toBe(false);
     });
 
-    it('应该使用同名文件匹配', () => {
+    it('不应该使用同名文件匹配（避免误匹配）', () => {
       const analyzer = new UnusedKeyAnalyzer();
 
       const references = new Set<CodeReference>([
-        { folderName: 'src_app_page', key: 'Welcome' },
+        { folderName: 'app_sub1_layout', key: 'Welcome' },
       ]);
 
-      // 同名文件匹配：page
-      expect(analyzer.isKeyUsed('page', 'Welcome', references)).toBe(true);
+      // app_sub1_layout 不应该匹配 app_sub1_deep_layout
+      expect(analyzer.isKeyUsed('app_sub1_deep_layout', 'Welcome', references)).toBe(false);
     });
   });
 });

@@ -3,13 +3,15 @@
  * 记录合并器 - 合并远端、本地和新扫描的翻译数据
  */
 
-import { TranslationRecord, LocaleTranslations, KeyTranslations } from '../../types/record';
+import { TranslationRecord } from '../../types/record';
 import { MergeResult } from '../../types/sync';
 
 /**
  * 记录合并器
  *
  * 职责：合并三方数据（远端、本地、新扫描）
+ *
+ * 🔑 设计变更：内存中统一使用语言代码（如 "en"），不再使用 "en.json"
  *
  * 合并策略：
  * - 老 keys（已存在于本地或远端）：
@@ -23,12 +25,12 @@ export class RecordMerger {
   /**
    * 合并三方数据
    *
-   * @param remote 远端翻译记录
-   * @param local 本地翻译记录
+   * @param remote 远端翻译记录（内存格式，locale 为 "en" 等）
+   * @param local 本地翻译记录（内存格式，locale 为 "en" 等）
    * @param newKeys 新扫描的 keys
    * @param folderName 当前文件夹名称
    * @param configLocales 配置文件中定义的所有语言（可选）
-   * @returns 合并结果
+   * @returns 合并结果（内存格式，locale 为 "en" 等）
    */
   merge(
     remote: TranslationRecord,
@@ -52,15 +54,15 @@ export class RecordMerger {
 
     // 从远端收集 keys
     if (remote[folderName]) {
-      for (const localeFile of Object.keys(remote[folderName])) {
-        Object.keys(remote[folderName][localeFile]).forEach(key => allKeys.add(key));
+      for (const locale of Object.keys(remote[folderName])) {
+        Object.keys(remote[folderName][locale]).forEach(key => allKeys.add(key));
       }
     }
 
     // 从本地收集 keys
     if (local[folderName]) {
-      for (const localeFile of Object.keys(local[folderName])) {
-        Object.keys(local[folderName][localeFile]).forEach(key => allKeys.add(key));
+      for (const locale of Object.keys(local[folderName])) {
+        Object.keys(local[folderName][locale]).forEach(key => allKeys.add(key));
       }
     }
 
@@ -72,11 +74,12 @@ export class RecordMerger {
 
     // 为每种语言合并数据
     for (const locale of locales) {
-      const localeFile = `${locale}.json`;
-      mergedRecord[folderName][localeFile] = {};
+      // 🔑 确保使用语言代码（移除可能的 .json 后缀）
+      const localeCode = locale.endsWith('.json') ? locale.slice(0, -5) : locale;
+      mergedRecord[folderName][localeCode] = {};
 
       for (const key of allKeys) {
-        const mergedValue = this.mergeKey(key, locale, remote, local, folderName);
+        const mergedValue = this.mergeKey(key, localeCode, remote, local, folderName);
 
         // 统计来源
         if (mergedValue.source === 'remote') {
@@ -87,7 +90,7 @@ export class RecordMerger {
           stats.newKeys++;
         }
 
-        mergedRecord[folderName][localeFile][key] = mergedValue.value;
+        mergedRecord[folderName][localeCode][key] = mergedValue.value;
       }
     }
 
@@ -98,33 +101,31 @@ export class RecordMerger {
    * 合并单个 key 的翻译
    *
    * @param key 翻译键
-   * @param locale 语言代码
-   * @param remote 远端记录
-   * @param local 本地记录
+   * @param localeCode 语言代码（如 "en"）
+   * @param remote 远端记录（内存格式）
+   * @param local 本地记录（内存格式）
    * @param folderName 文件夹名称
    * @returns 合并结果 { value: string, source: 'remote' | 'local' | 'new' }
    */
   private mergeKey(
     key: string,
-    locale: string,
+    localeCode: string,
     remote: TranslationRecord,
     local: TranslationRecord,
     folderName: string
   ): { value: string; source: 'remote' | 'local' | 'new' } {
-    const localeFile = `${locale}.json`;
-
     // 优先：远端有翻译
-    if (remote[folderName]?.[localeFile]?.[key]) {
+    if (remote[folderName]?.[localeCode]?.[key]) {
       return {
-        value: remote[folderName][localeFile][key],
+        value: remote[folderName][localeCode][key],
         source: 'remote',
       };
     }
 
     // 次之：本地有翻译
-    if (local[folderName]?.[localeFile]?.[key]) {
+    if (local[folderName]?.[localeCode]?.[key]) {
       return {
-        value: local[folderName][localeFile][key],
+        value: local[folderName][localeCode][key],
         source: 'local',
       };
     }
@@ -143,7 +144,7 @@ export class RecordMerger {
    * @param local 本地记录
    * @param folderName 文件夹名称
    * @param configLocales 配置文件中定义的所有语言（可选）
-   * @returns 语言代码列表
+   * @returns 语言代码列表（如 ["en", "ko"]）
    */
   private collectAllLocales(
     remote: TranslationRecord,
@@ -153,23 +154,25 @@ export class RecordMerger {
   ): string[] {
     // 优先使用配置的语言列表
     if (configLocales && configLocales.length > 0) {
-      return configLocales;
+      return configLocales.map(l => l.endsWith('.json') ? l.slice(0, -5) : l);
     }
 
     // 否则从远端和本地记录收集
     const locales = new Set<string>();
 
     if (remote[folderName]) {
-      Object.keys(remote[folderName]).forEach(localeFile => {
-        const locale = localeFile.replace('.json', '');
-        locales.add(locale);
+      Object.keys(remote[folderName]).forEach(locale => {
+        // 🔑 记录中已经是语言代码（如 "en"），移除可能的 .json 后缀
+        const localeCode = locale.endsWith('.json') ? locale.slice(0, -5) : locale;
+        locales.add(localeCode);
       });
     }
 
     if (local[folderName]) {
-      Object.keys(local[folderName]).forEach(localeFile => {
-        const locale = localeFile.replace('.json', '');
-        locales.add(locale);
+      Object.keys(local[folderName]).forEach(locale => {
+        // 🔑 记录中已经是语言代码（如 "en"），移除可能的 .json 后缀
+        const localeCode = locale.endsWith('.json') ? locale.slice(0, -5) : locale;
+        locales.add(localeCode);
       });
     }
 

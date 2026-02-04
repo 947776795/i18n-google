@@ -18,10 +18,6 @@ const DEFAULT_OPTIONS: RunOptions = {
  * 主函数
  */
 async function main(): Promise<void> {
-  console.log('\n' + '='.repeat(50));
-  console.log('🚀 I18n 扫描转换工具');
-  console.log('='.repeat(50));
-
   // 解析命令行参数
   const args = process.argv.slice(2);
   const options: RunOptions = { ...DEFAULT_OPTIONS };

@@ -137,13 +137,8 @@ export class Scanner {
 
     // ============ 主流程 ============
 
-    // 1️⃣ 🔧 加载配置
-    console.log(`\n🔧 加载配置...`);
+    // 1️⃣ 加载配置
     const config = await this.configLoader.load(options.projectRoot);
-    console.log(`   配置文件: i18n.config.js`);
-    console.log(`   扫描目录: ${config.rootDir}`);
-    console.log(`   输出目录: ${config.outputDir}`);
-    console.log(`   语言列表: ${config.languages.join(', ')}`);
 
     // 解析目录路径（支持命令行覆盖）
     const appDir = options.appDir
@@ -162,50 +157,45 @@ export class Scanner {
       this.googleSheetsSync = new GoogleSheetsSync(config);
     }
 
-    // 2️⃣ 📥 从 Google Sheets 拉取远端翻译
+    // 2️⃣ 从 Google Sheets 拉取远端翻译
     let remoteRecord: TranslationRecord = {};
     if (this.googleSheetsSync) {
-      console.log('\n📥 从 Google Sheets 拉取远端翻译...');
       try {
         remoteRecord = await this.googleSheetsSync.pull();
         result.syncStatus!.pulled = true;
-        console.log(`   ✅ 拉取了 ${Object.keys(remoteRecord).length} 个模块的远端翻译`);
       } catch (error) {
-        console.log(`   ⚠️  拉取远端翻译失败: ${error}`);
+        console.log(`⚠️  拉取远端翻译失败: ${error}`);
       }
     }
 
-    // 3️⃣ 💾 读取本地现有翻译记录
+    // 3️⃣ 读取本地现有翻译记录
     let localRecord: TranslationRecord = {};
-    console.log('\n💾 读取本地现有翻译记录...');
     try {
       if (fs.existsSync(recordPath)) {
         const content = fs.readFileSync(recordPath, 'utf-8');
         const loadedRecord: TranslationRecord = JSON.parse(content);
 
-        // 转换格式：将 "en" 转换回 "en.json"（RecordGenerator 保存时移除了 .json 后缀）
-        for (const [folderName, localeMap] of Object.entries(loadedRecord)) {
-          localRecord[folderName] = {};
+        // 🔑 直接使用加载的数据，不再转换格式
+        // 现在内存中统一使用语言代码（如 "en"），不再使用 "en.json"
+        localRecord = loadedRecord;
+
+        // 🔑 将 localRecord 的数据加载到 recordGenerator 中
+        // 这样无用 key 检测才能发现之前存在但当前未使用的 keys
+        for (const [folderName, localeMap] of Object.entries(localRecord)) {
           for (const [locale, translations] of Object.entries(localeMap)) {
-            // 如果 locale 没有 .json 后缀，添加它
-            const localeFile = locale.endsWith('.json') ? locale : `${locale}.json`;
-            localRecord[folderName][localeFile] = translations;
+            for (const [key, value] of Object.entries(translations)) {
+              this.recordGenerator.add(folderName, locale, key, value);
+            }
           }
         }
-
-        console.log(`   ✅ 读取了 ${Object.keys(localRecord).length} 个模块的本地翻译`);
-      } else {
-        console.log(`   ℹ️  本地记录不存在，将创建新记录`);
       }
     } catch (error) {
-      console.log(`   ⚠️  读取本地记录失败: ${error}`);
+      console.log(`⚠️  读取本地记录失败: ${error}`);
     }
 
-    // 4️⃣ 📁 扫描文件
-    console.log(`\n📁 扫描文件: ${appDir}`);
+    // 4️⃣ 扫描文件
     const entryFiles = this.fileScanner.scan(appDir, config);
     result.totalFiles = entryFiles.length;
-    console.log(`   找到 ${entryFiles.length} 个入口文件`);
 
     if (entryFiles.length === 0) {
       console.log('⚠️  未找到任何入口文件 (page.tsx/layout.tsx)');
@@ -221,9 +211,7 @@ export class Scanner {
     // 用于收集代码引用（用于无用 key 检测）
     const codeReferences = new Set<CodeReference>();
 
-    // 5️⃣ 🔍 收集翻译 keys + 代码转换（含递归依赖分析）
-    console.log('\n🔍 收集翻译并转换代码...');
-
+    // 5️⃣ 收集翻译 keys + 代码转换（含递归依赖分析）
     // 初始化需要 config 的提取器
     this.jsxTextExtractor = new JSXTextExtractor(config);
     this.templateExtractor = new TemplateExtractor(config);
@@ -235,17 +223,77 @@ export class Scanner {
 
       // 递归分析依赖文件
       const allFiles = this.dependencyAnalyzer.analyze(entryFile.filePath, config);
-      console.log(`   📂 ${entryFile.fileName} → ${folderName} (${allFiles.length} 个文件)`);
 
       for (const filePath of allFiles) {
-        // 跳过已处理的文件
-        if (processedFiles.has(filePath)) {
-          console.log(`      ⏭️  ${path.relative(appDir, filePath)} (已处理)`);
+        const source = fs.readFileSync(filePath, 'utf-8');
+        const isAlreadyProcessed = processedFiles.has(filePath);
+
+        // 🔑 关键修复：无论文件是否已处理，都要为当前 entryFile 收集引用
+        // 这样可以确保组件迁移后，新的 entryFile 能正确收集依赖文件的引用
+        const existingRefs = this.referenceCollector.collect(source, filePath);
+        for (const ref of existingRefs) {
+          // 使用入口文件的 folderName，而不是从 ref.filePath 计算
+          // 这样可以确保被依赖的组件文件的引用与记录中的 folderName 匹配
+          codeReferences.add({ folderName, key: ref.key });
+        }
+
+        // 如果文件已经处理过，跳过转换（避免重复转换）
+        // 但需要为当前入口生成翻译副本：从 recordGenerator 中查找共享组件的翻译
+        if (isAlreadyProcessed) {
+          // 收集已转换文件中的 I18n.t() 引用
+          const fileRefs = this.referenceCollector.collect(source, filePath);
+
+          if (fileRefs.length > 0) {
+            // 从 recordGenerator 中查找其他 folderName 的翻译，并复制到当前 folderName
+            for (const ref of fileRefs) {
+              // 遍历所有已处理的 folderName，查找包含这个 key 的翻译
+              for (const locale of locales) {
+                // 🔑 确保使用语言代码（移除可能的 .json 后缀）
+                const localeCode = locale.endsWith('.json') ? locale.slice(0, -5) : locale;
+                let translatedValue = '';
+
+                // 🔑 优先从 recordGenerator 中查找（当前扫描过程中已添加的翻译）
+                const currentRecord = this.recordGenerator.generate();
+                for (const [otherFolderName, localeMap] of Object.entries(currentRecord)) {
+                  if (otherFolderName === folderName) continue;
+                  if (localeMap[localeCode]?.[ref.key]) {
+                    translatedValue = localeMap[localeCode][ref.key];
+                    break;
+                  }
+                }
+
+                // 如果 recordGenerator 中没有，尝试从 localRecord 查找
+                if (!translatedValue) {
+                  for (const [otherFolderName, localeMap] of Object.entries(localRecord)) {
+                    if (otherFolderName === folderName) continue;
+                    if (localeMap[localeCode]?.[ref.key]) {
+                      translatedValue = localeMap[localeCode][ref.key];
+                      break;
+                    }
+                  }
+                }
+
+                // 如果 localRecord 中没有，尝试从 remoteRecord 查找
+                if (!translatedValue) {
+                  for (const [otherFolderName, localeMap] of Object.entries(remoteRecord)) {
+                    if (otherFolderName === folderName) continue;
+                    if (localeMap[localeCode]?.[ref.key]) {
+                      translatedValue = localeMap[localeCode][ref.key];
+                      break;
+                    }
+                  }
+                }
+
+                // 如果找到了翻译，添加到当前 folderName
+                if (translatedValue) {
+                  this.recordGenerator.add(folderName, localeCode, ref.key, translatedValue);
+                }
+              }
+            }
+          }
           continue;
         }
         processedFiles.add(filePath);
-
-        const source = fs.readFileSync(filePath, 'utf-8');
 
         // 收集所有需要翻译的 key
         const allKeys = new Set<string>();
@@ -262,41 +310,53 @@ export class Scanner {
         const templateContents = this.templateExtractor.extract(source, filePath);
         templateContents.forEach(content => allKeys.add(content.cleanedText));
 
-        // 4. 收集 I18n.t() 引用（用于无用 key 检测）
-        const existingRefs = this.referenceCollector.collect(source, filePath);
-        for (const ref of existingRefs) {
-          // 使用入口文件的 folderName，而不是从 ref.filePath 计算
-          // 这样可以确保被依赖的组件文件的引用与记录中的 folderName 匹配
-          codeReferences.add({ folderName, key: ref.key });
-        }
-
         const keysArray = Array.from(allKeys);
 
         if (keysArray.length === 0) {
-          console.log(`      ⏭️  ${path.relative(appDir, filePath)} (无标记)`);
+          // 🔑 即使没有新标记，也要检查是否有 I18n.t() 引用需要复制翻译
+          const fileRefs = this.referenceCollector.collect(source, filePath);
+          if (fileRefs.length > 0) {
+            // 🔑 关键修复：将引用添加到 codeReferences，用于无用 key 检测
+            for (const ref of fileRefs) {
+              codeReferences.add({ folderName, key: ref.key });
+            }
 
-          // 即使没有新标记，也要合并本地记录以保留现有翻译（用于无用 key 检测）
-          const mergeResult = this.recordMerger.merge(
-            remoteRecord,
-            localRecord,
-            new Set<string>(),
-            folderName,
-            locales  // 传入配置的语言列表
-          );
+            // 从 localRecord 或 remoteRecord 中查找翻译，并复制到当前 folderName
+            for (const ref of fileRefs) {
+              for (const locale of locales) {
+                // 🔑 确保使用语言代码（移除可能的 .json 后缀）
+                const localeCode = locale.endsWith('.json') ? locale.slice(0, -5) : locale;
+                let translatedValue = '';
 
-          // 将合并后的翻译添加到记录生成器
-          const mergedTranslations = mergeResult.mergedRecord[folderName];
-          if (mergedTranslations) {
-            for (const locale of locales) {
-              const localeFile = `${locale}.json`;
-              if (mergedTranslations[localeFile]) {
-                for (const [key, value] of Object.entries(mergedTranslations[localeFile])) {
-                  this.recordGenerator.add(folderName, locale, key, value);
+                // 优先从 localRecord 查找
+                for (const [otherFolderName, localeMap] of Object.entries(localRecord)) {
+                  if (otherFolderName === folderName) continue;
+                  if (localeMap[localeCode]?.[ref.key]) {
+                    translatedValue = localeMap[localeCode][ref.key];
+                    break;
+                  }
+                }
+
+                // 如果 localRecord 中没有，尝试从 remoteRecord 查找
+                if (!translatedValue) {
+                  for (const [otherFolderName, localeMap] of Object.entries(remoteRecord)) {
+                    if (otherFolderName === folderName) continue;
+                    if (localeMap[localeCode]?.[ref.key]) {
+                      translatedValue = localeMap[localeCode][ref.key];
+                      break;
+                    }
+                  }
+                }
+
+                // 如果找到了翻译，添加到当前 folderName
+                if (translatedValue) {
+                  this.recordGenerator.add(folderName, localeCode, ref.key, translatedValue);
                 }
               }
             }
           }
 
+          // 没有新标记，跳过后续逻辑
           continue;
         }
 
@@ -334,10 +394,11 @@ export class Scanner {
         const mergedTranslations = mergeResult.mergedRecord[folderName];
         if (mergedTranslations) {
           for (const locale of locales) {
-            const localeFile = `${locale}.json`;
-            if (mergedTranslations[localeFile]) {
-              for (const [key, value] of Object.entries(mergedTranslations[localeFile])) {
-                this.recordGenerator.add(folderName, locale, key, value);
+            // 🔑 确保使用语言代码（移除可能的 .json 后缀）
+            const localeCode = locale.endsWith('.json') ? locale.slice(0, -5) : locale;
+            if (mergedTranslations[localeCode]) {
+              for (const [key, value] of Object.entries(mergedTranslations[localeCode])) {
+                this.recordGenerator.add(folderName, localeCode, key, value);
               }
             }
           }
@@ -345,18 +406,13 @@ export class Scanner {
 
         result.totalKeys += keysArray.length;
         result.transformedFiles++;
-
-        console.log(`      ✅ ${path.relative(appDir, filePath)} (${keysArray.length} 个标记)`);
       }
     }
 
-    // 7️⃣ 🔧 生成翻译文件
-    console.log('\n🔧 生成翻译文件...');
+    // 7️⃣ 生成翻译文件
     await this.recordGenerator.saveCompleteRecord(recordPath);
 
     const stats = this.recordGenerator.getStats();
-    console.log(`   总文件夹数: ${stats.totalFolders}`);
-    console.log(`   总 Key 数: ${stats.totalKeys}`);
 
     const record = this.recordGenerator.generate();
     await this.langFileGenerator.generate(record, translateDir, locales);
@@ -368,12 +424,7 @@ export class Scanner {
     );
     result.generatedFiles = generatedFiles.length;
 
-    for (const file of generatedFiles) {
-      console.log(`   ✅ ${file}`);
-    }
-
-    // 8️⃣ 🧹 检测无用翻译 keys
-    console.log('\n🧹 检测无用翻译 keys...');
+    // 8️⃣ 检测无用翻译 keys
     const analysisResult = this.unusedKeyAnalyzer.analyze(record, codeReferences);
 
     // 收集已删除的 keys（用于推送到远端）
@@ -411,29 +462,32 @@ export class Scanner {
         }
 
         result.deletedKeys = analysisResult.total;
-        console.log(`   ✅ 已删除 ${analysisResult.total} 个无用 keys`);
 
         // 重新保存记录
         await this.recordGenerator.saveCompleteRecord(recordPath);
         // 重新生成翻译文件
         await this.langFileGenerator.generate(record, translateDir, locales);
-      } else {
-        console.log(`   ℹ️  保留所有 keys`);
       }
-    } else {
-      console.log(`   ✅ 所有翻译 keys 都在使用中，无需清理`);
     }
 
     // 9️⃣ 📤 推送到 Google Sheets（使用增量合并避免并发冲突）
     if (this.googleSheetsSync) {
-      console.log('\n📤 推送翻译到 Google Sheets...');
-      try {
-        // 使用带合并的推送，避免覆盖远端的最新更新
-        await this.googleSheetsSync.pushWithMerge(record, deletedKeysFormatted);
-        result.syncStatus!.pushed = true;
-        console.log(`   ✅ 推送成功`);
-      } catch (error) {
-        console.log(`   ⚠️  推送失败: ${error}`);
+      // 计算总翻译 key 数量
+      const totalKeys = stats.totalKeys;
+      const deletedKeysCount = deletedKeysFormatted.length;
+
+      // 推送前二次确认
+      const shouldPush = await this.userPrompt.confirmPushToSheet(totalKeys, deletedKeysCount);
+
+      if (shouldPush) {
+        try {
+          // 使用带合并的推送，避免覆盖远端的最新更新
+          await this.googleSheetsSync.pushWithMerge(record, deletedKeysFormatted);
+          result.syncStatus!.pushed = true;
+          console.log(`✅ 推送成功`);
+        } catch (error) {
+          console.log(`⚠️  推送失败: ${error}`);
+        }
       }
     }
 

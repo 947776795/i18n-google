@@ -69,20 +69,15 @@ export class UnusedKeyAnalyzer {
     references: Set<CodeReference>
   ): boolean {
     for (const ref of references) {
-      // 1. 精确匹配
+      // 1. 精确匹配：folderName 和 key 完全相同
       if (ref.folderName === folderName && ref.key === key) {
         return true;
       }
 
-      // 2. 后缀匹配：引用路径后缀等于记录 folderName
-      if (ref.key === key && ref.folderName.endsWith(folderName)) {
-        return true;
-      }
-
-      // 3. 同名文件匹配：文件名相同
-      const refBaseName = ref.folderName.split('_').pop();
-      const recordBaseName = folderName.split('_').pop();
-      if (ref.key === key && refBaseName && refBaseName === recordBaseName) {
+      // 2. 直接子路径匹配：ref.folderName 是 folderName 的直接子路径
+      // 例如：folderName="app_sub1", ref.folderName="app_sub1_page"
+      // 这样可以处理嵌套页面引用父级共享组件的情况
+      if (ref.key === key && ref.folderName.startsWith(folderName + '_')) {
         return true;
       }
     }

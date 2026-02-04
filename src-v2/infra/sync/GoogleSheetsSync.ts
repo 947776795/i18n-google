@@ -233,9 +233,9 @@ export class GoogleSheetsSync {
   }
 
   /**
-   * 将远端数据格式转换为本地格式
+   * 将远端格式转换为本地格式
    * @param remote 远端数据
-   * @returns 本地翻译记录
+   * @returns 本地翻译记录（内存格式，locale 为 "en" 等）
    */
   private remoteToLocal(remote: Record<string, Record<string, string>>): TranslationRecord {
     const result: TranslationRecord = {};
@@ -255,13 +255,14 @@ export class GoogleSheetsSync {
         result[folderName] = {};
       }
 
-      // 为每种语言添加翻译
+      // 🔑 为每种语言添加翻译（使用语言代码，而非 "en.json"）
       for (const [locale, value] of Object.entries(translations)) {
-        const localeFile = `${locale}.json`;
-        if (!result[folderName][localeFile]) {
-          result[folderName][localeFile] = {};
+        // 确保使用语言代码（移除可能的 .json 后缀）
+        const localeCode = locale.endsWith('.json') ? locale.slice(0, -5) : locale;
+        if (!result[folderName][localeCode]) {
+          result[folderName][localeCode] = {};
         }
-        result[folderName][localeFile][key] = value;
+        result[folderName][localeCode][key] = value;
       }
     }
 
@@ -270,7 +271,7 @@ export class GoogleSheetsSync {
 
   /**
    * 将本地格式转换为远端数据格式
-   * @param record 本地翻译记录
+   * @param record 本地翻译记录（内存格式，locale 为 "en" 等）
    * @param deletedKeys 已删除的 keys
    * @returns 远端数据格式（二维数组）
    */
@@ -285,8 +286,8 @@ export class GoogleSheetsSync {
     for (const [folderName, localeMap] of Object.entries(record)) {
       // 获取该文件夹下的所有 key
       const allKeys = new Set<string>();
-      for (const localeFile of Object.keys(localeMap)) {
-        Object.keys(localeMap[localeFile]).forEach(key => allKeys.add(key));
+      for (const locale of Object.keys(localeMap)) {
+        Object.keys(localeMap[locale]).forEach(key => allKeys.add(key));
       }
 
       // 为每个 key 生成一行
@@ -303,8 +304,9 @@ export class GoogleSheetsSync {
 
         // 添加各语言的翻译
         for (const locale of this.config.languages) {
-          const localeFile = `${locale}.json`;
-          const value = localeMap[localeFile]?.[key] || '';
+          // 🔑 确保使用语言代码（移除可能的 .json 后缀）
+          const localeCode = locale.endsWith('.json') ? locale.slice(0, -5) : locale;
+          const value = localeMap[localeCode]?.[key] || '';
           row.push(value);
         }
 
@@ -339,13 +341,15 @@ export class GoogleSheetsSync {
   /**
    * 合并远端和本地数据用于推送
    *
+   * 🔑 设计变更：内存中统一使用语言代码（如 "en"），不再使用 "en.json"
+   *
    * 合并策略：远端优先，但保留本地的新增
    * - 如果远端有该 key，使用远端的值
    * - 如果远端没有，本地有，使用本地的值（本地新增）
    *
-   * @param remote 远端最新数据
-   * @param local 本地准备推送的数据
-   * @returns 合并后的数据
+   * @param remote 远端最新数据（内存格式，locale 为 "en" 等）
+   * @param local 本地准备推送的数据（内存格式，locale 为 "en" 等）
+   * @returns 合并后的数据（内存格式，locale 为 "en" 等）
    */
   private mergeForPush(
     remote: TranslationRecord,
@@ -362,19 +366,21 @@ export class GoogleSheetsSync {
     for (const folderName of allFolders) {
       result[folderName] = {};
 
-      // 收集该文件夹下所有的 localeFile
+      // 收集该文件夹下所有的 locale（语言代码）
       const folderRemotes = remote[folderName] || {};
       const folderLocals = local[folderName] || {};
-      const allLocaleFiles = new Set([
+      const allLocales = new Set([
         ...Object.keys(folderRemotes),
         ...Object.keys(folderLocals),
       ]);
 
-      for (const localeFile of allLocaleFiles) {
-        result[folderName][localeFile] = {};
+      for (const locale of allLocales) {
+        // 🔑 确保使用语言代码（移除可能的 .json 后缀）
+        const localeCode = locale.endsWith('.json') ? locale.slice(0, -5) : locale;
+        result[folderName][localeCode] = {};
 
-        const remoteKeys = folderRemotes[localeFile] || {};
-        const localKeys = folderLocals[localeFile] || {};
+        const remoteKeys = folderRemotes[localeCode] || {};
+        const localKeys = folderLocals[localeCode] || {};
 
         // 收集所有的 key
         const allKeys = new Set([
@@ -385,9 +391,9 @@ export class GoogleSheetsSync {
         for (const key of allKeys) {
           // 远端优先：如果远端有，使用远端的；否则使用本地的
           if (remoteKeys[key] !== undefined) {
-            result[folderName][localeFile][key] = remoteKeys[key];
+            result[folderName][localeCode][key] = remoteKeys[key];
           } else if (localKeys[key] !== undefined) {
-            result[folderName][localeFile][key] = localKeys[key];
+            result[folderName][localeCode][key] = localKeys[key];
           }
         }
       }
