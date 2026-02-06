@@ -443,7 +443,9 @@ export class Scanner {
               for (const localeFile of Object.keys(record[folderName])) {
                 if (record[folderName][localeFile][key]) {
                   delete record[folderName][localeFile][key];
-                  deletedKeysFormatted.push(formattedKey);
+                  // 🔑 生成远端格式的 key [folderName][key]
+                  // 远端 key 格式直接使用 folderName，不需要文件路径
+                  deletedKeysFormatted.push(`[${folderName}][${key}]`);
                 }
               }
               // 如果该文件夹下没有翻译了，删除文件夹
@@ -472,22 +474,42 @@ export class Scanner {
 
     // 9️⃣ 📤 推送到 Google Sheets（使用增量合并避免并发冲突）
     if (this.googleSheetsSync) {
-      // 计算总翻译 key 数量
-      const totalKeys = stats.totalKeys;
-      const deletedKeysCount = deletedKeysFormatted.length;
+      // 🔴 修复：不管是否推送，都先拉取远端最新数据并合并到本地
+      const mergedRecord = await this.googleSheetsSync.pullAndMerge(record, deletedKeysFormatted);
 
-      // 推送前二次确认
-      const shouldPush = await this.userPrompt.confirmPushToSheet(totalKeys, deletedKeysCount);
+      // 🔑 将合并后的远端更新写回本地文件
+      for (const [folderName, localeMap] of Object.entries(mergedRecord)) {
+        for (const [locale, translations] of Object.entries(localeMap)) {
+          for (const [key, value] of Object.entries(translations)) {
+            this.recordGenerator.add(folderName, locale, key, value);
+          }
+        }
+      }
+      // 保存更新后的完整记录
+      await this.recordGenerator.saveCompleteRecord(recordPath);
+
+      // 同时重新生成语言文件（远端更新需要同步到 en.json 等）
+      const updatedRecord = this.recordGenerator.generate();
+      await this.langFileGenerator.generate(updatedRecord, translateDir, locales);
+
+      // 🔑 现在询问用户是否推送（合并已完成）
+      const updatedStats = this.recordGenerator.getStats();
+      const shouldPush = await this.userPrompt.confirmPushToSheet(
+        updatedStats.totalKeys,
+        deletedKeysFormatted.length
+      );
 
       if (shouldPush) {
         try {
-          // 使用带合并的推送，避免覆盖远端的最新更新
-          await this.googleSheetsSync.pushWithMerge(record, deletedKeysFormatted);
+          // 只执行推送，不再需要合并
+          await this.googleSheetsSync.push(updatedRecord, deletedKeysFormatted);
           result.syncStatus!.pushed = true;
           console.log(`✅ 推送成功`);
         } catch (error) {
           console.log(`⚠️  推送失败: ${error}`);
         }
+      } else {
+        console.log(`⏭️  跳过推送，远端更新已合并到本地`);
       }
     }
 

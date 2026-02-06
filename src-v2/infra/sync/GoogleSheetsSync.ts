@@ -92,27 +92,58 @@ export class GoogleSheetsSync {
    *
    * 用于避免并发冲突：在用户确认删除期间，远端可能有新的更新
    *
+   * 合并策略：
+   * - 计划删除的 keys：从合并结果中过滤掉（远端有也不保留）
+   * - 其余 keys：远端优先，但保留本地的新增
+   *
    * @param record 本地准备推送的记录
-   * @param deletedKeys 已删除的 keys
+   * @param deletedKeys 已删除的 keys（格式：[folderName][key]）
+   * @returns 合并后的记录（用于写回本地文件）
    */
-  async pushWithMerge(record: TranslationRecord, deletedKeys: string[] = []): Promise<void> {
+  async pushWithMerge(record: TranslationRecord, deletedKeys: string[] = []): Promise<TranslationRecord> {
     await this.ensureInitialized();
 
     if (!this.isInitialized) {
       console.log('🔄 Google Sheets 未初始化，跳过推送');
-      return;
+      return record; // 返回原始记录
+    }
+
+    // 🔍 调试日志：显示本地传入的 app_page.Home Page
+    if (record['app_page']) {
+      for (const [locale, translations] of Object.entries(record['app_page'])) {
+        if (translations['Home Page']) {
+          console.log(`🔍 [pushWithMerge] 本地传入 [app_page][Home Page] (${locale}): "${translations['Home Page']}"`);
+        }
+      }
+    } else {
+      console.log(`🔍 [pushWithMerge] 本地传入 record 中没有 app_page 数据`);
     }
 
     console.log('📥 推送前再次拉取远端最新数据...');
     // 1. 先拉取远端最新数据
     const latestRemote = await this.pull();
 
-    // 2. 合并（远端优先，但保留本地的新增）
-    const merged = this.mergeForPush(latestRemote, record);
+    // 2. 将 deletedKeys 转换为 Set 便于查找
+    const deletedSet = new Set(deletedKeys);
 
-    // 3. 推送合并后的结果
+    // 3. 合并（远端优先，但过滤掉计划删除的 keys）
+    const merged = this.mergeForPush(latestRemote, record, deletedSet);
+
+    // 🔍 调试日志：显示合并后的 app_page.Home Page
+    if (merged['app_page']) {
+      for (const [locale, translations] of Object.entries(merged['app_page'])) {
+        if (translations['Home Page']) {
+          console.log(`🔍 [pushWithMerge] 合并后 [app_page][Home Page] (${locale}): "${translations['Home Page']}"`);
+        }
+      }
+    }
+
+    // 4. 推送合并后的结果
     const remoteData = this.localToRemote(merged, deletedKeys);
     await this.writeToSheets(remoteData);
+
+    // 5. 返回合并后的记录（用于写回本地文件）
+    return merged;
   }
 
   /**
@@ -133,6 +164,32 @@ export class GoogleSheetsSync {
 
     // 写入远端
     await this.writeToSheets(remoteData);
+  }
+
+  /**
+   * 仅拉取远端数据并合并，不推送
+   *
+   * 用于：不管用户是否选择推送，都需要先获取远端最新更新
+   *
+   * @param record 本地记录
+   * @param deletedKeys 已删除的 keys（格式：[folderName][key]）
+   * @returns 合并后的记录
+   */
+  async pullAndMerge(record: TranslationRecord, deletedKeys: string[] = []): Promise<TranslationRecord> {
+    await this.ensureInitialized();
+
+    if (!this.isInitialized) {
+      console.log('🔄 Google Sheets 未初始化，跳过拉取合并');
+      return record;
+    }
+
+    console.log('📥 拉取远端最新数据并合并到本地...');
+    // 1. 拉取远端最新数据
+    const latestRemote = await this.pull();
+
+    // 2. 合并（远端优先）
+    const deletedSet = new Set(deletedKeys);
+    return this.mergeForPush(latestRemote, record, deletedSet);
   }
 
   /**
@@ -241,14 +298,19 @@ export class GoogleSheetsSync {
     const result: TranslationRecord = {};
 
     for (const [combinedKey, translations] of Object.entries(remote)) {
-      // 解析组合键: [filePath][key]
+      // 解析组合键: [folderName][key]
+      // 远端 key 格式是 [folderName][key]，folderName 使用下划线（如 app_page）
       const match = combinedKey.match(/^\[(.+)\]\[([^\]]+)\]$/);
       if (!match) continue;
 
-      const [, filePath, key] = match;
+      const [, folderName, key] = match;
+      // 🔑 直接使用 folderName，不需要转换
+      // 远端格式和本地格式都使用下划线分隔的 folderName（如 app_page）
 
-      // 转换文件路径为 folderName
-      const folderName = this.filePathToFolderName(filePath);
+      // 🔍 调试日志：追踪 app_page 中的 Home Page
+      if (folderName === 'app_page' && key === 'Home Page') {
+        console.log(`🔍 [remoteToLocal] 远端拉取 [${folderName}][${key}]:`, JSON.stringify(translations));
+      }
 
       // 初始化 folder
       if (!result[folderName]) {
@@ -272,7 +334,7 @@ export class GoogleSheetsSync {
   /**
    * 将本地格式转换为远端数据格式
    * @param record 本地翻译记录（内存格式，locale 为 "en" 等）
-   * @param deletedKeys 已删除的 keys
+   * @param deletedKeys 已删除的 keys（格式：[folderName][key]）
    * @returns 远端数据格式（二维数组）
    */
   private localToRemote(record: TranslationRecord, deletedKeys: string[] = []): string[][] {
@@ -292,8 +354,8 @@ export class GoogleSheetsSync {
 
       // 为每个 key 生成一行
       for (const key of allKeys) {
-        const filePath = this.folderNameToFilePath(folderName);
-        const combinedKey = `[${filePath}][${key}]`;
+        // 🔑 远端 key 格式直接使用 folderName：[folderName][key]
+        const combinedKey = `[${folderName}][${key}]`;
 
         // 检查是否被删除
         if (deletedSet.has(combinedKey)) {
@@ -318,42 +380,23 @@ export class GoogleSheetsSync {
   }
 
   /**
-   * 将文件路径转换为 folderName
-   * @param filePath 文件路径 (如 "app/page.tsx")
-   * @returns folderName (如 "app")
-   */
-  private filePathToFolderName(filePath: string): string {
-    // 移除文件扩展名
-    const withoutExt = filePath.replace(/\.(tsx?|jsx?)$/, '');
-    // 获取第一部分作为 folderName
-    return withoutExt.split('/')[0];
-  }
-
-  /**
-   * 将 folderName 转换为文件路径
-   * @param folderName 文件夹名称
-   * @returns 文件路径
-   */
-  private folderNameToFilePath(folderName: string): string {
-    return `${folderName}/page.tsx`;
-  }
-
-  /**
    * 合并远端和本地数据用于推送
    *
    * 🔑 设计变更：内存中统一使用语言代码（如 "en"），不再使用 "en.json"
    *
-   * 合并策略：远端优先，但保留本地的新增
-   * - 如果远端有该 key，使用远端的值
-   * - 如果远端没有，本地有，使用本地的值（本地新增）
+   * 合并策略：
+   * - 计划删除的 keys：从合并结果中过滤掉（远端有也不保留）
+   * - 其余 keys：远端优先，但保留本地的新增
    *
    * @param remote 远端最新数据（内存格式，locale 为 "en" 等）
    * @param local 本地准备推送的数据（内存格式，locale 为 "en" 等）
+   * @param deletedKeys 计划删除的 keys（格式：[folderName][key]）
    * @returns 合并后的数据（内存格式，locale 为 "en" 等）
    */
-  private mergeForPush(
+  public mergeForPush(
     remote: TranslationRecord,
-    local: TranslationRecord
+    local: TranslationRecord,
+    deletedKeys: Set<string> = new Set()
   ): TranslationRecord {
     const result: TranslationRecord = {};
 
@@ -389,11 +432,29 @@ export class GoogleSheetsSync {
         ]);
 
         for (const key of allKeys) {
+          // 🔑 检查该 key 是否在删除列表中
+          // deletedKeys 格式：[folderName][key]，直接使用 folderName
+          const combinedKey = `[${folderName}][${key}]`;
+
+          // 如果在删除列表中，跳过该 key
+          if (deletedKeys.has(combinedKey)) {
+            continue;
+          }
+
           // 远端优先：如果远端有，使用远端的；否则使用本地的
           if (remoteKeys[key] !== undefined) {
             result[folderName][localeCode][key] = remoteKeys[key];
           } else if (localKeys[key] !== undefined) {
             result[folderName][localeCode][key] = localKeys[key];
+          }
+
+          // 🔍 调试日志：追踪 app_page 中的 Home Page
+          if (folderName === 'app_page' && key === 'Home Page') {
+            const remoteValue = remoteKeys[key];
+            const localValue = localKeys[key];
+            const finalValue = result[folderName][localeCode][key];
+            const source = remoteValue !== undefined ? '远端' : '本地';
+            console.log(`🔍 [mergeForPush] [${folderName}][${key}] (${localeCode}) - 远端: "${remoteValue}", 本地: "${localValue}" → 使用${source}: "${finalValue}"`);
           }
         }
       }

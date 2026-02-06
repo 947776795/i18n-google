@@ -191,7 +191,8 @@ describe('Feature 5: 完整主流程测试', () => {
 
       expect(remoteData.length).toBeGreaterThan(0);
       expect(remoteData[0]).toEqual(['key', 'en', 'ko']);
-      expect(remoteData[1]).toEqual(['[app/page.tsx][Welcome]', 'Welcome', '환영']);
+      // 🔑 远端 key 格式直接使用 folderName：[folderName][key]
+      expect(remoteData[1]).toEqual(['[app][Welcome]', 'Welcome', '환영']);
     });
   });
 

@@ -103,11 +103,39 @@ describe('Feature 5: 并发场景测试 - 推送前远端有更新', () => {
         return pullResults.shift() || {};
       });
 
+    // 保存 deletedKeys 的引用，用于验证
+    let capturedDeletedKeys: string[] = [];
+
     // Mock localToRemote - 捕获转换后的数据（用于 pushWithMerge）
+    // 同时模拟过滤 deletedKeys 的逻辑
     jest.spyOn(GoogleSheetsSync.prototype as any, 'localToRemote')
-      .mockImplementation(function (...args: unknown[]) {
+      .mockImplementation(function (this: any, ...args: unknown[]) {
         const record = args[0] as TranslationRecord;
-        pushData = record; // 捕获原始记录
+        const deletedKeys = (args[1] || []) as string[];
+        capturedDeletedKeys = deletedKeys;
+
+        // 模拟过滤逻辑：从 record 中移除 deletedKeys
+        const deletedSet = new Set(deletedKeys);
+        const filtered: TranslationRecord = {};
+
+        for (const [folderName, localeMap] of Object.entries(record)) {
+          filtered[folderName] = {};
+          for (const [locale, translations] of Object.entries(localeMap)) {
+            filtered[folderName][locale] = {};
+            for (const [key, value] of Object.entries(translations)) {
+              // 🔑 修复后：deletedKeys 格式是 [folderName/page.tsx][key]
+              const filePath = `${folderName}/page.tsx`;
+              const combinedKey = `[${filePath}][${key}]`;
+
+              // 过滤掉被删除的 key
+              if (!deletedSet.has(combinedKey)) {
+                filtered[folderName][locale][key] = value;
+              }
+            }
+          }
+        }
+
+        pushData = filtered; // 捕获过滤后的记录
         return []; // 返回空数组模拟转换结果
       });
 
@@ -151,7 +179,8 @@ export default function Page() {
   return (
     <div>
       <h1>~NewLocal~</h1>
-      <p>I18n.t("Welcome")</p>
+      <p>~Welcome~</p>
+      <p>~NewRemote~</p>
     </div>
   );
 }
@@ -217,10 +246,16 @@ export default function Page() {
       };
       fs.writeFileSync(recordPath, JSON.stringify(localRecord, null, 2), 'utf-8');
 
-      // 测试文件（新增翻译）
+      // 测试文件（新增翻译 + Welcome 引用）
       const pageContent = `
 export default function Page() {
-  return <h1>~NewLocal~</h1>;
+  return (
+    <div>
+      <h1>~NewLocal~</h1>
+      <p>~Welcome~</p>
+      <p>~NewRemote~</p>
+    </div>
+  );
 }
 `;
       const pagePath = path.join(appDir, 'page.tsx');
@@ -250,6 +285,99 @@ export default function Page() {
 
       // 本地新增
       expect(pushedEn['NewLocal']).toBe('NewLocal');
+    });
+
+    it('应该正确过滤远端需要删除的 keys', async () => {
+      /**
+       * 关键场景：远端有需要删除的 key
+       *
+       * 1. 本地和远端 V1 都有 OldKey
+       * 2. 本地检测到 OldKey 无用，用户确认删除
+       * 3. 推送前，远端 V2 仍有 OldKey
+       * 4. 期望：最终推送的数据不包含 OldKey（即使远端有）
+       */
+
+      // 1. 准备初始本地记录（包含 OldKey）
+      const recordPath = path.join(translateDir, 'i18n-complete-record.json');
+      const localRecord: TranslationRecord = {
+        app_page: {
+          'en': {
+            Welcome: 'Welcome Local',
+            OldKey: 'Old Key Local', // 将被检测为无用并删除
+          },
+          'ko': {
+            Welcome: '환영',
+            OldKey: '구 키',
+          },
+        },
+      };
+      fs.writeFileSync(recordPath, JSON.stringify(localRecord, null, 2), 'utf-8');
+
+      // 2. 创建测试文件（不使用 OldKey，所以它会被检测为无用）
+      const pageContent = `
+export default function Page() {
+  return (
+    <div>
+      <h1>~NewLocal~</h1>
+      <p>~Welcome~</p>
+      <p>~NewRemote~</p>
+    </div>
+  );
+}
+`;
+      const pagePath = path.join(appDir, 'page.tsx');
+      fs.writeFileSync(pagePath, pageContent, 'utf-8');
+
+      // 3. 创建配置
+      const configContent = `module.exports = ${JSON.stringify(mockConfig, null, 2)};`;
+      fs.writeFileSync(configPath, configContent, 'utf-8');
+
+      // 4. 设置 pull() 返回的数据：远端也有 OldKey
+      const remoteWithOldKey: TranslationRecord = {
+        app_page: {
+          'en': {
+            Welcome: 'Welcome Remote',
+            OldKey: 'Old Key Remote', // 远端也有 OldKey！
+            NewRemote: 'New Remote',
+          },
+          'ko': {
+            Welcome: '환영 Remote',
+            OldKey: '구 키 Remote',
+            NewRemote: '새로운 Remote',
+          },
+        },
+      };
+
+      pullResults.push(remoteWithOldKey); // 第一次拉取
+      pullResults.push(remoteWithOldKey); // 第二次拉取（推送前，仍有 OldKey）
+
+      // 5. 启用测试模式（自动确认删除）
+      setTestMode(true);
+
+      // 6. 运行扫描
+      const scanner = new Scanner();
+      const result = await scanner.run({ projectRoot: tempDir });
+
+      // 7. 验证结果
+      expect(pullSpy).toHaveBeenCalledTimes(2);
+      expect(pushData).not.toBeNull();
+
+      const pushedEn = pushData!.app_page!['en'];
+      const pushedKo = pushData!.app_page!['ko'];
+
+      // ✅ 远端的更新应该保留
+      expect(pushedEn['Welcome']).toBe('Welcome Remote');
+      expect(pushedEn['NewRemote']).toBe('New Remote');
+
+      // ✅ 本地新增应该保留
+      expect(pushedEn['NewLocal']).toBe('NewLocal');
+
+      // ✅ 关键验证：即使远端有 OldKey，也应该被过滤掉
+      expect(pushedEn['OldKey']).toBeUndefined();
+      expect(pushedKo['OldKey']).toBeUndefined();
+
+      // 验证统计
+      expect(result.deletedKeys).toBeGreaterThanOrEqual(1); // 至少删除了 OldKey
     });
   });
 
@@ -346,6 +474,297 @@ export default function Page() {
       // 都为空
       result = sync['mergeForPush']({}, {});
       expect(Object.keys(result)).toHaveLength(0);
+    });
+
+    it('应该过滤掉 deletedKeys 中的 keys（即使远端有）', () => {
+      const sync = new GoogleSheetsSync(mockConfig);
+
+      const remote: TranslationRecord = {
+        app_page: {
+          'en': {
+            Key1: 'Remote V1',
+            Key2: 'Remote V2',
+            ToDelete: 'Remote ToDelete', // 远端有这个 key
+          },
+        },
+      };
+
+      const local: TranslationRecord = {
+        app_page: {
+          'en': {
+            Key1: 'Local V1',
+            Key3: 'Local V3',
+          },
+        },
+      };
+
+      // 设置要删除的 keys（直接使用 folderName）
+      const deletedKeys = new Set(['[app_page][ToDelete]']);
+
+      const result = sync['mergeForPush'](remote, local, deletedKeys);
+
+      // 远端优先
+      expect(result.app_page!['en']['Key1']).toBe('Remote V1');
+      expect(result.app_page!['en']['Key2']).toBe('Remote V2');
+
+      // 本地新增
+      expect(result.app_page!['en']['Key3']).toBe('Local V3');
+
+      // 关键验证：ToDelete 应该被过滤掉（即使远端有）
+      expect(result.app_page!['en']['ToDelete']).toBeUndefined();
+    });
+
+    it('应该正确过滤深层嵌套路径的 deletedKeys', () => {
+      const sync = new GoogleSheetsSync(mockConfig);
+
+      const remote: TranslationRecord = {
+        app_sub1_deep_page: {
+          'en': {
+            DeepKey: 'Remote Deep',
+            ToDelete: 'Remote ToDelete',
+          },
+        },
+      };
+
+      const local: TranslationRecord = {
+        app_sub1_deep_page: {
+          'en': {
+            DeepKey: 'Local Deep',
+            NewKey: 'Local New',
+          },
+        },
+      };
+
+      // 设置要删除的 keys（直接使用 folderName）
+      const deletedKeys = new Set(['[app_sub1_deep_page][ToDelete]']);
+
+      const result = sync['mergeForPush'](remote, local, deletedKeys);
+
+      // 远端优先
+      expect(result.app_sub1_deep_page!['en']['DeepKey']).toBe('Remote Deep');
+
+      // 本地新增
+      expect(result.app_sub1_deep_page!['en']['NewKey']).toBe('Local New');
+
+      // 关键验证：ToDelete 应该被过滤掉
+      expect(result.app_sub1_deep_page!['en']['ToDelete']).toBeUndefined();
+    });
+
+    it('应该正确解析远端 key 格式 [folderName][key]', () => {
+      const sync = new GoogleSheetsSync(mockConfig);
+
+      // 模拟远端数据格式（从 Google Sheets 读取）
+      const remoteData: Record<string, Record<string, string>> = {
+        '[app_page][Welcome]': {
+          'en': 'Welcome Remote',
+          'ko': '환영 Remote',
+        },
+        '[app_sub1_page][Hello]': {
+          'en': 'Hello Remote',
+        },
+      };
+
+      // 调用 remoteToLocal 转换
+      const result = sync['remoteToLocal'](remoteData);
+
+      // 验证 folderName 正确解析（不使用 filePathToFolderName 转换）
+      expect(result['app_page']).toBeDefined();
+      expect(result['app_page']['en']['Welcome']).toBe('Welcome Remote');
+      expect(result['app_page']['ko']['Welcome']).toBe('환영 Remote');
+
+      expect(result['app_sub1_page']).toBeDefined();
+      expect(result['app_sub1_page']['en']['Hello']).toBe('Hello Remote');
+
+      // 验证没有错误地创建 'app' 或 'app_sub1' 这样的 key
+      expect(result['app']).toBeUndefined();
+      expect(result['app_sub1']).toBeUndefined();
+    });
+  });
+
+  describe('Bug 修复：远端更新后语言文件同步', () => {
+    /**
+     * 测试场景：远端更新后，en.json 等语言文件应该同步更新
+     *
+     * 问题背景：
+     * - pushWithMerge 返回合并后的远端更新数据
+     * - 之前只保存了 i18n-complete-record.json
+     * - 但没有重新生成 en.json 等语言文件
+     *
+     * 期望行为：
+     * - 远端更新应该同时同步到 i18n-complete-record.json 和 en.json
+     */
+    it('应该将远端更新同步到 en.json 等语言文件', async () => {
+      // 1. 准备初始本地记录
+      const recordPath = path.join(translateDir, 'i18n-complete-record.json');
+      const localRecord: TranslationRecord = {
+        app_page: {
+          'en': {
+            Welcome: 'Welcome Local',
+          },
+          'ko': {
+            Welcome: '환영',
+          },
+        },
+      };
+      fs.writeFileSync(recordPath, JSON.stringify(localRecord, null, 2), 'utf-8');
+
+      // 2. 创建测试文件
+      const pageContent = `
+export default function Page() {
+  return (
+    <div>
+      <h1>~Welcome~</h1>
+    </div>
+  );
+}
+`;
+      const pagePath = path.join(appDir, 'page.tsx');
+      fs.writeFileSync(pagePath, pageContent, 'utf-8');
+
+      // 3. 创建配置
+      const configContent = `module.exports = ${JSON.stringify(mockConfig, null, 2)};`;
+      fs.writeFileSync(configPath, configContent, 'utf-8');
+
+      // 4. 设置远端更新数据（第二次拉取时有新更新）
+      const remoteV1: TranslationRecord = {
+        app_page: {
+          'en': { Welcome: 'Welcome V1' },
+          'ko': { Welcome: '환영 V1' },
+        },
+      };
+
+      const remoteV2: TranslationRecord = {
+        app_page: {
+          'en': {
+            Welcome: 'Welcome V2 Updated', // 远端更新
+            NewKey: 'New Remote Key', // 远端新增 key
+          },
+          'ko': {
+            Welcome: '환영 V2 업데이트',
+            NewKey: '새로운 키',
+          },
+        },
+      };
+
+      pullResults.push(remoteV1);
+      pullResults.push(remoteV2);
+
+      // 5. 启用测试模式
+      setTestMode(true);
+
+      // 6. 运行扫描
+      const scanner = new Scanner();
+      await scanner.run({ projectRoot: tempDir });
+
+      // 7. 验证 i18n-complete-record.json 包含远端更新
+      const finalRecord: TranslationRecord = JSON.parse(
+        fs.readFileSync(recordPath, 'utf-8')
+      );
+
+      expect(finalRecord.app_page!['en']['Welcome']).toBe('Welcome V2 Updated');
+      expect(finalRecord.app_page!['ko']['Welcome']).toBe('환영 V2 업데이트');
+
+      // 8. 验证 en.json 等语言文件也包含远端更新（🔴 关键验证）
+      const enJsonPath = path.join(translateDir, 'app_page', 'en.json');
+      const koJsonPath = path.join(translateDir, 'app_page', 'ko.json');
+
+      expect(fs.existsSync(enJsonPath)).toBe(true);
+      expect(fs.existsSync(koJsonPath)).toBe(true);
+
+      const enJson = JSON.parse(fs.readFileSync(enJsonPath, 'utf-8'));
+      const koJson = JSON.parse(fs.readFileSync(koJsonPath, 'utf-8'));
+
+      // ✅ 远端更新应该反映在语言文件中
+      expect(enJson['Welcome']).toBe('Welcome V2 Updated');
+      expect(koJson['Welcome']).toBe('환영 V2 업데이트');
+
+      // ✅ 远端新增的 key 也应该在语言文件中
+      expect(enJson['NewKey']).toBe('New Remote Key');
+      expect(koJson['NewKey']).toBe('새로운 키');
+    });
+
+    it('应该在删除无用 key 后同步语言文件', async () => {
+      /**
+       * 场景：
+       * 1. 本地有 OldKey
+       * 2. 远端也有 OldKey
+       * 3. 检测到 OldKey 无用，用户确认删除
+       * 4. 推送前远端又有其他更新
+       * 5. 期望：语言文件中 OldKey 被删除，远端更新被添加
+       */
+
+      // 1. 准备初始本地记录（包含 OldKey）
+      const recordPath = path.join(translateDir, 'i18n-complete-record.json');
+      const localRecord: TranslationRecord = {
+        app_page: {
+          'en': {
+            Welcome: 'Welcome Local',
+            OldKey: 'Old Key',
+          },
+          'ko': {
+            Welcome: '환영',
+            OldKey: '구 키',
+          },
+        },
+      };
+      fs.writeFileSync(recordPath, JSON.stringify(localRecord, null, 2), 'utf-8');
+
+      // 2. 创建测试文件（不使用 OldKey）
+      const pageContent = `
+export default function Page() {
+  return (
+    <div>
+      <h1>~Welcome~</h1>
+    </div>
+  );
+}
+`;
+      const pagePath = path.join(appDir, 'page.tsx');
+      fs.writeFileSync(pagePath, pageContent, 'utf-8');
+
+      const configContent = `module.exports = ${JSON.stringify(mockConfig, null, 2)};`;
+      fs.writeFileSync(configPath, configContent, 'utf-8');
+
+      // 3. 设置远端数据（也有 OldKey，并且有新更新）
+      const remoteV2: TranslationRecord = {
+        app_page: {
+          'en': {
+            Welcome: 'Welcome V2',
+            OldKey: 'Old Key Remote', // 远端也有
+          },
+          'ko': {
+            Welcome: '환영 V2',
+            OldKey: '구 키 Remote',
+          },
+        },
+      };
+
+      pullResults.push(localRecord);
+      pullResults.push(remoteV2);
+
+      setTestMode(true);
+
+      // 4. 运行扫描
+      const scanner = new Scanner();
+      const result = await scanner.run({ projectRoot: tempDir });
+
+      // 5. 验证删除了无用 key
+      expect(result.deletedKeys).toBeGreaterThanOrEqual(1);
+
+      // 6. 验证语言文件中 OldKey 被删除，远端更新被应用
+      const enJsonPath = path.join(translateDir, 'app_page', 'en.json');
+      const koJsonPath = path.join(translateDir, 'app_page', 'ko.json');
+
+      const enJson = JSON.parse(fs.readFileSync(enJsonPath, 'utf-8'));
+      const koJson = JSON.parse(fs.readFileSync(koJsonPath, 'utf-8'));
+
+      // ✅ OldKey 应该被删除（即使远端有）
+      expect(enJson['OldKey']).toBeUndefined();
+      expect(koJson['OldKey']).toBeUndefined();
+
+      // ✅ 远端更新应该保留
+      expect(enJson['Welcome']).toBe('Welcome V2');
+      expect(koJson['Welcome']).toBe('환영 V2');
     });
   });
 });
