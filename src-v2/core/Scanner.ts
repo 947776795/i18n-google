@@ -19,6 +19,7 @@ import { LangFileGenerator } from '../domain/record/LangFileGenerator';
 import { GoogleSheetsSync } from '../infra/sync/GoogleSheetsSync';
 import { RecordMerger } from '../domain/record/RecordMerger';
 import { UnusedKeyAnalyzer } from '../domain/cleanup/UnusedKeyAnalyzer';
+import { TranslationService } from '../domain/translate/TranslationService';
 import { UserPrompt } from '../ui/UserPrompt';
 import { TranslationRecord } from '../types/record';
 import { CodeReference } from '../types/sync';
@@ -409,7 +410,43 @@ export class Scanner {
       }
     }
 
-    // 7️⃣ 生成翻译文件
+    // 7️⃣ 🤖 AI 翻译新 keys
+    // 收集所有新 keys（不区分 folderName，因为翻译是基于 key 本身）
+    const allNewKeys = new Set<string>();
+    for (const keys of newKeysByFolder.values()) {
+      keys.forEach(key => allNewKeys.add(key));
+    }
+
+    // 如果配置了 apiKey 且有新 keys，进行 AI 翻译
+    if (config.apiKey && allNewKeys.size > 0) {
+      console.log(`🤖 [AI翻译] 发现 ${allNewKeys.size} 个新 keys，开始 AI 翻译...`);
+
+      try {
+        const translationService = new TranslationService(config);
+        const translations = await translationService.translateNewKeys(
+          Array.from(allNewKeys),
+          locales
+        );
+
+        // 将翻译结果应用到 recordGenerator
+        for (const [key, keyTranslations] of translations.entries()) {
+          // 为每个包含此 key 的 folderName 应用翻译
+          for (const [folderName, keys] of newKeysByFolder.entries()) {
+            if (keys.has(key)) {
+              for (const [locale, translation] of Object.entries(keyTranslations)) {
+                this.recordGenerator.add(folderName, locale, key, translation);
+              }
+            }
+          }
+        }
+
+        console.log(`✅ [AI翻译] 完成 ${translations.size} 个 keys 的翻译`);
+      } catch (error) {
+        console.warn(`⚠️ [AI翻译] 翻译失败，将使用原文: ${error}`);
+      }
+    }
+
+    // 8️⃣ 生成翻译文件
     await this.recordGenerator.saveCompleteRecord(recordPath);
 
     const stats = this.recordGenerator.getStats();
@@ -424,7 +461,7 @@ export class Scanner {
     );
     result.generatedFiles = generatedFiles.length;
 
-    // 8️⃣ 检测无用翻译 keys
+    // 9️⃣ 检测无用翻译 keys
     const analysisResult = this.unusedKeyAnalyzer.analyze(record, codeReferences);
 
     // 收集已删除的 keys（用于推送到远端）
@@ -470,7 +507,7 @@ export class Scanner {
       }
     }
 
-    // 9️⃣ 📤 推送到 Google Sheets（使用增量合并避免并发冲突）
+    // 🔟 📤 推送到 Google Sheets（使用增量合并避免并发冲突）
     if (this.googleSheetsSync) {
       // 计算总翻译 key 数量
       const totalKeys = stats.totalKeys;

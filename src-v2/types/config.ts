@@ -67,4 +67,28 @@ export interface I18nConfig {
 
   /** LLM 模型名称 */
   llmModel?: string;
+
+  /** 每批处理的 key 数量（默认 15） */
+  llmBatchSize?: number;
+
+  /** 批次间延迟毫秒数（默认 500） */
+  llmBatchDelay?: number;
+}
+
+/**
+ * 翻译选项
+ */
+export interface TranslationOptions {
+  /** 重试次数 */
+  retries?: number;
+  /** 超时时间（毫秒） */
+  timeout?: number;
+  /** 温度参数 */
+  temperature?: number;
+  /** 模型名称 */
+  model?: string;
+  /** 每批处理的 key 数量 */
+  batchSize?: number;
+  /** 批次间延迟（毫秒） */
+  batchDelay?: number;
 }
