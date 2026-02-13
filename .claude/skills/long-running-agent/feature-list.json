@@ -1,0 +1,245 @@
+{
+  "project": "src-v2 代码审查",
+  "description": "对src-v2 i18n自动化工具进行全面的代码审查",
+  "version": "1.0.0",
+  "features": [
+    {
+      "id": "arch-001",
+      "category": "架构审查",
+      "description": "审查Scanner.ts的546行复杂度问题",
+      "agent": "架构与SOLID审查代理",
+      "files": ["src-v2/core/Scanner.ts"],
+      "steps": [
+        "分析Scanner.ts的职责划分",
+        "识别单一职责原则违反情况",
+        "检查状态管理复杂度",
+        "评估是否需要拆分模块",
+        "提供重构建议（含文件:行号引用）"
+      ],
+      "passes": false,
+      "priority": "critical"
+    },
+    {
+      "id": "arch-002",
+      "category": "架构审查",
+      "description": "验证架构与代码设计一致性",
+      "agent": "架构与SOLID审查代理",
+      "files": ["src-v2/**/*.ts"],
+      "steps": [
+        "验证domain层职责纯粹性",
+        "验证infra层技术实现隔离",
+        "验证application层编排职责",
+        "验证interface层交互边界",
+        "识别层边界违反情况",
+        "检查整洁架构原则执行情况"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "arch-003",
+      "category": "架构审查",
+      "description": "审查文本提取器职责重叠",
+      "agent": "架构与SOLID审查代理",
+      "files": ["src-v2/domain/collect/*.ts"],
+      "steps": [
+        "分析MarkExtractor.ts职责",
+        "分析JSXTextExtractor.ts职责",
+        "分析TemplateExtractor.ts职责",
+        "分析StringExtractor.ts职责",
+        "分析ReferenceCollector.ts职责",
+        "识别职责重叠和边界模糊",
+        "提供合并或分离建议"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "sec-001",
+      "category": "安全审查",
+      "description": "审查输入验证安全性",
+      "agent": "安全与错误处理审查代理",
+      "files": ["src-v2/domain/collect/ConfigLoader.ts"],
+      "steps": [
+        "检查配置文件路径验证",
+        "检查配置值类型验证",
+        "检查默认值安全性",
+        "识别路径遍历漏洞",
+        "识别配置注入风险"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "sec-002",
+      "category": "安全审查",
+      "description": "审查AST操作安全性",
+      "agent": "安全与错误处理审查代理",
+      "files": ["src-v2/infra/ast/CodeTransformer.ts"],
+      "steps": [
+        "检查源代码修改前验证",
+        "检查导入语句注入防护",
+        "检查标记完整性验证",
+        "识别代码注入风险",
+        "评估源文件损坏风险"
+      ],
+      "passes": false,
+      "priority": "critical"
+    },
+    {
+      "id": "sec-003",
+      "category": "安全审查",
+      "description": "审查Google Sheets认证安全",
+      "agent": "安全与错误处理审查代理",
+      "files": ["src-v2/infra/sync/GoogleSheetsSync.ts"],
+      "steps": [
+        "检查服务账号密钥存储",
+        "检查OAuth令牌处理",
+        "检查API错误恢复",
+        "识别认证泄露风险",
+        "评估并发操作安全性"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "perf-001",
+      "category": "性能审查",
+      "description": "检测嵌套循环复杂度O(n²)",
+      "agent": "性能与优化审查代理",
+      "files": [
+        "src-v2/core/Scanner.ts",
+        "src-v2/infra/ast/CodeTransformer.ts",
+        "src-v2/domain/cleanup/UnusedKeyAnalyzer.ts"
+      ],
+      "steps": [
+        "扫描所有嵌套循环模式",
+        "识别O(n²)复杂度代码",
+        "评估文件数量规模影响",
+        "提供优化建议",
+        "标注文件:行号引用"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "perf-002",
+      "category": "性能审查",
+      "description": "审查文件I/O优化机会",
+      "agent": "性能与优化审查代理",
+      "files": [
+        "src-v2/domain/scan/FileScanner.ts",
+        "src-v2/utils/FileUtil.ts"
+      ],
+      "steps": [
+        "识别重复文件读取",
+        "识别可批处理操作",
+        "评估缓存策略机会",
+        "检查异步并发设置",
+        "提供I/O优化建议"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "test-001",
+      "category": "测试审查",
+      "description": "评估测试用例规划合理性",
+      "agent": "测试覆盖率与质量审查代理",
+      "files": ["src-v2/**/__tests__/**/*.test.ts"],
+      "steps": [
+        "分析18个测试文件的组织结构",
+        "评估测试命名约定",
+        "检查测试分组逻辑",
+        "验证TDD原则遵守情况",
+        "识别测试策略问题",
+        "提供测试用例规划改进建议"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "test-002",
+      "category": "测试审查",
+      "description": "识别关键路径测试缺口",
+      "agent": "测试覆盖率与质量审查代理",
+      "files": ["src-v2/**/*.ts"],
+      "steps": [
+        "分析Scanner.ts工作流程覆盖",
+        "分析CodeTransformer.ts测试覆盖",
+        "分析GoogleSheetsSync.ts错误处理测试",
+        "识别未测试的边界情况",
+        "识别缺失的错误场景测试",
+        "提供补充测试建议"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "doc-001",
+      "category": "文档审查",
+      "description": "验证文档与代码一致性",
+      "agent": "文档与代码一致性审查代理",
+      "files": ["src-v2/**/*.md", "src-v2/**/*.ts"],
+      "steps": [
+        "检查README.md与实际功能匹配",
+        "检查API文档与签名一致性",
+        "检查类型定义文档准确性",
+        "验证示例代码正确性",
+        "检查内联注释准确性",
+        "识别文档-代码差异"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "doc-002",
+      "category": "文档审查",
+      "description": "验证配置文档有效性",
+      "agent": "文档与代码一致性审查代理",
+      "files": ["src-v2/**/*config*.*"],
+      "steps": [
+        "检查配置示例完整性",
+        "验证默认值说明准确性",
+        "检查配置项与实际代码匹配",
+        "识别缺失的配置文档",
+        "提供文档改进建议"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "final-001",
+      "category": "汇总",
+      "description": "生成综合审查报告",
+      "agent": "Team Lead",
+      "files": [],
+      "steps": [
+        "收集所有代理发现",
+        "按严重程度分类",
+        "去重重复发现",
+        "生成可操作建议",
+        "创建markdown报告"
+      ],
+      "passes": false,
+      "priority": "critical"
+    }
+  ],
+  "summary": {
+    "total": 13,
+    "by_category": {
+      "架构审查": 3,
+      "安全审查": 3,
+      "性能审查": 2,
+      "测试审查": 2,
+      "文档审查": 2,
+      "汇总": 1
+    },
+    "by_priority": {
+      "critical": 4,
+      "high": 6,
+      "medium": 2,
+      "low": 1
+    }
+  }
+}
